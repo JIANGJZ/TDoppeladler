@@ -26,8 +26,7 @@ def sample_requests(
     # Filter out the conversations with less than 2 turns.
     dataset = [data for data in dataset if len(data["conversations"]) >= 2]
     # Only keep the first two turns of each conversation.
-    dataset = [(data["conversations"][0]["value"],
-                data["conversations"][1]["value"]) for data in dataset]
+    dataset = [(data["conversations"][0]["value"], data["conversations"][1]["value"]) for data in dataset]
 
     # Tokenize the prompts and completions.
     prompts = [prompt for prompt, _ in dataset]
@@ -189,19 +188,15 @@ def run_mii(
 def main(args: argparse.Namespace):
     print(args)
     random.seed(args.seed)
-
     # Sample the requests.
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.tokenizer, trust_remote_code=args.trust_remote_code)
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=args.trust_remote_code)
     if args.dataset is None:
         # Synthesize a prompt with the given input length.
         prompt = "hi" * (args.input_len - 1)
-        requests = [(prompt, args.input_len, args.output_len)
-                    for _ in range(args.num_prompts)]
+        requests = [(prompt, args.input_len, args.output_len) for _ in range(args.num_prompts)]      
     else:
-        requests = sample_requests(args.dataset, args.num_prompts, tokenizer,
-                                   args.output_len)
-
+        requests = sample_requests(args.dataset, args.num_prompts, tokenizer, args.output_len)
+                                   
     if args.backend == "vllm":
         elapsed_time = run_vllm(requests, args.model, args.tokenizer,
                                 args.quantization, args.tensor_parallel_size,
@@ -214,15 +209,16 @@ def main(args: argparse.Namespace):
                               args.use_beam_search, args.hf_max_batch_size,
                               args.trust_remote_code)
     elif args.backend == "mii":
-        elapsed_time = run_mii(requests, args.model, args.tensor_parallel_size,
-                               args.output_len)
+        elapsed_time = run_mii(requests, args.model, args.tensor_parallel_size, args.output_len)                  
     else:
         raise ValueError(f"Unknown backend: {args.backend}")
-    total_num_tokens = sum(prompt_len + output_len
-                           for _, prompt_len, output_len in requests)
-    print(f"Throughput: {len(requests) / elapsed_time:.2f} requests/s, "
-          f"{total_num_tokens / elapsed_time:.2f} tokens/s")
-
+    total_num_tokens = sum(prompt_len + output_len for _, prompt_len, output_len in requests)                           
+    print(f"Throughput: {len(requests) / elapsed_time:.2f} requests/s, {total_num_tokens / elapsed_time:.2f} tokens/s")
+    total_prompt_tokens = sum(prompt_len for _, prompt_len, output_len in requests)
+    print(f"PromptThroughput: {total_prompt_tokens / elapsed_time:.2f} tokens/s")
+    total_output_tokens = sum(output_len for _, prompt_len, output_len in requests)
+    print(f"OutputThroughput: {total_output_tokens / elapsed_time:.2f} tokens/s")         
+    print(f"Total Time : {elapsed_time:.2f} s")         
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark the throughput.")

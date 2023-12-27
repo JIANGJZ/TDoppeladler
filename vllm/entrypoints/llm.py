@@ -78,7 +78,7 @@ class LLM:
         tokenizer_revision: Optional[str] = None,
         seed: int = 0,
         gpu_memory_utilization: float = 0.9,
-        swap_space: int = 4,
+        swap_space: int = 32,
         enforce_eager: bool = False,
         max_context_len_to_capture: int = 8192,
         **kwargs,

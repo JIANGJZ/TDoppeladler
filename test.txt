@@ -1,0 +1,1610 @@
+Namespace(backend='vllm', dataset='/home/jiangjz/llm/TDoppeladler/dataset/ShareGPT_V3_unfiltered_cleaned_split.json', dtype='auto', enforce_eager=False, hf_max_batch_size=None, input_len=None, max_model_len=None, model='/home/jiangjz/llm/TDoppeladler/model/vicuna-7b-v1.5', n=1, num_prompts=1000, output_len=None, quantization=None, seed=0, tensor_parallel_size=1, tokenizer='/home/jiangjz/llm/TDoppeladler/model/vicuna-7b-v1.5', trust_remote_code=False, use_beam_search=False)
+ModelConfig hidden_size=4096, head_size=128, swap_space_bytes=32, num_kv_heads=32        num_layers=32
+CacheConfig block_size=16, gpu_memory_utilization=0.9, swap_space_bytes=34359738368,         sliding_window=None
+SchedulerConfig max_num_batched_tokens=4096, max_model_len=4096, max_num_seqs=256,         max_paddings=256
+INFO 12-27 21:54:30 llm_engine.py:74] Initializing an LLM engine with config: model='/home/jiangjz/llm/TDoppeladler/model/vicuna-7b-v1.5', tokenizer='/home/jiangjz/llm/TDoppeladler/model/vicuna-7b-v1.5', tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.float16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, quantization=None, enforce_eager=False, seed=0)
+input_metadata = InputMetadata(prompt_lens=[16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16], num_prompts=256, max_context_len=None,)
+INFO 12-27 21:54:36 llm_engine.py:234] # GPU blocks: 953, # CPU blocks: 4096
+INFO 12-27 21:54:41 model_runner.py:403] Capturing the model for CUDA graphs. This may lead to unexpected consequences if the model is not static. To run the model in eager mode, set 'enforce_eager=True' or use '--enforce-eager' in the CLI.
+INFO 12-27 21:54:41 model_runner.py:407] CUDA graphs can take additional 1~3 GiB memory per GPU. If you are running out of memory, consider decreasing `gpu_memory_utilization` or enforcing eager mode.
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+input_metadata = InputMetadata(prompt_lens=[], num_prompts=0, max_context_len=4096,)
+INFO 12-27 21:54:44 model_runner.py:449] Graph capturing finished in 2 secs.
+promt select exit padding exceed_paddings=663, cur_paddings=141, exceeed_seq=470
+input_metadata = InputMetadata(prompt_lens=[68, 209], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=453, cur_paddings=0, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[470], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=313, cur_paddings=202, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[17, 57, 138], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=432, cur_paddings=0, exceeed_seq=459
+input_metadata = InputMetadata(prompt_lens=[27], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=415, cur_paddings=0, exceeed_seq=44
+input_metadata = InputMetadata(prompt_lens=[459], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=987, cur_paddings=11, exceeed_seq=532
+input_metadata = InputMetadata(prompt_lens=[44, 33], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=504, cur_paddings=0, exceeed_seq=28
+input_metadata = InputMetadata(prompt_lens=[532], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1211, cur_paddings=125, exceeed_seq=226
+input_metadata = InputMetadata(prompt_lens=[28, 14, 14, 38, 45, 6], num_prompts=6, max_context_len=None,)
+promt select exit padding exceed_paddings=945, cur_paddings=249, exceeed_seq=458
+input_metadata = InputMetadata(prompt_lens=[226, 36, 167], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=422, cur_paddings=0, exceeed_seq=36
+input_metadata = InputMetadata(prompt_lens=[458], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1353, cur_paddings=18, exceeed_seq=481
+input_metadata = InputMetadata(prompt_lens=[36, 28, 26], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=311, cur_paddings=164, exceeed_seq=609
+input_metadata = InputMetadata(prompt_lens=[481, 475, 560], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=588, cur_paddings=0, exceeed_seq=21
+input_metadata = InputMetadata(prompt_lens=[609], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=308, cur_paddings=0, exceeed_seq=329
+input_metadata = InputMetadata(prompt_lens=[21], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=544, cur_paddings=190, exceeed_seq=696
+input_metadata = InputMetadata(prompt_lens=[329, 519], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=503, cur_paddings=220, exceeed_seq=413
+input_metadata = InputMetadata(prompt_lens=[696, 476], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=382, cur_paddings=0, exceeed_seq=31
+input_metadata = InputMetadata(prompt_lens=[413], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=311, cur_paddings=35, exceeed_seq=123
+input_metadata = InputMetadata(prompt_lens=[31, 21, 6], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=631, cur_paddings=0, exceeed_seq=754
+input_metadata = InputMetadata(prompt_lens=[123], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=733, cur_paddings=0, exceeed_seq=21
+input_metadata = InputMetadata(prompt_lens=[754], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=314, cur_paddings=189, exceeed_seq=85
+input_metadata = InputMetadata(prompt_lens=[21, 210], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=455, cur_paddings=0, exceeed_seq=540
+input_metadata = InputMetadata(prompt_lens=[85], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=351, cur_paddings=89, exceeed_seq=278
+input_metadata = InputMetadata(prompt_lens=[540, 451], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=264, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[278], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1574, cur_paddings=2, exceeed_seq=802
+input_metadata = InputMetadata(prompt_lens=[14, 16], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=635, cur_paddings=0, exceeed_seq=167
+input_metadata = InputMetadata(prompt_lens=[802], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=580, cur_paddings=224, exceeed_seq=35
+input_metadata = InputMetadata(prompt_lens=[167, 391], num_prompts=2, max_context_len=None,)
+promt select exceed tokens total_tokens=4314, new_tokens=719
+input_metadata = InputMetadata(prompt_lens=[35, 16, 15, 30, 25], num_prompts=5, max_context_len=None,)
+promt select exit padding exceed_paddings=705, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[719], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=394, cur_paddings=0, exceeed_seq=408
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=382, cur_paddings=0, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[408], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=412, cur_paddings=0, exceeed_seq=438
+input_metadata = InputMetadata(prompt_lens=[26], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=333, cur_paddings=0, exceeed_seq=105
+input_metadata = InputMetadata(prompt_lens=[438], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=741, cur_paddings=0, exceeed_seq=846
+input_metadata = InputMetadata(prompt_lens=[105], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[846], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=683, cur_paddings=0, exceeed_seq=20
+input_metadata = InputMetadata(prompt_lens=[703], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[20], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[228], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=392, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[404], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=319, cur_paddings=0, exceeed_seq=331
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=298, cur_paddings=0, exceeed_seq=33
+input_metadata = InputMetadata(prompt_lens=[331], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=427, cur_paddings=0, exceeed_seq=460
+input_metadata = InputMetadata(prompt_lens=[33], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=449, cur_paddings=0, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[460], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11, 9], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[672], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[883], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=277, cur_paddings=18, exceeed_seq=149
+input_metadata = InputMetadata(prompt_lens=[390, 408], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=303, cur_paddings=0, exceeed_seq=452
+input_metadata = InputMetadata(prompt_lens=[149], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=360, cur_paddings=0, exceeed_seq=92
+input_metadata = InputMetadata(prompt_lens=[452], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[92, 236], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[244], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=408, cur_paddings=0, exceeed_seq=15
+input_metadata = InputMetadata(prompt_lens=[423], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=731, cur_paddings=5, exceeed_seq=378
+input_metadata = InputMetadata(prompt_lens=[15, 10], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[378], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=469, cur_paddings=228, exceeed_seq=7
+input_metadata = InputMetadata(prompt_lens=[248, 167, 101], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[7], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[104, 10], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=556, cur_paddings=0, exceeed_seq=57
+input_metadata = InputMetadata(prompt_lens=[613], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[57], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[58, 283], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=661, cur_paddings=0, exceeed_seq=179
+input_metadata = InputMetadata(prompt_lens=[840], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[179], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[259, 23], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=807, cur_paddings=0, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[836], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[29, 89, 35], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[167], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[232, 8], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:54:49 llm_engine.py:685] Avg past 5 seconds prompt throughput: 5923.0 tokens/s, Avg past 5 seconds real prompt throughput: 5292.6 tokens/s, Avg past 5 seconds generation throughput: 1089.6 tokens/s, total prompt throughput: 27989.0 tokens/s, total real prompt throughput: 25010.0 tokens/s, total generation throughput: 3100.0 tokens/s, avg total prompt throughput: 5923.0 tokens/s, avg total real prompt throughput: 5292.6 tokens/s, avg total generation throughput: 1089.6 tokens/s, Running: 69 reqs, Swapped: 0 reqs, Waiting: 899 reqs, GPU KV cache usage: 98.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[235, 11], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[943], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[946], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=360, cur_paddings=0, exceeed_seq=83
+input_metadata = InputMetadata(prompt_lens=[443], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[83, 42], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=449, cur_paddings=0, exceeed_seq=83
+input_metadata = InputMetadata(prompt_lens=[532], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[83], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=513, cur_paddings=0, exceeed_seq=148
+input_metadata = InputMetadata(prompt_lens=[661], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=611, cur_paddings=193, exceeed_seq=550
+input_metadata = InputMetadata(prompt_lens=[148, 341], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[550], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[441], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[445], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=651, cur_paddings=0, exceeed_seq=31
+input_metadata = InputMetadata(prompt_lens=[682], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[31], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[479], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[484], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=653, cur_paddings=0, exceeed_seq=36
+input_metadata = InputMetadata(prompt_lens=[689], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[36], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:54:54 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1785.4 tokens/s, Avg past 5 seconds real prompt throughput: 1691.7 tokens/s, Avg past 5 seconds generation throughput: 1611.7 tokens/s, total prompt throughput: 37180.0 tokens/s, total real prompt throughput: 33519.0 tokens/s, total generation throughput: 11216.0 tokens/s, avg total prompt throughput: 3814.4 tokens/s, avg total real prompt throughput: 3438.8 tokens/s, avg total generation throughput: 1425.7 tokens/s, Running: 50 reqs, Swapped: 0 reqs, Waiting: 886 reqs, GPU KV cache usage: 98.8%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[550], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[244], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[248, 194], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[289], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[300], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[305], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[245], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[321], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[330], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[335], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[554], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:54:59 llm_engine.py:685] Avg past 5 seconds prompt throughput: 733.4 tokens/s, Avg past 5 seconds real prompt throughput: 721.9 tokens/s, Avg past 5 seconds generation throughput: 1255.3 tokens/s, total prompt throughput: 40631.0 tokens/s, total real prompt throughput: 36916.0 tokens/s, total generation throughput: 17510.0 tokens/s, avg total prompt throughput: 2754.6 tokens/s, avg total real prompt throughput: 2502.7 tokens/s, avg total generation throughput: 1360.6 tokens/s, Running: 29 reqs, Swapped: 0 reqs, Waiting: 886 reqs, GPU KV cache usage: 96.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[627], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[641], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=654, cur_paddings=0, exceeed_seq=58
+input_metadata = InputMetadata(prompt_lens=[712], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[58], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=653, cur_paddings=0, exceeed_seq=166
+input_metadata = InputMetadata(prompt_lens=[819], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=301, cur_paddings=143, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[166, 23], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8, 14], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=385, cur_paddings=0, exceeed_seq=410
+input_metadata = InputMetadata(prompt_lens=[25], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[410], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=361, cur_paddings=0, exceeed_seq=21
+input_metadata = InputMetadata(prompt_lens=[382], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[21, 67], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=376, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[385], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1211, cur_paddings=32, exceeed_seq=418
+input_metadata = InputMetadata(prompt_lens=[9, 9, 25], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[418], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[427], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[437], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[673], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[78], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=818, cur_paddings=0, exceeed_seq=30
+input_metadata = InputMetadata(prompt_lens=[848], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:55:04 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2043.8 tokens/s, Avg past 5 seconds real prompt throughput: 1974.2 tokens/s, Avg past 5 seconds generation throughput: 877.1 tokens/s, total prompt throughput: 47846.0 tokens/s, total real prompt throughput: 43904.0 tokens/s, total generation throughput: 21911.0 tokens/s, avg total prompt throughput: 2421.3 tokens/s, avg total real prompt throughput: 2221.8 tokens/s, avg total generation throughput: 1225.4 tokens/s, Running: 30 reqs, Swapped: 0 reqs, Waiting: 867 reqs, GPU KV cache usage: 96.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[30, 31, 96, 17], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=450, cur_paddings=91, exceeed_seq=6
+input_metadata = InputMetadata(prompt_lens=[365, 274], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[6, 6], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[63, 99, 79, 27], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[777], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=770, cur_paddings=0, exceeed_seq=10
+input_metadata = InputMetadata(prompt_lens=[780], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[10, 30], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[125, 72], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=770, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[788], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=353, cur_paddings=182, exceeed_seq=175
+input_metadata = InputMetadata(prompt_lens=[18, 36, 118], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=422, cur_paddings=0, exceeed_seq=597
+input_metadata = InputMetadata(prompt_lens=[175], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[597], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[269, 245], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[255, 249, 72], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=358, cur_paddings=0, exceeed_seq=6
+input_metadata = InputMetadata(prompt_lens=[364], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[6], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:55:09 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1401.3 tokens/s, Avg past 5 seconds real prompt throughput: 1221.0 tokens/s, Avg past 5 seconds generation throughput: 1079.4 tokens/s, total prompt throughput: 55664.0 tokens/s, total real prompt throughput: 50825.0 tokens/s, total generation throughput: 27280.0 tokens/s, avg total prompt throughput: 2246.6 tokens/s, avg total real prompt throughput: 2051.3 tokens/s, avg total generation throughput: 1191.4 tokens/s, Running: 31 reqs, Swapped: 0 reqs, Waiting: 845 reqs, GPU KV cache usage: 99.0%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[290], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=258, cur_paddings=12, exceeed_seq=297
+input_metadata = InputMetadata(prompt_lens=[162, 174], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[297], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[337], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[342, 151], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:55:14 llm_engine.py:685] Avg past 5 seconds prompt throughput: 308.2 tokens/s, Avg past 5 seconds real prompt throughput: 305.3 tokens/s, Avg past 5 seconds generation throughput: 912.7 tokens/s, total prompt throughput: 56942.0 tokens/s, total real prompt throughput: 52091.0 tokens/s, total generation throughput: 31866.0 tokens/s, avg total prompt throughput: 1911.2 tokens/s, avg total real prompt throughput: 1748.4 tokens/s, avg total generation throughput: 1141.6 tokens/s, Running: 19 reqs, Swapped: 0 reqs, Waiting: 851 reqs, GPU KV cache usage: 98.6%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[335], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[252], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[250, 357], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=307, cur_paddings=195, exceeed_seq=426
+input_metadata = InputMetadata(prompt_lens=[370, 175], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=360, cur_paddings=0, exceeed_seq=66
+input_metadata = InputMetadata(prompt_lens=[426], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[66], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=325, cur_paddings=0, exceeed_seq=692
+input_metadata = InputMetadata(prompt_lens=[1017], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=669, cur_paddings=0, exceeed_seq=23
+input_metadata = InputMetadata(prompt_lens=[692], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1683, cur_paddings=59, exceeed_seq=443
+input_metadata = InputMetadata(prompt_lens=[23, 11, 37, 18], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=438, cur_paddings=0, exceeed_seq=5
+input_metadata = InputMetadata(prompt_lens=[443], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[5, 14], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=394, cur_paddings=0, exceeed_seq=67
+input_metadata = InputMetadata(prompt_lens=[461], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=283, cur_paddings=115, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[67, 182], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[248], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=398, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[406], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=399, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[415], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[16], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=399, cur_paddings=0, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[424], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=327, cur_paddings=218, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[25, 126, 9], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=424, cur_paddings=144, exceeed_seq=79
+input_metadata = InputMetadata(prompt_lens=[17, 15, 39, 14, 10, 17, 17], num_prompts=7, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[79], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=573, cur_paddings=0, exceeed_seq=124
+input_metadata = InputMetadata(prompt_lens=[697], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=291, cur_paddings=117, exceeed_seq=211
+input_metadata = InputMetadata(prompt_lens=[124, 7], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[211, 5], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[221, 15], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=593, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[601], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=317, cur_paddings=0, exceeed_seq=325
+input_metadata = InputMetadata(prompt_lens=[8], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=404, cur_paddings=115, exceeed_seq=36
+input_metadata = InputMetadata(prompt_lens=[325, 210], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[36, 276], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:55:19 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2302.0 tokens/s, Avg past 5 seconds real prompt throughput: 1990.4 tokens/s, Avg past 5 seconds generation throughput: 728.3 tokens/s, total prompt throughput: 68641.0 tokens/s, total real prompt throughput: 62108.0 tokens/s, total generation throughput: 35513.0 tokens/s, avg total prompt throughput: 1972.4 tokens/s, avg total real prompt throughput: 1784.7 tokens/s, avg total generation throughput: 1078.7 tokens/s, Running: 44 reqs, Swapped: 0 reqs, Waiting: 806 reqs, GPU KV cache usage: 99.5%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[767], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=973, cur_paddings=0, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[992], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=973, cur_paddings=0, exceeed_seq=24
+input_metadata = InputMetadata(prompt_lens=[997], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[24], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=421, cur_paddings=93, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[262, 355], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[27], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=405, cur_paddings=77, exceeed_seq=32
+input_metadata = InputMetadata(prompt_lens=[283, 360], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=268, cur_paddings=143, exceeed_seq=50
+input_metadata = InputMetadata(prompt_lens=[32, 175], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[50], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=841, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[850], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=841, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[853], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12, 136], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[83, 43], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[58, 6], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=2591, cur_paddings=62, exceeed_seq=906
+input_metadata = InputMetadata(prompt_lens=[53, 63, 11], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=775, cur_paddings=0, exceeed_seq=131
+input_metadata = InputMetadata(prompt_lens=[906], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=346, cur_paddings=232, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[131, 8, 22], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[17], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=759, cur_paddings=255, exceeed_seq=28
+input_metadata = InputMetadata(prompt_lens=[532, 277], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[28, 7], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[233, 5], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[242, 14], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[25], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[60, 62, 40], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=887, cur_paddings=0, exceeed_seq=82
+input_metadata = InputMetadata(prompt_lens=[969], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[82, 72, 72, 49], num_prompts=4, max_context_len=None,)
+INFO 12-27 21:55:24 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2393.8 tokens/s, Avg past 5 seconds real prompt throughput: 2070.1 tokens/s, Avg past 5 seconds generation throughput: 1070.0 tokens/s, total prompt throughput: 80870.0 tokens/s, total real prompt throughput: 72518.0 tokens/s, total generation throughput: 40897.0 tokens/s, avg total prompt throughput: 2030.9 tokens/s, avg total real prompt throughput: 1821.1 tokens/s, avg total generation throughput: 1077.9 tokens/s, Running: 39 reqs, Swapped: 0 reqs, Waiting: 782 reqs, GPU KV cache usage: 99.0%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=889, cur_paddings=0, exceeed_seq=95
+input_metadata = InputMetadata(prompt_lens=[984], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[95, 83, 81, 57], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=370, cur_paddings=228, exceeed_seq=328
+input_metadata = InputMetadata(prompt_lens=[257, 29], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=296, cur_paddings=0, exceeed_seq=624
+input_metadata = InputMetadata(prompt_lens=[328], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=505, cur_paddings=0, exceeed_seq=119
+input_metadata = InputMetadata(prompt_lens=[624], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[119], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=557, cur_paddings=71, exceeed_seq=218
+input_metadata = InputMetadata(prompt_lens=[56, 13, 28], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[218, 16], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[641], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=270, cur_paddings=174, exceeed_seq=37
+input_metadata = InputMetadata(prompt_lens=[133, 68, 24], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=390, cur_paddings=187, exceeed_seq=21
+input_metadata = InputMetadata(prompt_lens=[37, 224], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[21, 50], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=760, cur_paddings=0, exceeed_seq=183
+input_metadata = InputMetadata(prompt_lens=[943], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[183], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[807], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:55:29 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1372.3 tokens/s, Avg past 5 seconds real prompt throughput: 1163.2 tokens/s, Avg past 5 seconds generation throughput: 1143.3 tokens/s, total prompt throughput: 87465.0 tokens/s, total real prompt throughput: 78105.0 tokens/s, total generation throughput: 46647.0 tokens/s, avg total prompt throughput: 1950.4 tokens/s, avg total real prompt throughput: 1741.7 tokens/s, avg total generation throughput: 1085.7 tokens/s, Running: 31 reqs, Swapped: 0 reqs, Waiting: 769 reqs, GPU KV cache usage: 95.4%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=690, cur_paddings=0, exceeed_seq=123
+input_metadata = InputMetadata(prompt_lens=[813], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[123], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=819, cur_paddings=0, exceeed_seq=81
+input_metadata = InputMetadata(prompt_lens=[900], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1413, cur_paddings=209, exceeed_seq=382
+input_metadata = InputMetadata(prompt_lens=[81, 11, 18, 5], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=340, cur_paddings=0, exceeed_seq=42
+input_metadata = InputMetadata(prompt_lens=[382], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[42], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=513, cur_paddings=235, exceeed_seq=4
+input_metadata = InputMetadata(prompt_lens=[282, 47], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=1128, cur_paddings=44, exceeed_seq=301
+input_metadata = InputMetadata(prompt_lens=[4, 30, 15, 27], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[301], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[305], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[521], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[82, 66], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[89, 71, 76], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[101], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[108, 81, 82], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[130, 114], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[144], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[119, 89, 88], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[524], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=622, cur_paddings=218, exceeed_seq=445
+input_metadata = InputMetadata(prompt_lens=[243, 25], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=434, cur_paddings=0, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[445], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=680, cur_paddings=230, exceeed_seq=134
+input_metadata = InputMetadata(prompt_lens=[10, 9, 7, 25, 59, 14], num_prompts=6, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[134, 20], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=368, cur_paddings=236, exceeed_seq=6
+input_metadata = InputMetadata(prompt_lens=[138, 24, 16], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[6, 12], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:55:34 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1749.5 tokens/s, Avg past 5 seconds real prompt throughput: 1448.9 tokens/s, Avg past 5 seconds generation throughput: 997.5 tokens/s, total prompt throughput: 96786.0 tokens/s, total real prompt throughput: 85963.0 tokens/s, total generation throughput: 51640.0 tokens/s, avg total prompt throughput: 1941.8 tokens/s, avg total real prompt throughput: 1724.6 tokens/s, avg total generation throughput: 1076.6 tokens/s, Running: 41 reqs, Swapped: 0 reqs, Waiting: 737 reqs, GPU KV cache usage: 98.2%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[194, 24], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=855, cur_paddings=134, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[599, 733], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12, 16], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=721, cur_paddings=0, exceeed_seq=20
+input_metadata = InputMetadata(prompt_lens=[741], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[20, 23], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=722, cur_paddings=0, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[747], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[25, 27], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[249], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=723, cur_paddings=0, exceeed_seq=39
+input_metadata = InputMetadata(prompt_lens=[762], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=448, cur_paddings=214, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[39, 253], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=342, cur_paddings=0, exceeed_seq=79
+input_metadata = InputMetadata(prompt_lens=[421], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[79, 114, 12, 14], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=743, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[752], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9, 13, 26, 46], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=743, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[757], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14, 18, 29, 49, 31], num_prompts=5, max_context_len=None,)
+promt select exit padding exceed_paddings=436, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[445], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[67, 46], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=437, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[449], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=297, cur_paddings=0, exceeed_seq=13
+input_metadata = InputMetadata(prompt_lens=[310], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[13, 35, 12], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[99], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:55:39 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1890.3 tokens/s, Avg past 5 seconds real prompt throughput: 1681.9 tokens/s, Avg past 5 seconds generation throughput: 1113.8 tokens/s, total prompt throughput: 106099.0 tokens/s, total real prompt throughput: 94246.0 tokens/s, total generation throughput: 57236.0 tokens/s, avg total prompt throughput: 1934.0 tokens/s, avg total real prompt throughput: 1717.9 tokens/s, avg total generation throughput: 1080.3 tokens/s, Running: 42 reqs, Swapped: 0 reqs, Waiting: 713 reqs, GPU KV cache usage: 99.6%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=298, cur_paddings=0, exceeed_seq=34
+input_metadata = InputMetadata(prompt_lens=[332], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1433, cur_paddings=217, exceeed_seq=415
+input_metadata = InputMetadata(prompt_lens=[34, 54, 28, 111], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[415], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=321, cur_paddings=0, exceeed_seq=228
+input_metadata = InputMetadata(prompt_lens=[549], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=537, cur_paddings=109, exceeed_seq=551
+input_metadata = InputMetadata(prompt_lens=[228, 337], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=532, cur_paddings=0, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[551], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=533, cur_paddings=0, exceeed_seq=30
+input_metadata = InputMetadata(prompt_lens=[563], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=704, cur_paddings=0, exceeed_seq=734
+input_metadata = InputMetadata(prompt_lens=[30], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[734], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[787], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[791], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:55:44 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1065.8 tokens/s, Avg past 5 seconds real prompt throughput: 997.7 tokens/s, Avg past 5 seconds generation throughput: 1200.1 tokens/s, total prompt throughput: 111296.0 tokens/s, total real prompt throughput: 99117.0 tokens/s, total generation throughput: 63272.0 tokens/s, avg total prompt throughput: 1858.6 tokens/s, avg total real prompt throughput: 1655.2 tokens/s, avg total generation throughput: 1090.8 tokens/s, Running: 32 reqs, Swapped: 0 reqs, Waiting: 703 reqs, GPU KV cache usage: 96.4%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=965, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[979], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=497, cur_paddings=0, exceeed_seq=88
+input_metadata = InputMetadata(prompt_lens=[585], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=315, cur_paddings=213, exceeed_seq=99
+input_metadata = InputMetadata(prompt_lens=[88, 101, 201], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=798, cur_paddings=237, exceeed_seq=358
+input_metadata = InputMetadata(prompt_lens=[99, 171, 6], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=344, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[358], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=297, cur_paddings=3, exceeed_seq=164
+input_metadata = InputMetadata(prompt_lens=[14, 17], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=279, cur_paddings=126, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[164, 38], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11, 108], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=284, cur_paddings=128, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[185, 57], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[29], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=345, cur_paddings=0, exceeed_seq=54
+input_metadata = InputMetadata(prompt_lens=[399], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[54, 56], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[193, 64], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=295, cur_paddings=131, exceeed_seq=34
+input_metadata = InputMetadata(prompt_lens=[198, 67], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[34], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[122], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=687, cur_paddings=0, exceeed_seq=175
+input_metadata = InputMetadata(prompt_lens=[862], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[175, 194, 6], num_prompts=3, max_context_len=None,)
+INFO 12-27 21:55:49 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1507.3 tokens/s, Avg past 5 seconds real prompt throughput: 1253.9 tokens/s, Avg past 5 seconds generation throughput: 1026.2 tokens/s, total prompt throughput: 118427.0 tokens/s, total real prompt throughput: 105182.0 tokens/s, total generation throughput: 68423.0 tokens/s, avg total prompt throughput: 1824.8 tokens/s, avg total real prompt throughput: 1620.7 tokens/s, avg total generation throughput: 1085.8 tokens/s, Running: 30 reqs, Swapped: 0 reqs, Waiting: 683 reqs, GPU KV cache usage: 95.9%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=915, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[933], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[18, 8, 12, 57, 9], num_prompts=5, max_context_len=None,)
+promt select exit padding exceed_paddings=2360, cur_paddings=170, exceeed_seq=506
+input_metadata = InputMetadata(prompt_lens=[34, 23, 26, 68, 19], num_prompts=5, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[506], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=762, cur_paddings=0, exceeed_seq=112
+input_metadata = InputMetadata(prompt_lens=[874], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[112, 9], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=765, cur_paddings=0, exceeed_seq=118
+input_metadata = InputMetadata(prompt_lens=[883], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[118, 15], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[52, 12, 19], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=530, cur_paddings=0, exceeed_seq=4
+input_metadata = InputMetadata(prompt_lens=[534], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[4], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=530, cur_paddings=0, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[541], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[572], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=867, cur_paddings=0, exceeed_seq=6
+input_metadata = InputMetadata(prompt_lens=[873], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[6, 10, 107], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=336, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[352], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[16], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[44, 38, 15, 8], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[925], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[684], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=401, cur_paddings=0, exceeed_seq=509
+input_metadata = InputMetadata(prompt_lens=[108], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=492, cur_paddings=0, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[509], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[17], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=493, cur_paddings=0, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[520], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=339, cur_paddings=0, exceeed_seq=366
+input_metadata = InputMetadata(prompt_lens=[27], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=341, cur_paddings=0, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[366], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[25], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:55:54 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2324.6 tokens/s, Avg past 5 seconds real prompt throughput: 2134.5 tokens/s, Avg past 5 seconds generation throughput: 963.2 tokens/s, total prompt throughput: 130002.0 tokens/s, total real prompt throughput: 115651.0 tokens/s, total generation throughput: 73246.0 tokens/s, avg total prompt throughput: 1859.8 tokens/s, avg total real prompt throughput: 1654.5 tokens/s, avg total generation throughput: 1076.8 tokens/s, Running: 40 reqs, Swapped: 0 reqs, Waiting: 653 reqs, GPU KV cache usage: 98.7%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=495, cur_paddings=0, exceeed_seq=43
+input_metadata = InputMetadata(prompt_lens=[538], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[43], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[554], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=501, cur_paddings=0, exceeed_seq=58
+input_metadata = InputMetadata(prompt_lens=[559], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=313, cur_paddings=0, exceeed_seq=371
+input_metadata = InputMetadata(prompt_lens=[58], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=342, cur_paddings=0, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[371], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=439, cur_paddings=0, exceeed_seq=468
+input_metadata = InputMetadata(prompt_lens=[29], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=453, cur_paddings=0, exceeed_seq=15
+input_metadata = InputMetadata(prompt_lens=[468], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=359, cur_paddings=75, exceeed_seq=232
+input_metadata = InputMetadata(prompt_lens=[15, 90], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=322, cur_paddings=222, exceeed_seq=132
+input_metadata = InputMetadata(prompt_lens=[232, 10], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[132, 54], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[255], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[33, 151, 72], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[83], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[286, 58], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[180, 146], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:55:59 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1045.2 tokens/s, Avg past 5 seconds real prompt throughput: 874.2 tokens/s, Avg past 5 seconds generation throughput: 1133.1 tokens/s, total prompt throughput: 134918.0 tokens/s, total real prompt throughput: 119767.0 tokens/s, total generation throughput: 78943.0 tokens/s, avg total prompt throughput: 1800.8 tokens/s, avg total real prompt throughput: 1598.6 tokens/s, avg total generation throughput: 1080.8 tokens/s, Running: 28 reqs, Swapped: 0 reqs, Waiting: 651 reqs, GPU KV cache usage: 95.6%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=457, cur_paddings=0, exceeed_seq=109
+input_metadata = InputMetadata(prompt_lens=[566], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[109], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[116, 177], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=275, cur_paddings=55, exceeed_seq=295
+input_metadata = InputMetadata(prompt_lens=[130, 185], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=354, cur_paddings=230, exceeed_seq=171
+input_metadata = InputMetadata(prompt_lens=[295, 65], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[171, 88], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=341, cur_paddings=0, exceeed_seq=32
+input_metadata = InputMetadata(prompt_lens=[373], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=501, cur_paddings=51, exceeed_seq=131
+input_metadata = InputMetadata(prompt_lens=[32, 26, 40, 41, 15], num_prompts=5, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[131, 25, 140, 9], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[159, 27], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[173, 65], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=264, cur_paddings=176, exceeed_seq=76
+input_metadata = InputMetadata(prompt_lens=[164, 103, 108, 105], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=369, cur_paddings=227, exceeed_seq=42
+input_metadata = InputMetadata(prompt_lens=[76, 184, 74, 175], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[42], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[185, 51], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[114], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:04 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1220.0 tokens/s, Avg past 5 seconds real prompt throughput: 909.3 tokens/s, Avg past 5 seconds generation throughput: 1036.6 tokens/s, total prompt throughput: 141215.0 tokens/s, total real prompt throughput: 124518.0 tokens/s, total generation throughput: 84131.0 tokens/s, avg total prompt throughput: 1766.9 tokens/s, avg total real prompt throughput: 1558.0 tokens/s, avg total generation throughput: 1078.0 tokens/s, Running: 26 reqs, Swapped: 0 reqs, Waiting: 640 reqs, GPU KV cache usage: 99.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[157], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[165, 152, 120, 215], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=268, cur_paddings=94, exceeed_seq=190
+input_metadata = InputMetadata(prompt_lens=[364, 270], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[190, 172], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[133], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[228, 201], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[249, 212], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[147, 222, 101, 194], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=572, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[580], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=313, cur_paddings=160, exceeed_seq=15
+input_metadata = InputMetadata(prompt_lens=[8, 168], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=378, cur_paddings=15, exceeed_seq=136
+input_metadata = InputMetadata(prompt_lens=[15, 4, 11], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[136, 13], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=432, cur_paddings=70, exceeed_seq=30
+input_metadata = InputMetadata(prompt_lens=[322, 392], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=470, cur_paddings=26, exceeed_seq=178
+input_metadata = InputMetadata(prompt_lens=[30, 15, 19], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[178], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[178], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:09 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1300.9 tokens/s, Avg past 5 seconds real prompt throughput: 1096.7 tokens/s, Avg past 5 seconds generation throughput: 809.7 tokens/s, total prompt throughput: 147714.0 tokens/s, total real prompt throughput: 130015.0 tokens/s, total generation throughput: 88193.0 tokens/s, avg total prompt throughput: 1739.2 tokens/s, avg total real prompt throughput: 1530.8 tokens/s, avg total generation throughput: 1061.9 tokens/s, Running: 34 reqs, Swapped: 0 reqs, Waiting: 619 reqs, GPU KV cache usage: 93.3%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=431, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[445], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14, 66, 12], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=433, cur_paddings=0, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[462], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1251, cur_paddings=105, exceeed_seq=461
+input_metadata = InputMetadata(prompt_lens=[29, 79, 24], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[461], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=486, cur_paddings=0, exceeed_seq=53
+input_metadata = InputMetadata(prompt_lens=[539], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[53, 15], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[115, 76], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=871, cur_paddings=0, exceeed_seq=44
+input_metadata = InputMetadata(prompt_lens=[915], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[44], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=873, cur_paddings=0, exceeed_seq=47
+input_metadata = InputMetadata(prompt_lens=[920], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[47], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=675, cur_paddings=0, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[686], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11, 48, 17], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=927, cur_paddings=0, exceeed_seq=38
+input_metadata = InputMetadata(prompt_lens=[965], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=420, cur_paddings=0, exceeed_seq=458
+input_metadata = InputMetadata(prompt_lens=[38], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[458], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[598], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=655, cur_paddings=0, exceeed_seq=152
+input_metadata = InputMetadata(prompt_lens=[807], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:14 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1568.6 tokens/s, Avg past 5 seconds real prompt throughput: 1511.4 tokens/s, Avg past 5 seconds generation throughput: 1044.4 tokens/s, total prompt throughput: 155385.0 tokens/s, total real prompt throughput: 137330.0 tokens/s, total generation throughput: 93426.0 tokens/s, avg total prompt throughput: 1726.2 tokens/s, avg total real prompt throughput: 1525.7 tokens/s, avg total generation throughput: 1060.1 tokens/s, Running: 34 reqs, Swapped: 0 reqs, Waiting: 600 reqs, GPU KV cache usage: 96.9%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=261, cur_paddings=142, exceeed_seq=33
+input_metadata = InputMetadata(prompt_lens=[152, 10], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[33], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[518], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=346, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[360], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=296, cur_paddings=0, exceeed_seq=310
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[310], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[317, 95], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=321, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[333], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=445, cur_paddings=0, exceeed_seq=461
+input_metadata = InputMetadata(prompt_lens=[16], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=588, cur_paddings=138, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[461, 323], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=284, cur_paddings=157, exceeed_seq=41
+input_metadata = InputMetadata(prompt_lens=[11, 168], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=625, cur_paddings=23, exceeed_seq=342
+input_metadata = InputMetadata(prompt_lens=[41, 18], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=328, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[342], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=270, cur_paddings=0, exceeed_seq=350
+input_metadata = InputMetadata(prompt_lens=[80], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=342, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[350], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1391, cur_paddings=5, exceeed_seq=706
+input_metadata = InputMetadata(prompt_lens=[8, 13], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[706], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=699, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[708], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[184, 31], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[367], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[917], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[920], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=692, cur_paddings=0, exceeed_seq=232
+input_metadata = InputMetadata(prompt_lens=[924], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=353, cur_paddings=189, exceeed_seq=314
+input_metadata = InputMetadata(prompt_lens=[232, 43], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[314, 58], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[627], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=456, cur_paddings=0, exceeed_seq=309
+input_metadata = InputMetadata(prompt_lens=[765], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=503, cur_paddings=208, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[309, 101], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14, 25], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=508, cur_paddings=210, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[316, 106], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=395, cur_paddings=23, exceeed_seq=122
+input_metadata = InputMetadata(prompt_lens=[18, 29, 27, 19], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[122], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[558, 323], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=756, cur_paddings=0, exceeed_seq=180
+input_metadata = InputMetadata(prompt_lens=[936], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[180], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=452, cur_paddings=0, exceeed_seq=471
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=435, cur_paddings=0, exceeed_seq=36
+input_metadata = InputMetadata(prompt_lens=[471], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=734, cur_paddings=149, exceeed_seq=294
+input_metadata = InputMetadata(prompt_lens=[36, 13, 99], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=265, cur_paddings=0, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[294], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[29, 35, 15, 11, 33, 17, 8, 36], num_prompts=8, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[256], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=482, cur_paddings=0, exceeed_seq=56
+input_metadata = InputMetadata(prompt_lens=[538], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[56, 22], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[542], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[58, 24], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=576, cur_paddings=116, exceeed_seq=94
+input_metadata = InputMetadata(prompt_lens=[554, 438], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[94], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:19 llm_engine.py:685] Avg past 5 seconds prompt throughput: 3998.0 tokens/s, Avg past 5 seconds real prompt throughput: 3514.0 tokens/s, Avg past 5 seconds generation throughput: 936.0 tokens/s, total prompt throughput: 176092.0 tokens/s, total real prompt throughput: 155628.0 tokens/s, total generation throughput: 98075.0 tokens/s, avg total prompt throughput: 1853.0 tokens/s, avg total real prompt throughput: 1637.6 tokens/s, avg total generation throughput: 1052.8 tokens/s, Running: 60 reqs, Swapped: 0 reqs, Waiting: 534 reqs, GPU KV cache usage: 93.7%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=598, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[616], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[18, 146], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[149, 271], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=598, cur_paddings=0, exceeed_seq=35
+input_metadata = InputMetadata(prompt_lens=[633], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[35], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[38, 160], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[275, 191], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=319, cur_paddings=150, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[195, 45], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[26, 41, 24, 21, 23, 50], num_prompts=6, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[210, 59], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[39], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=327, cur_paddings=152, exceeed_seq=43
+input_metadata = InputMetadata(prompt_lens=[218, 66], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[43], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[52, 35, 31, 33, 58], num_prompts=5, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[53, 49, 50, 73], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=966, cur_paddings=0, exceeed_seq=40
+input_metadata = InputMetadata(prompt_lens=[1006], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[40, 21], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[114, 94], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[90, 87], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[109], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:24 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1355.4 tokens/s, Avg past 5 seconds real prompt throughput: 1109.5 tokens/s, Avg past 5 seconds generation throughput: 1592.0 tokens/s, total prompt throughput: 182878.0 tokens/s, total real prompt throughput: 161200.0 tokens/s, total generation throughput: 105883.0 tokens/s, avg total prompt throughput: 1828.2 tokens/s, avg total real prompt throughput: 1611.5 tokens/s, avg total generation throughput: 1078.8 tokens/s, Running: 46 reqs, Swapped: 0 reqs, Waiting: 523 reqs, GPU KV cache usage: 99.9%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[109, 126], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[114, 129], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[122, 135], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[141], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[170], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[174], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[251], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[227, 201, 189], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[196], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1638, cur_paddings=26, exceeed_seq=1011
+input_metadata = InputMetadata(prompt_lens=[205, 179], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=967, cur_paddings=0, exceeed_seq=44
+input_metadata = InputMetadata(prompt_lens=[1011], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[44, 25, 50, 23], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[52, 31, 55, 28], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[159], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:29 llm_engine.py:685] Avg past 5 seconds prompt throughput: 862.3 tokens/s, Avg past 5 seconds real prompt throughput: 812.0 tokens/s, Avg past 5 seconds generation throughput: 1186.9 tokens/s, total prompt throughput: 187221.0 tokens/s, total real prompt throughput: 165296.0 tokens/s, total generation throughput: 111857.0 tokens/s, avg total prompt throughput: 1782.1 tokens/s, avg total real prompt throughput: 1573.4 tokens/s, avg total generation throughput: 1084.1 tokens/s, Running: 30 reqs, Swapped: 0 reqs, Waiting: 521 reqs, GPU KV cache usage: 99.9%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=971, cur_paddings=0, exceeed_seq=74
+input_metadata = InputMetadata(prompt_lens=[1045], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[74, 52, 72, 44], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[170], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=974, cur_paddings=0, exceeed_seq=106
+input_metadata = InputMetadata(prompt_lens=[1080], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=283, cur_paddings=49, exceeed_seq=184
+input_metadata = InputMetadata(prompt_lens=[106, 96, 67], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[184], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=279, cur_paddings=0, exceeed_seq=94
+input_metadata = InputMetadata(prompt_lens=[373], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[94, 47], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[102], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=282, cur_paddings=0, exceeed_seq=110
+input_metadata = InputMetadata(prompt_lens=[392], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[110, 52, 26], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=287, cur_paddings=0, exceeed_seq=119
+input_metadata = InputMetadata(prompt_lens=[406], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[119, 59, 33], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=484, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[500], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[16], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=554, cur_paddings=0, exceeed_seq=332
+input_metadata = InputMetadata(prompt_lens=[886], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[332], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[304], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:34 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2006.9 tokens/s, Avg past 5 seconds real prompt throughput: 1880.9 tokens/s, Avg past 5 seconds generation throughput: 906.2 tokens/s, total prompt throughput: 194355.0 tokens/s, total real prompt throughput: 171992.0 tokens/s, total generation throughput: 116357.0 tokens/s, avg total prompt throughput: 1765.8 tokens/s, avg total real prompt throughput: 1562.6 tokens/s, avg total generation throughput: 1075.5 tokens/s, Running: 28 reqs, Swapped: 0 reqs, Waiting: 507 reqs, GPU KV cache usage: 95.2%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[668], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[342], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=473, cur_paddings=141, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[351, 210], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=572, cur_paddings=8, exceeed_seq=301
+input_metadata = InputMetadata(prompt_lens=[19, 11], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[301], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[245], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=816, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[834], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=415, cur_paddings=235, exceeed_seq=73
+input_metadata = InputMetadata(prompt_lens=[18, 253], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[73, 11], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=418, cur_paddings=0, exceeed_seq=39
+input_metadata = InputMetadata(prompt_lens=[457], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[39], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=419, cur_paddings=0, exceeed_seq=44
+input_metadata = InputMetadata(prompt_lens=[463], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[44, 88, 26, 57], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=264, cur_paddings=0, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[291], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[27, 22], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=372, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[380], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=673, cur_paddings=7, exceeed_seq=348
+input_metadata = InputMetadata(prompt_lens=[8, 15], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[348], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[354], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=294, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[302], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8, 13], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=496, cur_paddings=0, exceeed_seq=40
+input_metadata = InputMetadata(prompt_lens=[536], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[40, 167, 58], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=388, cur_paddings=0, exceeed_seq=44
+input_metadata = InputMetadata(prompt_lens=[432], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[44], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[458], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[466], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=287, cur_paddings=148, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[168, 20], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[29, 15, 8, 32], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=288, cur_paddings=148, exceeed_seq=40
+input_metadata = InputMetadata(prompt_lens=[180, 32], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[40, 26, 18, 41], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[37, 28, 50], num_prompts=3, max_context_len=None,)
+INFO 12-27 21:56:39 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2114.1 tokens/s, Avg past 5 seconds real prompt throughput: 1864.8 tokens/s, Avg past 5 seconds generation throughput: 1009.7 tokens/s, total prompt throughput: 204962.0 tokens/s, total real prompt throughput: 181384.0 tokens/s, total generation throughput: 121416.0 tokens/s, avg total prompt throughput: 1781.1 tokens/s, avg total real prompt throughput: 1576.2 tokens/s, avg total generation throughput: 1072.6 tokens/s, Running: 41 reqs, Swapped: 0 reqs, Waiting: 467 reqs, GPU KV cache usage: 97.9%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[85], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=860, cur_paddings=0, exceeed_seq=156
+input_metadata = InputMetadata(prompt_lens=[1016], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[156, 39, 41], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=772, cur_paddings=254, exceeed_seq=541
+input_metadata = InputMetadata(prompt_lens=[282, 28], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=529, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[541], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=502, cur_paddings=251, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[12, 263], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=308, cur_paddings=0, exceeed_seq=320
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=271, cur_paddings=0, exceeed_seq=49
+input_metadata = InputMetadata(prompt_lens=[320], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[49], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=271, cur_paddings=0, exceeed_seq=54
+input_metadata = InputMetadata(prompt_lens=[325], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=352, cur_paddings=254, exceeed_seq=96
+input_metadata = InputMetadata(prompt_lens=[54, 80, 194], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[96], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=382, cur_paddings=13, exceeed_seq=28
+input_metadata = InputMetadata(prompt_lens=[384, 397], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=948, cur_paddings=0, exceeed_seq=976
+input_metadata = InputMetadata(prompt_lens=[28], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[976], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[980], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=573, cur_paddings=0, exceeed_seq=413
+input_metadata = InputMetadata(prompt_lens=[986], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[413], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1077, cur_paddings=85, exceeed_seq=593
+input_metadata = InputMetadata(prompt_lens=[97, 12], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=531, cur_paddings=0, exceeed_seq=62
+input_metadata = InputMetadata(prompt_lens=[593], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[62], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=532, cur_paddings=0, exceeed_seq=69
+input_metadata = InputMetadata(prompt_lens=[601], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[69], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:44 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2299.9 tokens/s, Avg past 5 seconds real prompt throughput: 2054.6 tokens/s, Avg past 5 seconds generation throughput: 1084.7 tokens/s, total prompt throughput: 215323.0 tokens/s, total real prompt throughput: 190621.0 tokens/s, total generation throughput: 126870.0 tokens/s, avg total prompt throughput: 1793.0 tokens/s, avg total real prompt throughput: 1587.3 tokens/s, avg total generation throughput: 1073.2 tokens/s, Running: 41 reqs, Swapped: 0 reqs, Waiting: 443 reqs, GPU KV cache usage: 98.5%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=533, cur_paddings=0, exceeed_seq=79
+input_metadata = InputMetadata(prompt_lens=[612], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=530, cur_paddings=0, exceeed_seq=609
+input_metadata = InputMetadata(prompt_lens=[79], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=407, cur_paddings=0, exceeed_seq=202
+input_metadata = InputMetadata(prompt_lens=[609], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[202, 26], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=412, cur_paddings=0, exceeed_seq=209
+input_metadata = InputMetadata(prompt_lens=[621], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[209, 32], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=412, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[421], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[338], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[349], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[354], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[358], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=590, cur_paddings=0, exceeed_seq=956
+input_metadata = InputMetadata(prompt_lens=[366], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=874, cur_paddings=0, exceeed_seq=82
+input_metadata = InputMetadata(prompt_lens=[956], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[82, 7], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=877, cur_paddings=0, exceeed_seq=93
+input_metadata = InputMetadata(prompt_lens=[970], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[93, 18], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=431, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[439], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=647, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[665], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[18, 14, 17, 62], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=282, cur_paddings=0, exceeed_seq=131
+input_metadata = InputMetadata(prompt_lens=[413], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[131, 26], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=311, cur_paddings=0, exceeed_seq=66
+input_metadata = InputMetadata(prompt_lens=[377], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=564, cur_paddings=184, exceeed_seq=142
+input_metadata = InputMetadata(prompt_lens=[66, 27, 15, 22, 16], num_prompts=5, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[142], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:49 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2201.2 tokens/s, Avg past 5 seconds real prompt throughput: 1995.8 tokens/s, Avg past 5 seconds generation throughput: 1041.4 tokens/s, total prompt throughput: 225348.0 tokens/s, total real prompt throughput: 199717.0 tokens/s, total generation throughput: 132094.0 tokens/s, avg total prompt throughput: 1801.4 tokens/s, avg total real prompt throughput: 1596.5 tokens/s, avg total generation throughput: 1072.0 tokens/s, Running: 44 reqs, Swapped: 0 reqs, Waiting: 417 reqs, GPU KV cache usage: 95.8%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[773], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[487], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[730], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[668], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[1023], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[55], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=971, cur_paddings=0, exceeed_seq=61
+input_metadata = InputMetadata(prompt_lens=[1032], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[61], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=503, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[517], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=590, cur_paddings=0, exceeed_seq=37
+input_metadata = InputMetadata(prompt_lens=[627], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=415, cur_paddings=0, exceeed_seq=452
+input_metadata = InputMetadata(prompt_lens=[37], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=432, cur_paddings=0, exceeed_seq=20
+input_metadata = InputMetadata(prompt_lens=[452], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=266, cur_paddings=232, exceeed_seq=109
+input_metadata = InputMetadata(prompt_lens=[20, 34, 143], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[109], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=262, cur_paddings=225, exceeed_seq=112
+input_metadata = InputMetadata(prompt_lens=[30, 43, 149], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[112, 167], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=864, cur_paddings=0, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[883], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=864, cur_paddings=0, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[889], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[25], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[788], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=659, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[673], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=710, cur_paddings=0, exceeed_seq=13
+input_metadata = InputMetadata(prompt_lens=[723], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[13], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[243, 397], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[403], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:56:54 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2593.3 tokens/s, Avg past 5 seconds real prompt throughput: 2456.4 tokens/s, Avg past 5 seconds generation throughput: 1046.3 tokens/s, total prompt throughput: 238106.0 tokens/s, total real prompt throughput: 211809.0 tokens/s, total generation throughput: 137346.0 tokens/s, avg total prompt throughput: 1830.1 tokens/s, avg total real prompt throughput: 1628.0 tokens/s, avg total generation throughput: 1071.1 tokens/s, Running: 41 reqs, Swapped: 0 reqs, Waiting: 392 reqs, GPU KV cache usage: 99.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[410], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=430, cur_paddings=93, exceeed_seq=76
+input_metadata = InputMetadata(prompt_lens=[413, 320], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[76, 15, 89], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[332], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[84, 23, 95], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[94, 31], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=351, cur_paddings=0, exceeed_seq=100
+input_metadata = InputMetadata(prompt_lens=[451], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[100, 35, 100], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=353, cur_paddings=0, exceeed_seq=112
+input_metadata = InputMetadata(prompt_lens=[465], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=396, cur_paddings=72, exceeed_seq=220
+input_metadata = InputMetadata(prompt_lens=[112, 46, 106], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[220, 10], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[236, 26], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[248, 37], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=772, cur_paddings=127, exceeed_seq=41
+input_metadata = InputMetadata(prompt_lens=[686, 559], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=419, cur_paddings=0, exceeed_seq=460
+input_metadata = InputMetadata(prompt_lens=[41], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[460], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[465, 445], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:56:59 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1467.2 tokens/s, Avg past 5 seconds real prompt throughput: 1216.3 tokens/s, Avg past 5 seconds generation throughput: 1062.4 tokens/s, total prompt throughput: 245650.0 tokens/s, total real prompt throughput: 218132.0 tokens/s, total generation throughput: 142696.0 tokens/s, avg total prompt throughput: 1817.9 tokens/s, avg total real prompt throughput: 1614.2 tokens/s, avg total generation throughput: 1070.9 tokens/s, Running: 35 reqs, Swapped: 0 reqs, Waiting: 381 reqs, GPU KV cache usage: 98.5%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[85, 109], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=722, cur_paddings=20, exceeed_seq=465
+input_metadata = InputMetadata(prompt_lens=[94, 114], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=447, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[465], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[18], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=424, cur_paddings=0, exceeed_seq=20
+input_metadata = InputMetadata(prompt_lens=[444], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[20, 9, 10], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=990, cur_paddings=0, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[1007], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[17, 34, 106], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=990, cur_paddings=0, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[1016], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[26], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=991, cur_paddings=0, exceeed_seq=30
+input_metadata = InputMetadata(prompt_lens=[1021], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=360, cur_paddings=153, exceeed_seq=181
+input_metadata = InputMetadata(prompt_lens=[30, 41, 112], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[181, 234], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[89], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[746], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=827, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[839], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=827, cur_paddings=0, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[844], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=419, cur_paddings=207, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[17, 224], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12, 59, 5], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[604], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[498], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=491, cur_paddings=0, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[510], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=282, cur_paddings=0, exceeed_seq=301
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=260, cur_paddings=0, exceeed_seq=41
+input_metadata = InputMetadata(prompt_lens=[301], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=952, cur_paddings=26, exceeed_seq=504
+input_metadata = InputMetadata(prompt_lens=[41, 15], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[504], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=635, cur_paddings=0, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[664], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[29, 14, 21], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[103], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:04 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2458.7 tokens/s, Avg past 5 seconds real prompt throughput: 2297.7 tokens/s, Avg past 5 seconds generation throughput: 989.6 tokens/s, total prompt throughput: 258629.0 tokens/s, total real prompt throughput: 230302.0 tokens/s, total generation throughput: 147661.0 tokens/s, avg total prompt throughput: 1845.5 tokens/s, avg total real prompt throughput: 1643.3 tokens/s, avg total generation throughput: 1068.0 tokens/s, Running: 40 reqs, Swapped: 0 reqs, Waiting: 346 reqs, GPU KV cache usage: 92.8%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=781, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[797], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[16, 51], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[596], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[76], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[861], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=787, cur_paddings=0, exceeed_seq=78
+input_metadata = InputMetadata(prompt_lens=[865], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[78], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:09 llm_engine.py:685] Avg past 5 seconds prompt throughput: 669.4 tokens/s, Avg past 5 seconds real prompt throughput: 662.3 tokens/s, Avg past 5 seconds generation throughput: 1200.9 tokens/s, total prompt throughput: 262029.0 tokens/s, total real prompt throughput: 233667.0 tokens/s, total generation throughput: 153560.0 tokens/s, avg total prompt throughput: 1805.2 tokens/s, avg total real prompt throughput: 1609.8 tokens/s, avg total generation throughput: 1071.8 tokens/s, Running: 28 reqs, Swapped: 0 reqs, Waiting: 343 reqs, GPU KV cache usage: 94.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[109], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[937], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=857, cur_paddings=0, exceeed_seq=84
+input_metadata = InputMetadata(prompt_lens=[941], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[84], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=481, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[489], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=317, cur_paddings=0, exceeed_seq=325
+input_metadata = InputMetadata(prompt_lens=[8], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=311, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[325], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=312, cur_paddings=0, exceeed_seq=21
+input_metadata = InputMetadata(prompt_lens=[333], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[21], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=585, cur_paddings=84, exceeed_seq=22
+input_metadata = InputMetadata(prompt_lens=[523, 439], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[22], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[468], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=797, cur_paddings=236, exceeed_seq=376
+input_metadata = InputMetadata(prompt_lens=[121, 189, 21], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=342, cur_paddings=0, exceeed_seq=34
+input_metadata = InputMetadata(prompt_lens=[376], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[34], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=515, cur_paddings=169, exceeed_seq=383
+input_metadata = InputMetadata(prompt_lens=[210, 41], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=344, cur_paddings=0, exceeed_seq=39
+input_metadata = InputMetadata(prompt_lens=[383], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[39], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=751, cur_paddings=0, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[762], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[31], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:14 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1479.0 tokens/s, Avg past 5 seconds real prompt throughput: 1381.1 tokens/s, Avg past 5 seconds generation throughput: 920.7 tokens/s, total prompt throughput: 269496.0 tokens/s, total real prompt throughput: 240645.0 tokens/s, total generation throughput: 158165.0 tokens/s, avg total prompt throughput: 1794.6 tokens/s, avg total real prompt throughput: 1602.5 tokens/s, avg total generation throughput: 1066.6 tokens/s, Running: 29 reqs, Swapped: 0 reqs, Waiting: 325 reqs, GPU KV cache usage: 94.4%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[944], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=382, cur_paddings=255, exceeed_seq=137
+input_metadata = InputMetadata(prompt_lens=[264, 9], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[137], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=341, cur_paddings=0, exceeed_seq=622
+input_metadata = InputMetadata(prompt_lens=[963], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=594, cur_paddings=0, exceeed_seq=28
+input_metadata = InputMetadata(prompt_lens=[622], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[28, 164], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=594, cur_paddings=0, exceeed_seq=42
+input_metadata = InputMetadata(prompt_lens=[636], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[42], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[344], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=910, cur_paddings=162, exceeed_seq=308
+input_metadata = InputMetadata(prompt_lens=[100, 121, 82, 19], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[308], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=921, cur_paddings=0, exceeed_seq=31
+input_metadata = InputMetadata(prompt_lens=[952], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[31], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=376, cur_paddings=254, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[86, 29, 30, 133], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[11], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[629], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[635], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[490], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=365, cur_paddings=0, exceeed_seq=34
+input_metadata = InputMetadata(prompt_lens=[399], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=624, cur_paddings=0, exceeed_seq=658
+input_metadata = InputMetadata(prompt_lens=[34], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=641, cur_paddings=0, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[658], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[17], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:19 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1991.8 tokens/s, Avg past 5 seconds real prompt throughput: 1826.2 tokens/s, Avg past 5 seconds generation throughput: 932.1 tokens/s, total prompt throughput: 279234.0 tokens/s, total real prompt throughput: 249576.0 tokens/s, total generation throughput: 162847.0 tokens/s, avg total prompt throughput: 1799.3 tokens/s, avg total real prompt throughput: 1608.2 tokens/s, avg total generation throughput: 1062.2 tokens/s, Running: 31 reqs, Swapped: 0 reqs, Waiting: 298 reqs, GPU KV cache usage: 95.1%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=645, cur_paddings=0, exceeed_seq=72
+input_metadata = InputMetadata(prompt_lens=[717], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[72], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[762], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[1024], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[38, 19], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[828], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[652], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=741, cur_paddings=141, exceeed_seq=64
+input_metadata = InputMetadata(prompt_lens=[664, 523], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[64], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:24 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1637.2 tokens/s, Avg past 5 seconds real prompt throughput: 1589.2 tokens/s, Avg past 5 seconds generation throughput: 982.5 tokens/s, total prompt throughput: 284710.0 tokens/s, total real prompt throughput: 254892.0 tokens/s, total generation throughput: 167771.0 tokens/s, avg total prompt throughput: 1777.3 tokens/s, avg total real prompt throughput: 1591.2 tokens/s, avg total generation throughput: 1059.7 tokens/s, Running: 26 reqs, Swapped: 0 reqs, Waiting: 290 reqs, GPU KV cache usage: 97.3%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=694, cur_paddings=0, exceeed_seq=7
+input_metadata = InputMetadata(prompt_lens=[701], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[7, 25], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=695, cur_paddings=0, exceeed_seq=22
+input_metadata = InputMetadata(prompt_lens=[717], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[22, 38], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=901, cur_paddings=0, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[927], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[26, 38, 13], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=297, cur_paddings=222, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[42, 17, 87, 30, 37], num_prompts=5, max_context_len=None,)
+promt select exit padding exceed_paddings=715, cur_paddings=127, exceeed_seq=288
+input_metadata = InputMetadata(prompt_lens=[12, 92, 45], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[288], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1189, cur_paddings=214, exceeed_seq=536
+input_metadata = InputMetadata(prompt_lens=[164, 211, 44], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[536], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[542], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=536, cur_paddings=0, exceeed_seq=24
+input_metadata = InputMetadata(prompt_lens=[560], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[24], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=537, cur_paddings=0, exceeed_seq=42
+input_metadata = InputMetadata(prompt_lens=[579], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[42], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=539, cur_paddings=0, exceeed_seq=56
+input_metadata = InputMetadata(prompt_lens=[595], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[56], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=540, cur_paddings=0, exceeed_seq=64
+input_metadata = InputMetadata(prompt_lens=[604], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=284, cur_paddings=0, exceeed_seq=348
+input_metadata = InputMetadata(prompt_lens=[64], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=332, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[348], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=589, cur_paddings=9, exceeed_seq=306
+input_metadata = InputMetadata(prompt_lens=[16, 7], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=279, cur_paddings=0, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[306], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[27, 13, 6], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[723], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:29 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1853.8 tokens/s, Avg past 5 seconds real prompt throughput: 1707.4 tokens/s, Avg past 5 seconds generation throughput: 896.6 tokens/s, total prompt throughput: 293360.0 tokens/s, total real prompt throughput: 262864.0 tokens/s, total generation throughput: 172304.0 tokens/s, avg total prompt throughput: 1775.3 tokens/s, avg total real prompt throughput: 1590.8 tokens/s, avg total generation throughput: 1054.7 tokens/s, Running: 35 reqs, Swapped: 0 reqs, Waiting: 262 reqs, GPU KV cache usage: 97.6%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[62, 53], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[424], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[89, 96, 79, 67], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[735], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=305, cur_paddings=0, exceeed_seq=587
+input_metadata = InputMetadata(prompt_lens=[892], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=475, cur_paddings=0, exceeed_seq=112
+input_metadata = InputMetadata(prompt_lens=[587], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1000, cur_paddings=98, exceeed_seq=563
+input_metadata = InputMetadata(prompt_lens=[112, 14], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[563], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=378, cur_paddings=0, exceeed_seq=189
+input_metadata = InputMetadata(prompt_lens=[567], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=271, cur_paddings=51, exceeed_seq=20
+input_metadata = InputMetadata(prompt_lens=[189, 240], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[20], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[594], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[212], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[252, 31], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=609, cur_paddings=149, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[468, 457, 330], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=281, cur_paddings=0, exceeed_seq=5
+input_metadata = InputMetadata(prompt_lens=[286], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=491, cur_paddings=0, exceeed_seq=496
+input_metadata = InputMetadata(prompt_lens=[5], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=423, cur_paddings=0, exceeed_seq=73
+input_metadata = InputMetadata(prompt_lens=[496], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[73], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:34 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2128.6 tokens/s, Avg past 5 seconds real prompt throughput: 1983.2 tokens/s, Avg past 5 seconds generation throughput: 931.3 tokens/s, total prompt throughput: 302592.0 tokens/s, total real prompt throughput: 271515.0 tokens/s, total generation throughput: 176986.0 tokens/s, avg total prompt throughput: 1777.2 tokens/s, avg total real prompt throughput: 1594.7 tokens/s, avg total generation throughput: 1051.1 tokens/s, Running: 34 reqs, Swapped: 0 reqs, Waiting: 246 reqs, GPU KV cache usage: 99.5%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=449, cur_paddings=0, exceeed_seq=55
+input_metadata = InputMetadata(prompt_lens=[504], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[55, 6], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=451, cur_paddings=0, exceeed_seq=63
+input_metadata = InputMetadata(prompt_lens=[514], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=370, cur_paddings=50, exceeed_seq=223
+input_metadata = InputMetadata(prompt_lens=[63, 13], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=405, cur_paddings=211, exceeed_seq=29
+input_metadata = InputMetadata(prompt_lens=[223, 12], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[29], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=408, cur_paddings=212, exceeed_seq=33
+input_metadata = InputMetadata(prompt_lens=[229, 17], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[33], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=474, cur_paddings=0, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[482], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8, 12], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[1003], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[1009], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[1017], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=646, cur_paddings=0, exceeed_seq=375
+input_metadata = InputMetadata(prompt_lens=[1021], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=591, cur_paddings=224, exceeed_seq=8
+input_metadata = InputMetadata(prompt_lens=[375, 151], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[8, 38, 12], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=259, cur_paddings=144, exceeed_seq=50
+input_metadata = InputMetadata(prompt_lens=[165, 21], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=1160, cur_paddings=28, exceeed_seq=616
+input_metadata = InputMetadata(prompt_lens=[50, 22], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:57:39 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1775.8 tokens/s, Avg past 5 seconds real prompt throughput: 1564.2 tokens/s, Avg past 5 seconds generation throughput: 959.8 tokens/s, total prompt throughput: 310635.0 tokens/s, total real prompt throughput: 278608.0 tokens/s, total generation throughput: 181799.0 tokens/s, avg total prompt throughput: 1772.3 tokens/s, avg total real prompt throughput: 1589.6 tokens/s, avg total generation throughput: 1048.5 tokens/s, Running: 29 reqs, Swapped: 0 reqs, Waiting: 231 reqs, GPU KV cache usage: 94.8%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=607, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[616], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=619, cur_paddings=237, exceeed_seq=55
+input_metadata = InputMetadata(prompt_lens=[437, 200], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[55, 78, 50], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[622], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=612, cur_paddings=0, exceeed_seq=15
+input_metadata = InputMetadata(prompt_lens=[627], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[15], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=486, cur_paddings=0, exceeed_seq=7
+input_metadata = InputMetadata(prompt_lens=[493], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[7], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=963, cur_paddings=0, exceeed_seq=59
+input_metadata = InputMetadata(prompt_lens=[1022], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[59], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[62, 18, 49, 39], num_prompts=4, max_context_len=None,)
+promt select exit padding exceed_paddings=482, cur_paddings=0, exceeed_seq=180
+input_metadata = InputMetadata(prompt_lens=[662], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=507, cur_paddings=190, exceeed_seq=53
+input_metadata = InputMetadata(prompt_lens=[180, 370], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[53, 32], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[304, 93], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[911], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[914], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=604, cur_paddings=0, exceeed_seq=316
+input_metadata = InputMetadata(prompt_lens=[920], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=390, cur_paddings=228, exceeed_seq=397
+input_metadata = InputMetadata(prompt_lens=[316, 88], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=331, cur_paddings=0, exceeed_seq=66
+input_metadata = InputMetadata(prompt_lens=[397], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[66, 18, 17], num_prompts=3, max_context_len=None,)
+INFO 12-27 21:57:44 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2158.8 tokens/s, Avg past 5 seconds real prompt throughput: 1953.7 tokens/s, Avg past 5 seconds generation throughput: 872.0 tokens/s, total prompt throughput: 321451.0 tokens/s, total real prompt throughput: 288378.0 tokens/s, total generation throughput: 186117.0 tokens/s, avg total prompt throughput: 1782.9 tokens/s, avg total real prompt throughput: 1599.5 tokens/s, avg total generation throughput: 1043.2 tokens/s, Running: 35 reqs, Swapped: 0 reqs, Waiting: 207 reqs, GPU KV cache usage: 99.5%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[40, 38], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=1155, cur_paddings=153, exceeed_seq=475
+input_metadata = InputMetadata(prompt_lens=[141, 66, 63], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[475], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=324, cur_paddings=166, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[184, 18], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=282, cur_paddings=236, exceeed_seq=285
+input_metadata = InputMetadata(prompt_lens=[26, 262], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[285], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[279], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[294], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[543], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=285, cur_paddings=243, exceeed_seq=383
+input_metadata = InputMetadata(prompt_lens=[425, 185, 422], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[383], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=843, cur_paddings=0, exceeed_seq=36
+input_metadata = InputMetadata(prompt_lens=[879], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[36, 23], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[580], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[303], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=419, cur_paddings=0, exceeed_seq=192
+input_metadata = InputMetadata(prompt_lens=[611], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[192, 84], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[199, 89], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[98], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[387], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=665, cur_paddings=0, exceeed_seq=7
+input_metadata = InputMetadata(prompt_lens=[672], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[7, 18], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=666, cur_paddings=0, exceeed_seq=11
+input_metadata = InputMetadata(prompt_lens=[677], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:49 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1928.8 tokens/s, Avg past 5 seconds real prompt throughput: 1713.8 tokens/s, Avg past 5 seconds generation throughput: 919.6 tokens/s, total prompt throughput: 330998.0 tokens/s, total real prompt throughput: 296786.0 tokens/s, total generation throughput: 190730.0 tokens/s, avg total prompt throughput: 1786.3 tokens/s, avg total real prompt throughput: 1601.6 tokens/s, avg total generation throughput: 1039.8 tokens/s, Running: 32 reqs, Swapped: 0 reqs, Waiting: 186 reqs, GPU KV cache usage: 99.0%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[11], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[22, 25], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=376, cur_paddings=0, exceeed_seq=690
+input_metadata = InputMetadata(prompt_lens=[314], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[690], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=571, cur_paddings=0, exceeed_seq=7
+input_metadata = InputMetadata(prompt_lens=[578], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[7, 6], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=523, cur_paddings=0, exceeed_seq=206
+input_metadata = InputMetadata(prompt_lens=[729], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[206], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=341, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[353], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[18], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=342, cur_paddings=0, exceeed_seq=7
+input_metadata = InputMetadata(prompt_lens=[349], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[7], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=355, cur_paddings=113, exceeed_seq=68
+input_metadata = InputMetadata(prompt_lens=[197, 310], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[68, 8], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[213], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=546, cur_paddings=243, exceeed_seq=13
+input_metadata = InputMetadata(prompt_lens=[316, 73], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[13], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=550, cur_paddings=245, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[321, 76], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[16], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[308], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[234, 18], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=306, cur_paddings=0, exceeed_seq=52
+input_metadata = InputMetadata(prompt_lens=[358], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=280, cur_paddings=0, exceeed_seq=332
+input_metadata = InputMetadata(prompt_lens=[52], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=398, cur_paddings=91, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[332, 241], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=487, cur_paddings=0, exceeed_seq=512
+input_metadata = InputMetadata(prompt_lens=[25], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=435, cur_paddings=0, exceeed_seq=77
+input_metadata = InputMetadata(prompt_lens=[512], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[77], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[415], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[95], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[856], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=845, cur_paddings=0, exceeed_seq=15
+input_metadata = InputMetadata(prompt_lens=[860], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[15], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:57:54 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2064.3 tokens/s, Avg past 5 seconds real prompt throughput: 1869.4 tokens/s, Avg past 5 seconds generation throughput: 977.6 tokens/s, total prompt throughput: 341968.0 tokens/s, total real prompt throughput: 306784.0 tokens/s, total generation throughput: 195609.0 tokens/s, avg total prompt throughput: 1797.0 tokens/s, avg total real prompt throughput: 1612.1 tokens/s, avg total generation throughput: 1038.1 tokens/s, Running: 37 reqs, Swapped: 0 reqs, Waiting: 159 reqs, GPU KV cache usage: 96.6%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=892, cur_paddings=0, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[918], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[26, 92, 6], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=847, cur_paddings=0, exceeed_seq=81
+input_metadata = InputMetadata(prompt_lens=[928], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[81], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=893, cur_paddings=0, exceeed_seq=34
+input_metadata = InputMetadata(prompt_lens=[927], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[34, 97, 11], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=341, cur_paddings=218, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[21, 148, 57], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[25, 15], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[20], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[24], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=539, cur_paddings=0, exceeed_seq=25
+input_metadata = InputMetadata(prompt_lens=[564], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=1987, cur_paddings=34, exceeed_seq=686
+input_metadata = InputMetadata(prompt_lens=[25, 35, 11], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[686], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[690], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[74, 8, 9], num_prompts=3, max_context_len=None,)
+INFO 12-27 21:57:59 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1317.6 tokens/s, Avg past 5 seconds real prompt throughput: 1194.1 tokens/s, Avg past 5 seconds generation throughput: 1049.1 tokens/s, total prompt throughput: 347987.0 tokens/s, total real prompt throughput: 312240.0 tokens/s, total generation throughput: 200877.0 tokens/s, avg total prompt throughput: 1781.6 tokens/s, avg total real prompt throughput: 1598.6 tokens/s, avg total generation throughput: 1038.5 tokens/s, Running: 34 reqs, Swapped: 0 reqs, Waiting: 143 reqs, GPU KV cache usage: 99.4%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=581, cur_paddings=1, exceeed_seq=310
+input_metadata = InputMetadata(prompt_lens=[19, 20], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[310], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[338], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=506, cur_paddings=142, exceeed_seq=137
+input_metadata = InputMetadata(prompt_lens=[359, 501], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[137, 81, 18], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[612], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=512, cur_paddings=0, exceeed_seq=104
+input_metadata = InputMetadata(prompt_lens=[616], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=284, cur_paddings=160, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[104, 138, 12], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=2497, cur_paddings=253, exceeed_seq=899
+input_metadata = InputMetadata(prompt_lens=[151, 24, 25], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=764, cur_paddings=0, exceeed_seq=135
+input_metadata = InputMetadata(prompt_lens=[899], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[135, 97], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=427, cur_paddings=0, exceeed_seq=529
+input_metadata = InputMetadata(prompt_lens=[102], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=503, cur_paddings=0, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[529], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[26, 50], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[752], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[72, 6, 7], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=751, cur_paddings=0, exceeed_seq=24
+input_metadata = InputMetadata(prompt_lens=[775], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=961, cur_paddings=1, exceeed_seq=505
+input_metadata = InputMetadata(prompt_lens=[24, 25], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[505], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=411, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[427], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=313, cur_paddings=3, exceeed_seq=171
+input_metadata = InputMetadata(prompt_lens=[16, 13], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[171, 6], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=302, cur_paddings=4, exceeed_seq=179
+input_metadata = InputMetadata(prompt_lens=[30, 26], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[179, 14], num_prompts=2, max_context_len=None,)
+INFO 12-27 21:58:04 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1910.8 tokens/s, Avg past 5 seconds real prompt throughput: 1684.7 tokens/s, Avg past 5 seconds generation throughput: 962.5 tokens/s, total prompt throughput: 357478.0 tokens/s, total real prompt throughput: 320503.0 tokens/s, total generation throughput: 205705.0 tokens/s, avg total prompt throughput: 1784.5 tokens/s, avg total real prompt throughput: 1599.9 tokens/s, avg total generation throughput: 1036.6 tokens/s, Running: 39 reqs, Swapped: 0 reqs, Waiting: 116 reqs, GPU KV cache usage: 98.8%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[219], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[913], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=349, cur_paddings=0, exceeed_seq=570
+input_metadata = InputMetadata(prompt_lens=[919], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=523, cur_paddings=0, exceeed_seq=47
+input_metadata = InputMetadata(prompt_lens=[570], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[47], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=525, cur_paddings=0, exceeed_seq=51
+input_metadata = InputMetadata(prompt_lens=[576], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=368, cur_paddings=0, exceeed_seq=419
+input_metadata = InputMetadata(prompt_lens=[51], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=329, cur_paddings=0, exceeed_seq=90
+input_metadata = InputMetadata(prompt_lens=[419], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[90], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=425, cur_paddings=0, exceeed_seq=10
+input_metadata = InputMetadata(prompt_lens=[435], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=281, cur_paddings=201, exceeed_seq=35
+input_metadata = InputMetadata(prompt_lens=[10, 115, 19], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=305, cur_paddings=219, exceeed_seq=64
+input_metadata = InputMetadata(prompt_lens=[35, 46, 150], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[64, 14, 16], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[91, 40, 41], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=371, cur_paddings=230, exceeed_seq=46
+input_metadata = InputMetadata(prompt_lens=[187, 98, 46], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[46], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=396, cur_paddings=245, exceeed_seq=54
+input_metadata = InputMetadata(prompt_lens=[205, 109, 56], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[54], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[130, 76, 72], num_prompts=3, max_context_len=None,)
+INFO 12-27 21:58:09 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1387.6 tokens/s, Avg past 5 seconds real prompt throughput: 1163.6 tokens/s, Avg past 5 seconds generation throughput: 1117.9 tokens/s, total prompt throughput: 364611.0 tokens/s, total real prompt throughput: 326377.0 tokens/s, total generation throughput: 211324.0 tokens/s, avg total prompt throughput: 1775.6 tokens/s, avg total real prompt throughput: 1589.4 tokens/s, avg total generation throughput: 1038.6 tokens/s, Running: 34 reqs, Swapped: 0 reqs, Waiting: 100 reqs, GPU KV cache usage: 93.5%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=1001, cur_paddings=0, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[1010], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9, 11, 8], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=1002, cur_paddings=0, exceeed_seq=17
+input_metadata = InputMetadata(prompt_lens=[1019], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=313, cur_paddings=4, exceeed_seq=121
+input_metadata = InputMetadata(prompt_lens=[17, 18, 15], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[121, 19, 37], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=577, cur_paddings=17, exceeed_seq=329
+input_metadata = InputMetadata(prompt_lens=[32, 49], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[329], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=293, cur_paddings=203, exceeed_seq=74
+input_metadata = InputMetadata(prompt_lens=[65, 164, 60], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=261, cur_paddings=0, exceeed_seq=335
+input_metadata = InputMetadata(prompt_lens=[74], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[335, 147], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[344, 153], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=308, cur_paddings=216, exceeed_seq=144
+input_metadata = InputMetadata(prompt_lens=[236, 20], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[144], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=355, cur_paddings=0, exceeed_seq=504
+input_metadata = InputMetadata(prompt_lens=[149], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=469, cur_paddings=0, exceeed_seq=35
+input_metadata = InputMetadata(prompt_lens=[504], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[35, 33], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=314, cur_paddings=0, exceeed_seq=15
+input_metadata = InputMetadata(prompt_lens=[329], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[15, 32, 13, 13], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[366], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:58:14 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1461.0 tokens/s, Avg past 5 seconds real prompt throughput: 1225.7 tokens/s, Avg past 5 seconds generation throughput: 1070.6 tokens/s, total prompt throughput: 371627.0 tokens/s, total real prompt throughput: 332214.0 tokens/s, total generation throughput: 216698.0 tokens/s, avg total prompt throughput: 1766.6 tokens/s, avg total real prompt throughput: 1579.2 tokens/s, avg total generation throughput: 1039.4 tokens/s, Running: 37 reqs, Swapped: 0 reqs, Waiting: 79 reqs, GPU KV cache usage: 100.0%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[402], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[418], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[429], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[554], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=477, cur_paddings=58, exceeed_seq=26
+input_metadata = InputMetadata(prompt_lens=[445, 387], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[26], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=441, cur_paddings=215, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[235, 20], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9, 13], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[358], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[917], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=912, cur_paddings=0, exceeed_seq=10
+input_metadata = InputMetadata(prompt_lens=[922], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[10, 126], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=913, cur_paddings=0, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[932], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[19, 131], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=663, cur_paddings=0, exceeed_seq=12
+input_metadata = InputMetadata(prompt_lens=[675], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[12], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=663, cur_paddings=0, exceeed_seq=19
+input_metadata = InputMetadata(prompt_lens=[682], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[19], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[307], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:58:19 llm_engine.py:685] Avg past 5 seconds prompt throughput: 1683.1 tokens/s, Avg past 5 seconds real prompt throughput: 1580.0 tokens/s, Avg past 5 seconds generation throughput: 986.4 tokens/s, total prompt throughput: 380239.0 tokens/s, total real prompt throughput: 340321.0 tokens/s, total generation throughput: 221640.0 tokens/s, avg total prompt throughput: 1765.6 tokens/s, avg total real prompt throughput: 1580.2 tokens/s, avg total generation throughput: 1038.2 tokens/s, Running: 32 reqs, Swapped: 0 reqs, Waiting: 64 reqs, GPU KV cache usage: 99.2%, CPU KV cache usage: 0.0%
+promt select exit padding exceed_paddings=322, cur_paddings=0, exceeed_seq=656
+input_metadata = InputMetadata(prompt_lens=[334], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[656], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=495, cur_paddings=0, exceeed_seq=89
+input_metadata = InputMetadata(prompt_lens=[584], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[89], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[870], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=291, cur_paddings=0, exceeed_seq=387
+input_metadata = InputMetadata(prompt_lens=[678], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=374, cur_paddings=0, exceeed_seq=13
+input_metadata = InputMetadata(prompt_lens=[387], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[13], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=509, cur_paddings=0, exceeed_seq=16
+input_metadata = InputMetadata(prompt_lens=[525], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[16], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=289, cur_paddings=0, exceeed_seq=101
+input_metadata = InputMetadata(prompt_lens=[390], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[101], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[107], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[118], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=839, cur_paddings=0, exceeed_seq=18
+input_metadata = InputMetadata(prompt_lens=[857], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[18, 197], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=746, cur_paddings=0, exceeed_seq=58
+input_metadata = InputMetadata(prompt_lens=[804], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[58, 49, 77], num_prompts=3, max_context_len=None,)
+promt select exit padding exceed_paddings=545, cur_paddings=154, exceeed_seq=107
+input_metadata = InputMetadata(prompt_lens=[498, 344], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=325, cur_paddings=240, exceeed_seq=22
+input_metadata = InputMetadata(prompt_lens=[107, 55, 12, 14], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[22], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[127], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[375, 130], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=273, cur_paddings=168, exceeed_seq=30
+input_metadata = InputMetadata(prompt_lens=[135, 73, 29], num_prompts=3, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[30, 36], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=401, cur_paddings=0, exceeed_seq=42
+input_metadata = InputMetadata(prompt_lens=[443], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=752, cur_paddings=122, exceeed_seq=204
+input_metadata = InputMetadata(prompt_lens=[42, 61, 78, 57, 30], num_prompts=5, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[204], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[424], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=433, cur_paddings=0, exceeed_seq=14
+input_metadata = InputMetadata(prompt_lens=[447], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[14], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=424, cur_paddings=0, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[451], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:58:24 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2545.8 tokens/s, Avg past 5 seconds real prompt throughput: 2297.0 tokens/s, Avg past 5 seconds generation throughput: 878.3 tokens/s, total prompt throughput: 392422.0 tokens/s, total real prompt throughput: 351343.0 tokens/s, total generation throughput: 226056.0 tokens/s, avg total prompt throughput: 1780.6 tokens/s, avg total real prompt throughput: 1594.2 tokens/s, avg total generation throughput: 1034.6 tokens/s, Running: 42 reqs, Swapped: 0 reqs, Waiting: 28 reqs, GPU KV cache usage: 97.3%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[27, 10, 85, 87], num_prompts=4, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[245, 131], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[255, 167], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[147], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[265], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[172], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[163, 183], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=432, cur_paddings=0, exceeed_seq=520
+input_metadata = InputMetadata(prompt_lens=[952], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=457, cur_paddings=0, exceeed_seq=63
+input_metadata = InputMetadata(prompt_lens=[520], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[63], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[533], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=925, cur_paddings=0, exceeed_seq=999
+input_metadata = InputMetadata(prompt_lens=[74], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[999], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=332, cur_paddings=0, exceeed_seq=131
+input_metadata = InputMetadata(prompt_lens=[463], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[131, 369], num_prompts=2, max_context_len=None,)
+promt select exit padding exceed_paddings=623, cur_paddings=0, exceeed_seq=10
+input_metadata = InputMetadata(prompt_lens=[633], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[10], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=595, cur_paddings=0, exceeed_seq=42
+input_metadata = InputMetadata(prompt_lens=[637], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[42], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=597, cur_paddings=0, exceeed_seq=46
+input_metadata = InputMetadata(prompt_lens=[643], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[46], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=425, cur_paddings=34, exceeed_seq=24
+input_metadata = InputMetadata(prompt_lens=[415, 381], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[24], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=358, cur_paddings=0, exceeed_seq=27
+input_metadata = InputMetadata(prompt_lens=[385], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[27], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[187], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[194], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:58:29 llm_engine.py:685] Avg past 5 seconds prompt throughput: 2032.5 tokens/s, Avg past 5 seconds real prompt throughput: 1905.1 tokens/s, Avg past 5 seconds generation throughput: 1125.1 tokens/s, total prompt throughput: 402977.0 tokens/s, total real prompt throughput: 361265.0 tokens/s, total generation throughput: 231659.0 tokens/s, avg total prompt throughput: 1787.9 tokens/s, avg total real prompt throughput: 1602.8 tokens/s, avg total generation throughput: 1036.4 tokens/s, Running: 37 reqs, Swapped: 0 reqs, Waiting: 7 reqs, GPU KV cache usage: 99.9%, CPU KV cache usage: 0.0%
+input_metadata = InputMetadata(prompt_lens=[419], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=496, cur_paddings=66, exceeed_seq=58
+input_metadata = InputMetadata(prompt_lens=[488, 422], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[58, 211], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[216], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[464, 310], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[356], num_prompts=1, max_context_len=None,)
+promt select exit padding exceed_paddings=552, cur_paddings=201, exceeed_seq=9
+input_metadata = InputMetadata(prompt_lens=[360, 159], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[9], num_prompts=1, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[166, 15], num_prompts=2, max_context_len=None,)
+input_metadata = InputMetadata(prompt_lens=[36], num_prompts=1, max_context_len=None,)
+INFO 12-27 21:58:34 llm_engine.py:685] Avg past 5 seconds prompt throughput: 896.1 tokens/s, Avg past 5 seconds real prompt throughput: 747.7 tokens/s, Avg past 5 seconds generation throughput: 1069.7 tokens/s, total prompt throughput: 407549.0 tokens/s, total real prompt throughput: 365112.0 tokens/s, total generation throughput: 237033.0 tokens/s, avg total prompt throughput: 1768.8 tokens/s, avg total real prompt throughput: 1584.6 tokens/s, avg total generation throughput: 1037.2 tokens/s, Running: 24 reqs, Swapped: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 81.3%, CPU KV cache usage: 0.0%
+INFO 12-27 21:58:39 llm_engine.py:685] Avg past 5 seconds prompt throughput: 0.0 tokens/s, Avg past 5 seconds real prompt throughput: 0.0 tokens/s, Avg past 5 seconds generation throughput: 764.4 tokens/s, total prompt throughput: 407549.0 tokens/s, total real prompt throughput: 365112.0 tokens/s, total generation throughput: 240870.0 tokens/s, avg total prompt throughput: 1731.1 tokens/s, avg total real prompt throughput: 1550.8 tokens/s, avg total generation throughput: 1031.4 tokens/s, Running: 11 reqs, Swapped: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 53.8%, CPU KV cache usage: 0.0%
+INFO 12-27 21:58:44 llm_engine.py:685] Avg past 5 seconds prompt throughput: 0.0 tokens/s, Avg past 5 seconds real prompt throughput: 0.0 tokens/s, Avg past 5 seconds generation throughput: 428.3 tokens/s, total prompt throughput: 407549.0 tokens/s, total real prompt throughput: 365112.0 tokens/s, total generation throughput: 243018.0 tokens/s, avg total prompt throughput: 1695.0 tokens/s, avg total real prompt throughput: 1518.5 tokens/s, avg total generation throughput: 1018.7 tokens/s, Running: 5 reqs, Swapped: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 29.8%, CPU KV cache usage: 0.0%
+Throughput: 4.10 requests/s, 1959.38 tokens/s
+PromptThroughput: 955.04 tokens/s
+OutputThroughput: 1004.33 tokens/s
+Total Time : 244.07 s

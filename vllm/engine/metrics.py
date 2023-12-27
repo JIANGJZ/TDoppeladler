@@ -6,6 +6,9 @@ from aioprometheus import Gauge
 # begin-metrics-definitions
 gauge_avg_prompt_throughput = Gauge("vllm:avg_prompt_throughput_toks_per_s",
                                     "Average prefill throughput in tokens/s.")
+gauge_avg_real_prompt_throughput = Gauge("vllm:avg_real_prompt_throughput_toks_per_s",
+                                    "Average real prefill throughput in tokens/s.")
+
 gauge_avg_generation_throughput = Gauge(
     "vllm:avg_generation_throughput_toks_per_s",
     "Average generation throughput in tokens/s.")
@@ -35,6 +38,7 @@ def add_global_metrics_labels(**kwargs):
 
 def record_metrics(
     avg_prompt_throughput: float,
+    avg_real_prompt_throughput: float,
     avg_generation_throughput: float,
     scheduler_running: int,
     scheduler_swapped: int,
@@ -43,6 +47,7 @@ def record_metrics(
     cpu_cache_usage: float,
 ):
     gauge_avg_prompt_throughput.set(labels, avg_prompt_throughput)
+    gauge_avg_real_prompt_throughput.set(labels, avg_real_prompt_throughput)
     gauge_avg_generation_throughput.set(labels, avg_generation_throughput)
     gauge_scheduler_running.set(labels, scheduler_running)
     gauge_scheduler_swapped.set(labels, scheduler_swapped)
