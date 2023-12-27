@@ -84,7 +84,7 @@ class LLM:
         **kwargs,
     ) -> None:
         if "disable_log_stats" not in kwargs:
-            kwargs["disable_log_stats"] = True
+            kwargs["disable_log_stats"] = False
         engine_args = EngineArgs(
             model=model,
             tokenizer=tokenizer,
@@ -159,8 +159,7 @@ class LLM:
             prompt_token_ids)
         for i in range(num_requests):
             prompt = prompts[i] if prompts is not None else None
-            token_ids = None if prompt_token_ids is None else prompt_token_ids[
-                i]
+            token_ids = None if prompt_token_ids is None else prompt_token_ids[ i]
             self._add_request(prompt, sampling_params, token_ids)
         return self._run_engine(use_tqdm)
 
@@ -171,9 +170,8 @@ class LLM:
         prompt_token_ids: Optional[List[int]],
     ) -> None:
         request_id = str(next(self.request_counter))
-        self.llm_engine.add_request(request_id, prompt, sampling_params,
-                                    prompt_token_ids)
-
+        self.llm_engine.add_request(request_id, prompt, sampling_params, prompt_token_ids)
+                                    
     def _run_engine(self, use_tqdm: bool) -> List[RequestOutput]:
         # Initialize tqdm.
         if use_tqdm:

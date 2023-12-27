@@ -302,9 +302,7 @@ class LLMEngine:
         seq = Sequence(seq_id, prompt, prompt_token_ids, block_size)
 
         # Create the sequence group.
-        seq_group = SequenceGroup(request_id, [seq], sampling_params,
-                                  arrival_time)
-
+        seq_group = SequenceGroup(request_id, [seq], sampling_params, arrival_time)
         # Add the sequence group to the scheduler.
         self.scheduler.add_seq_group(seq_group)
 

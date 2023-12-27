@@ -255,6 +255,9 @@ class SequenceGroup:
         # We use the prompt of an arbitrary sequence.
         return next(iter(self.seqs_dict.values())).data.prompt_token_ids
 
+    def get_prompt_length(self) -> int: 
+        return len(self.prompt_token_ids)
+
     def get_max_num_running_seqs(self) -> int:
         """The maximum number of sequences running in parallel in the remaining
         lifetime of the request."""

@@ -1,13 +1,14 @@
 import enum
 import time
 from typing import Dict, Iterable, List, Optional, Tuple, Union
+import bisect
 
 from vllm.config import CacheConfig, SchedulerConfig
 from vllm.core.block_manager import AllocStatus, BlockSpaceManager
 from vllm.core.policy import PolicyFactory
 from vllm.logger import init_logger
-from vllm.sequence import (Sequence, SequenceData, SequenceGroup,
-                           SequenceGroupMetadata, SequenceStatus)
+from vllm.sequence import (Sequence, SequenceData, SequenceGroup, SequenceGroupMetadata, SequenceStatus)
+                           
 
 logger = init_logger(__name__)
 
@@ -63,9 +64,7 @@ class Scheduler:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
 
-        self.prompt_limit = min(self.scheduler_config.max_model_len,
-                                self.scheduler_config.max_num_batched_tokens)
-
+        self.prompt_limit = min(self.scheduler_config.max_model_len, self.scheduler_config.max_num_batched_tokens)
         # Instantiate the scheduling policy.
         self.policy = PolicyFactory.get_policy(policy_name="fcfs")
         # Create the block space manager.
@@ -83,9 +82,17 @@ class Scheduler:
         # Sequence groups in the SWAPPED state.
         self.swapped: List[SequenceGroup] = []
 
+        self.total_padding = 0
+
+    def print_all_waiting(self):
+        for group in self.waiting:
+            print (" {} ".format( group.get_prompt_length()))
+
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
         # Add sequence groups to the waiting queue.
-        self.waiting.append(seq_group)
+        index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
+        self.waiting.insert(index, seq_group)    
+        # self.waiting.append(seq_group)
 
     def abort_seq_group(self, request_id: Union[str, Iterable[str]]) -> None:
         if isinstance(request_id, str):
@@ -172,19 +179,20 @@ class Scheduler:
                 # If the number of batched tokens exceeds the limit, stop.
                 new_seq_lens = seq_lens + [num_prompt_tokens]
                 num_batched_tokens = len(new_seq_lens) * max(new_seq_lens)
-                if (num_batched_tokens >
-                        self.scheduler_config.max_num_batched_tokens):
+                if (num_batched_tokens > self.scheduler_config.max_num_batched_tokens):
+                    print ("promt select exceed tokens total_tokens={}, new_tokens={}".format(num_batched_tokens, num_prompt_tokens))
                     break
 
                 # The total number of sequences in the RUNNING state should not
                 # exceed the maximum number of sequences.
                 num_new_seqs = seq_group.get_max_num_running_seqs()
-                if (num_curr_seqs + num_new_seqs >
-                        self.scheduler_config.max_num_seqs):
+                if (num_curr_seqs + num_new_seqs > self.scheduler_config.max_num_seqs):
+                    print ("promt select exit seqs total_seqs={}, num_curr_seqs={}".format(num_curr_seqs + num_new_seqs, num_curr_seqs))
                     break
 
                 num_paddings = num_batched_tokens - sum(new_seq_lens)
                 if num_paddings > self.scheduler_config.max_paddings:
+                    print ("promt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
                     break
                 seq_lens = new_seq_lens
 
@@ -205,6 +213,8 @@ class Scheduler:
                     blocks_to_copy=blocks_to_copy,
                     ignored_seq_groups=ignored_seq_groups,
                 )
+                self.total_padding += len(seq_lens) * max(seq_lens) - sum(seq_lens)
+                print ("total_padding={}".format(self.total_padding))
                 return scheduler_outputs
 
         # NOTE(woosuk): Preemption happens only when there is no available slot

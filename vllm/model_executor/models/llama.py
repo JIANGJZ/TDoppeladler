@@ -213,14 +213,12 @@ class LlamaDecoderLayer(nn.Module):
         )
 
         # Fully Connected
-        hidden_states, residual = self.post_attention_layernorm(
-            hidden_states, residual)
+        hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
         hidden_states = self.mlp(hidden_states)
         return hidden_states, residual
 
 
 class LlamaModel(nn.Module):
-
     def __init__(
         self,
         config: LlamaConfig,
@@ -283,8 +281,8 @@ class LlamaForCausalLM(nn.Module):
         kv_caches: List[KVCache],
         input_metadata: InputMetadata,
     ) -> torch.Tensor:
-        hidden_states = self.model(input_ids, positions, kv_caches,
-                                   input_metadata)
+        print ("input_metadata = {}".format(input_metadata))
+        hidden_states = self.model(input_ids, positions, kv_caches, input_metadata)          
         return hidden_states
 
     def sample(
@@ -292,8 +290,7 @@ class LlamaForCausalLM(nn.Module):
         hidden_states: torch.Tensor,
         sampling_metadata: SamplingMetadata,
     ) -> SamplerOutput:
-        next_tokens = self.sampler(self.lm_head.weight, hidden_states,
-                                   sampling_metadata)
+        next_tokens = self.sampler(self.lm_head.weight, hidden_states, sampling_metadata)                  
         return next_tokens
 
     def load_weights(self,

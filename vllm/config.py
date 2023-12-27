@@ -100,8 +100,8 @@ class ModelConfig:
 
         self.hf_config = get_config(self.model, trust_remote_code, revision)
         self.dtype = _get_and_verify_dtype(self.hf_config, dtype)
-        self.max_model_len = _get_and_verify_max_len(self.hf_config,
-                                                     max_model_len)
+        self.max_model_len = _get_and_verify_max_len(self.hf_config, max_model_len)                           
+        self.print_config()  
         self._verify_load_format()
         self._verify_tokenizer_mode()
         self._verify_quantization()
@@ -208,6 +208,10 @@ class ModelConfig:
                 "must be divisible by pipeline parallel size "
                 f"({pipeline_parallel_size}).")
 
+    def print_config(self):
+        print ("ModelConfig hidden_size={}, head_size={}, swap_space_bytes={}, num_kv_heads={}\
+        num_layers={}".format(self.get_hidden_size(), self.get_head_size(), self.hf_config.num_attention_heads, self.hf_config.num_key_value_heads, self.hf_config.num_hidden_layers))
+
     def get_sliding_window(self) -> Optional[int]:
         return getattr(self.hf_config, "sliding_window", None)
 
@@ -291,11 +295,16 @@ class CacheConfig:
         self.gpu_memory_utilization = gpu_memory_utilization
         self.swap_space_bytes = swap_space * _GB
         self.sliding_window = sliding_window
+        self.print_config()
         self._verify_args()
 
         # Will be set after profiling.
         self.num_gpu_blocks = None
         self.num_cpu_blocks = None
+
+    def print_config(self):
+        print ("CacheConfig block_size={}, gpu_memory_utilization={}, swap_space_bytes={}, \
+        sliding_window={}".format(self.block_size, self.gpu_memory_utilization, self.swap_space_bytes, self.sliding_window))
 
     def _verify_args(self) -> None:
         if self.gpu_memory_utilization > 1.0:
@@ -385,7 +394,12 @@ class SchedulerConfig:
         self.max_num_seqs = max_num_seqs
         self.max_model_len = max_model_len
         self.max_paddings = max_paddings
+        self.print_config()
         self._verify_args()
+
+    def print_config(self):
+        print ("SchedulerConfig max_num_batched_tokens={}, max_model_len={}, max_num_seqs={}, \
+        max_paddings={}".format(self.max_num_batched_tokens, self.max_model_len, self.max_num_seqs, self.max_paddings))
 
     def _verify_args(self) -> None:
         if self.max_num_batched_tokens < self.max_model_len:

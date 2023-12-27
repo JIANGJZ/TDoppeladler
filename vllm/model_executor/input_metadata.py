@@ -35,11 +35,17 @@ class InputMetadata:
         # FIXME(woosuk): This is a hack.
         self.attn_bias = None
 
+    # def __repr__(self) -> str:
+    #     return ("InputMetadata("
+    #             f"prompt_lens={self.prompt_lens}, "
+    #             f"max_context_len={self.max_context_len}, "
+    #             f"slot_mapping={self.slot_mapping}, "
+    #             f"context_lens={self.context_lens}, "
+    #             f"block_tables={self.block_tables}, "
+    #             f"use_cuda_graph={self.use_cuda_graph})")
+
     def __repr__(self) -> str:
         return ("InputMetadata("
                 f"prompt_lens={self.prompt_lens}, "
-                f"max_context_len={self.max_context_len}, "
-                f"slot_mapping={self.slot_mapping}, "
-                f"context_lens={self.context_lens}, "
-                f"block_tables={self.block_tables}, "
-                f"use_cuda_graph={self.use_cuda_graph})")
+                f"num_prompts={len(self.prompt_lens)}, "
+                f"max_context_len={self.max_context_len},)")

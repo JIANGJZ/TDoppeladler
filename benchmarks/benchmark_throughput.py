@@ -102,6 +102,7 @@ def run_vllm(
             sampling_params=sampling_params,
         )
 
+    # llm.llm_engine.scheduler.print_all_waiting()
     start = time.perf_counter()
     # FIXME(woosuk): Do not use internal method.
     llm._run_engine(use_tqdm=True)
