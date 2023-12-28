@@ -34,6 +34,7 @@ class SchedulerOutputs:
         prompt_run: bool,
         num_batched_tokens: int,
         num_real_prompt_tokens: int,
+        num_recompute_tokens: int,
         blocks_to_swap_in: Dict[int, int],
         blocks_to_swap_out: Dict[int, int],
         blocks_to_copy: Dict[int, List[int]],
@@ -43,6 +44,7 @@ class SchedulerOutputs:
         self.prompt_run = prompt_run
         self.num_batched_tokens = num_batched_tokens
         self.num_real_prompt_tokens = num_real_prompt_tokens
+        self.num_recompute_tokens = num_recompute_tokens
         self.blocks_to_swap_in = blocks_to_swap_in
         self.blocks_to_swap_out = blocks_to_swap_out
         self.blocks_to_copy = blocks_to_copy
@@ -143,6 +145,7 @@ class Scheduler:
             # requests in the generation phase.
             num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running)
             seq_lens: List[int] = []
+            seq_recompute_lens: List[int] = []
 
             # Optimization: We do not sort the waiting queue since the preempted
             # sequence groups are added to the front and the new sequence groups
@@ -174,6 +177,9 @@ class Scheduler:
 
                 # If the number of batched tokens exceeds the limit, stop.
                 new_seq_lens = seq_lens + [num_prompt_tokens]
+                new_seq_recompute_lens = seq_recompute_lens
+                if (seq_group.is_recompute):
+                    new_seq_recompute_lens = new_seq_recompute_lens + [num_prompt_tokens]
                 num_batched_tokens = len(new_seq_lens) * max(new_seq_lens)
                 if (num_batched_tokens > self.scheduler_config.max_num_batched_tokens):
                     print ("promt select exceed tokens total_tokens={}, new_tokens={}".format(num_batched_tokens, num_prompt_tokens))
@@ -191,7 +197,7 @@ class Scheduler:
                     print ("promt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
                     break
                 seq_lens = new_seq_lens
-
+                seq_recompute_lens = new_seq_recompute_lens
                 seq_group = self.waiting.pop(0)
                 self._allocate(seq_group)
                 self.running.append(seq_group)
@@ -204,6 +210,7 @@ class Scheduler:
                     prompt_run=True,
                     num_batched_tokens=len(seq_lens) * max(seq_lens) if seq_lens else 0,
                     num_real_prompt_tokens = sum(seq_lens),
+                    num_recompute_tokens = sum(seq_recompute_lens),
                     blocks_to_swap_in=blocks_to_swap_in,
                     blocks_to_swap_out=blocks_to_swap_out,
                     blocks_to_copy=blocks_to_copy,
@@ -273,7 +280,8 @@ class Scheduler:
             scheduled_seq_groups=self.running,
             prompt_run=False,
             num_batched_tokens=num_batched_tokens,
-            num_real_prompt_tokens=0,
+            num_real_prompt_tokens = 0,
+            num_recompute_tokens = 0,
             blocks_to_swap_in=blocks_to_swap_in,
             blocks_to_swap_out=blocks_to_swap_out,
             blocks_to_copy=blocks_to_copy,
@@ -379,6 +387,7 @@ class Scheduler:
         # NOTE: For FCFS, we insert the preempted sequence group to the front
         # of the waiting queue.
         # print ("recompute seq!")
+        seq_group.set_recompute(True)
         self.waiting.insert(0, seq_group)
 
     def _preempt_by_swap(

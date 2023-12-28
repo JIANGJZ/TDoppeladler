@@ -128,10 +128,12 @@ class LLMEngine:
         self.num_real_prompt_tokens: List[Tuple[float, int]] = []
         # List of (timestamp, num_tokens)
         self.num_generation_tokens: List[Tuple[float, int]] = []
+        
 
         self.total_prompt_tokens: List[Tuple[float, int]] = []
         self.total_real_prompt_tokens: List[Tuple[float, int]] = []
         self.total_generation_tokens: List[Tuple[float, int]] = []
+        self.total_recompute_tokens: List[Tuple[float, int]] = []
 
     def _init_workers(self, distributed_init_method: str):
         # Lazy import the Worker to avoid importing torch.cuda/xformers
@@ -574,7 +576,8 @@ class LLMEngine:
 
         if self.log_stats:
             # Log the system stats.
-            self._log_system_stats(scheduler_outputs.prompt_run, scheduler_outputs.num_batched_tokens, scheduler_outputs.num_real_prompt_tokens)      
+            self._log_system_stats(scheduler_outputs.prompt_run, scheduler_outputs.num_batched_tokens, 
+            scheduler_outputs.num_real_prompt_tokens, scheduler_outputs.num_recompute_tokens)      
         return request_outputs
 
     def step(self) -> List[RequestOutput]:
@@ -606,6 +609,7 @@ class LLMEngine:
         prompt_run: bool,
         num_batched_tokens: int,
         num_real_prompt_tokens: int,
+        num_recompute_tokens:int,
     ) -> None:
         now = time.monotonic()
         # Log the number of batched input tokens.
@@ -614,6 +618,7 @@ class LLMEngine:
             self.num_real_prompt_tokens.append((now, num_real_prompt_tokens))
             self.total_prompt_tokens.append((now, num_batched_tokens))
             self.total_real_prompt_tokens.append((now, num_real_prompt_tokens))
+            self.total_recompute_tokens.append((now, num_recompute_tokens))
         else:
             self.num_generation_tokens.append((now, num_batched_tokens))
             self.total_generation_tokens.append((now, num_batched_tokens))
@@ -625,11 +630,14 @@ class LLMEngine:
 
         total_prompt_tokens = sum(n for _, n in self.total_prompt_tokens[:-1])    
         total_real_prompt_tokens = sum(n for _, n in self.total_real_prompt_tokens[:-1])    
-        total_generation_tokens = sum(n for _, n in self.total_generation_tokens[:-1])    
+        total_generation_tokens = sum(n for _, n in self.total_generation_tokens[:-1])  
+        total_recompute_tokens =  sum(n for _, n in self.total_recompute_tokens[:-1]) 
+        total_final_prompt_tokens =  total_real_prompt_tokens - total_recompute_tokens
 
         # print ((now, self.last_logging_time, self.total_prompt_tokens[0][0]))
         avg_total_prompt_throughput = total_prompt_tokens / (now - self.total_prompt_tokens[0][0])
         avg_total_real_prompt_throughput = total_real_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
+        avg_total_final_prompt_throughput = total_final_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
         avg_total_generation_throughput = total_generation_tokens / (now - self.total_generation_tokens[0][0])
 
         # Discard the old stats.
@@ -692,12 +700,16 @@ class LLMEngine:
                     f"{total_prompt_tokens:.1f} tokens/s, "
                     "total real prompt throughput: "
                     f"{total_real_prompt_tokens:.1f} tokens/s, "
+                    "total final prompt throughput: "
+                    f"{total_final_prompt_tokens:.1f} tokens/s, "
                     "total generation throughput: "
                     f"{total_generation_tokens:.1f} tokens/s, "
                     "avg total prompt throughput: "
                     f"{avg_total_prompt_throughput:.1f} tokens/s, "
                     "avg total real prompt throughput: "
                     f"{avg_total_real_prompt_throughput:.1f} tokens/s, "
+                    "avg total final prompt throughput: "
+                    f"{avg_total_final_prompt_throughput:.1f} tokens/s, "
                     "avg total generation throughput: "
                     f"{avg_total_generation_throughput:.1f} tokens/s, "
                     f"Running: {len(self.scheduler.running)} reqs, "

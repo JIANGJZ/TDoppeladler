@@ -242,6 +242,7 @@ class SequenceGroup:
         self.sampling_params = sampling_params
         self.arrival_time = arrival_time
         self.prompt_logprobs: Optional[PromptLogprobs] = None
+        self.is_recompute = False
 
     @property
     def prompt(self) -> str:
@@ -254,6 +255,9 @@ class SequenceGroup:
         # All sequences in the group should have the same prompt.
         # We use the prompt of an arbitrary sequence.
         return next(iter(self.seqs_dict.values())).data.prompt_token_ids
+
+    def set_recompute(self, is_recompute:bool):
+        self.is_recompute = is_recompute
 
     def get_prompt_length(self) -> int: 
         return len(self.prompt_token_ids)
