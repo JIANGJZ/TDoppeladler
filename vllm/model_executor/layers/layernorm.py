@@ -48,19 +48,22 @@ class RMSNorm(nn.Module):
         x: torch.Tensor,
         residual: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        if residual is not None:
-            ops.fused_add_rms_norm(
+        if x.device == torch.device('cpu'):
+            return self._forward(x, residual)
+        else:
+            if residual is not None:
+                ops.fused_add_rms_norm(
+                    x,
+                    residual,
+                    self.weight.data,
+                    self.variance_epsilon,
+                )
+                return x, residual
+            out = torch.empty_like(x)
+            ops.rms_norm(
+                out,
                 x,
-                residual,
                 self.weight.data,
                 self.variance_epsilon,
             )
-            return x, residual
-        out = torch.empty_like(x)
-        ops.rms_norm(
-            out,
-            x,
-            self.weight.data,
-            self.variance_epsilon,
-        )
-        return out
+            return out

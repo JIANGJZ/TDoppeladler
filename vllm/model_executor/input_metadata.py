@@ -34,6 +34,10 @@ class InputMetadata:
         # Set during the execution of the first attention op.
         # FIXME(woosuk): This is a hack.
         self.attn_bias = None
+        if context_lens == None:
+            self.num_generation_tokens = 0
+        else:
+            self.num_generation_tokens = context_lens.shape[0]
 
     # def __repr__(self) -> str:
     #     return ("InputMetadata("
@@ -48,4 +52,4 @@ class InputMetadata:
         return ("InputMetadata("
                 f"prompt_lens={self.prompt_lens}, "
                 f"num_prompts={len(self.prompt_lens)}, "
-                f"max_context_len={self.max_context_len},)")
+                f"num_generation_tokens={self.num_generation_tokens},)")

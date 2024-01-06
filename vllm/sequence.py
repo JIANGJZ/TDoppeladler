@@ -150,10 +150,8 @@ class Sequence:
             if last_block.is_full():
                 self._append_logical_block()
                 last_block = self.logical_token_blocks[-1]
-
             num_empty_slots = last_block.get_num_empty_slots()
-            last_block.append_tokens(token_ids[cursor:cursor +
-                                               num_empty_slots])
+            last_block.append_tokens(token_ids[cursor:cursor + num_empty_slots])                      
             cursor += num_empty_slots
 
     def append_token_id(
@@ -201,8 +199,7 @@ class Sequence:
             seq_len = self.get_len()
             # NOTE: HF implementation does not count the EOS token
             # towards the length, we align with that here for testing.
-            if (eos_token_id is not None
-                    and self.get_last_token_id() == eos_token_id):
+            if (eos_token_id is not None and self.get_last_token_id() == eos_token_id):
                 seq_len -= 1
         return self.get_cumulative_logprob() / (seq_len**length_penalty)
 
@@ -243,6 +240,7 @@ class SequenceGroup:
         self.arrival_time = arrival_time
         self.prompt_logprobs: Optional[PromptLogprobs] = None
         self.is_recompute = False
+        self.is_cpu_compute = False
 
     @property
     def prompt(self) -> str:
@@ -258,6 +256,9 @@ class SequenceGroup:
 
     def set_recompute(self, is_recompute:bool):
         self.is_recompute = is_recompute
+
+    def set_cpu_compute(self, is_cpu_compute:bool):
+        self.is_cpu_compute = is_cpu_compute
 
     def get_prompt_length(self) -> int: 
         return len(self.prompt_token_ids)
@@ -286,14 +287,14 @@ class SequenceGroup:
         if status is None:
             return list(self.seqs_dict.values())
         else:
-            return [
-                seq for seq in self.seqs_dict.values() if seq.status == status
-            ]
+            return [seq for seq in self.seqs_dict.values() if seq.status == status]
+                
+            
 
     def get_unfinished_seqs(self) -> List[Sequence]:
-        return [
-            seq for seq in self.seqs_dict.values() if not seq.is_finished()
-        ]
+        return [seq for seq in self.seqs_dict.values() if not seq.is_finished()]
+            
+        
 
     def get_finished_seqs(self) -> List[Sequence]:
         return [seq for seq in self.seqs_dict.values() if seq.is_finished()]

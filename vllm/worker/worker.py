@@ -5,11 +5,9 @@ from typing import Dict, List, Optional, Tuple
 import torch
 import torch.distributed
 
-from vllm.config import (CacheConfig, ModelConfig, ParallelConfig,
-                         SchedulerConfig)
+from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig)    
 from vllm.model_executor import set_random_seed
-from vllm.model_executor.parallel_utils.parallel_state import (
-    initialize_model_parallel)
+from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_parallel)
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.cache_engine import CacheEngine
 from vllm.worker.model_runner import ModelRunner
@@ -37,8 +35,7 @@ class Worker:
         self.rank = rank
         self.distributed_init_method = distributed_init_method
 
-        self.model_runner = ModelRunner(model_config, parallel_config,
-                                        scheduler_config)
+        self.model_runner = ModelRunner(model_config, parallel_config, scheduler_config)        
         # Uninitialized cache engine. Will be initialized by
         # self.init_cache_engine().
         self.cache_config = None
@@ -47,19 +44,12 @@ class Worker:
         self.gpu_cache = None
 
     def init_model(self) -> None:
-        # torch.distributed.all_reduce does not free the input tensor until
-        # the synchronization point. This causes the memory usage to grow
-        # as the number of all_reduce calls increases. This env var disables
-        # this behavior.
-        # Related issue:
-        # https://discuss.pytorch.org/t/cuda-allocation-lifetime-for-inputs-to-distributed-all-reduce/191573
         os.environ["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
 
         # This env var set by Ray causes exceptions with graph building.
         os.environ.pop("NCCL_ASYNC_ERROR_HANDLING", None)
         # Env vars will be set by Ray.
-        self.rank = self.rank if self.rank is not None else int(
-            os.getenv("RANK", "-1"))
+        self.rank = self.rank if self.rank is not None else int(os.getenv("RANK", "-1"))
         local_rank = int(os.getenv("LOCAL_RANK", "0"))
         self.device = torch.device(f"cuda:{local_rank}")
         if self.rank < 0:
@@ -69,9 +59,7 @@ class Worker:
         _check_if_gpu_supports_dtype(self.model_config.dtype)
 
         # Initialize the distributed environment.
-        _init_distributed_environment(self.parallel_config, self.rank,
-                                      self.distributed_init_method)
-
+        _init_distributed_environment(self.parallel_config, self.rank, self.distributed_init_method)
         # Initialize the model.
         set_random_seed(self.model_config.seed)
 
@@ -99,11 +87,10 @@ class Worker:
         free_gpu_memory, total_gpu_memory = torch.cuda.mem_get_info()
         peak_memory = total_gpu_memory - free_gpu_memory
 
-        cache_block_size = CacheEngine.get_cache_block_size(
-            block_size, self.model_config, self.parallel_config)
-        num_gpu_blocks = int(
-            (total_gpu_memory * gpu_memory_utilization - peak_memory) //
-            cache_block_size)
+        cache_block_size = CacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
+
+        num_gpu_blocks = int((total_gpu_memory * gpu_memory_utilization - peak_memory) // cache_block_size)
+          
         num_cpu_blocks = int(cpu_swap_space // cache_block_size)
         num_gpu_blocks = max(num_gpu_blocks, 0)
         num_cpu_blocks = max(num_cpu_blocks, 0)
@@ -112,8 +99,7 @@ class Worker:
 
     def init_cache_engine(self, cache_config: CacheConfig) -> None:
         self.cache_config = cache_config
-        self.cache_engine = CacheEngine(self.cache_config, self.model_config,
-                                        self.parallel_config)
+        self.cache_engine = CacheEngine(self.cache_config, self.model_config, self.parallel_config)            
         self.cache_events = self.cache_engine.events
         self.gpu_cache = self.cache_engine.gpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
@@ -155,10 +141,47 @@ class Worker:
         # If there is no input, we don't need to execute the model.
         if not seq_group_metadata_list:
             return {}
-
-        output = self.model_runner.execute_model(seq_group_metadata_list,
-                                                 self.gpu_cache)
+        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache)                           
         return output
+
+
+class CPUworker:
+    def __init__(
+        self,
+        model_config: ModelConfig,
+        parallel_config: ParallelConfig,
+        scheduler_config: SchedulerConfig,
+        rank: Optional[int] = None,
+        distributed_init_method: Optional[str] = None,
+    ) -> None:
+        self.model_config = model_config
+        self.parallel_config = parallel_config
+        self.scheduler_config = scheduler_config
+
+        self.model_runner = CPUModelRunner(model_config, parallel_config, scheduler_config)        
+        # Uninitialized cache engine. Will be initialized by
+        # self.init_cache_engine().
+        self.cache_config = None
+        self.cache_engine = None
+        self.cache_events = None
+        self.cpu_cache = None    
+
+    def init_model(self) -> None:
+        self.device = torch.device(f"cpu")
+        # Initialize the model.
+        set_random_seed(self.model_config.seed)
+
+    def load_model(self):
+        self.model_runner.load_model()
+
+    def init_cache_engine(self, cache_config: CacheConfig) -> None:
+        self.cache_config = cache_config
+        self.cache_engine = CacheEngine(self.cache_config, self.model_config, self.parallel_config)            
+        self.cache_events = self.cache_engine.events
+        self.cpu_cache = self.cache_engine.cpu_cache
+        self.model_runner.set_block_size(self.cache_engine.block_size)
+
+
 
 
 def _init_distributed_environment(

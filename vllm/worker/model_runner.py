@@ -22,7 +22,6 @@ _BATCH_SIZES_TO_CAPTURE = [1, 2, 4] + [8 * i for i in range(1, 33)]
 
 
 class ModelRunner:
-
     def __init__(
         self,
         model_config: ModelConfig,
@@ -35,8 +34,7 @@ class ModelRunner:
 
         # model_config can be None in tests/samplers/test_sampler.py.
         # FIXME(woosuk): This is a hack to make the tests work. Refactor this.
-        self.sliding_window = (model_config.get_sliding_window()
-                               if model_config is not None else None)
+        self.sliding_window = (model_config.get_sliding_window() if model_config is not None else None)   
         self.model = None
         self.block_size = None  # Set after initial profiling.
 
@@ -62,10 +60,8 @@ class ModelRunner:
     def set_block_size(self, block_size: int) -> None:
         self.block_size = block_size
 
-        max_num_blocks = (self.max_context_len_to_capture + block_size -
-                          1) // block_size
-        self.graph_block_tables = np.zeros(
-            (max(_BATCH_SIZES_TO_CAPTURE), max_num_blocks), dtype=np.int32)
+        max_num_blocks = (self.max_context_len_to_capture + block_size - 1) // block_size                
+        self.graph_block_tables = np.zeros((max(_BATCH_SIZES_TO_CAPTURE), max_num_blocks), dtype=np.int32)
 
     def _prepare_prompt(
         self,
@@ -168,8 +164,7 @@ class ModelRunner:
                 position = seq_len - 1
                 input_positions.append([position])
 
-                context_len = seq_len if self.sliding_window is None else min(
-                    seq_len, self.sliding_window)
+                context_len = seq_len if self.sliding_window is None else min(seq_len, self.sliding_window)
                 context_lens.append(context_len)
 
                 block_table = seq_group_metadata.block_tables[seq_id]
@@ -179,8 +174,7 @@ class ModelRunner:
                 slot_mapping.append([slot])
 
                 if self.sliding_window is not None:
-                    sliding_window_blocks = (self.sliding_window //
-                                             self.block_size)
+                    sliding_window_blocks = (self.sliding_window // self.block_size)
                     block_table = block_table[-sliding_window_blocks:]
                 block_tables.append(block_table)
 
@@ -286,17 +280,13 @@ class ModelRunner:
                 categorized_sample_indices_start_idx += 1
 
                 if sampling_params.prompt_logprobs is not None:
-                    selected_token_indices.extend(
-                        range(selected_token_start_idx,
-                              selected_token_start_idx + prompt_len - 1))
-                selected_token_indices.append(selected_token_start_idx +
-                                              prompt_len - 1)
+                    selected_token_indices.extend(range(selected_token_start_idx, selected_token_start_idx + prompt_len - 1)) 
+                selected_token_indices.append(selected_token_start_idx + prompt_len - 1)
+                                              
                 selected_token_start_idx += max_prompt_len
             else:
                 num_seqs = len(seq_ids)
-                selected_token_indices.extend(
-                    range(selected_token_start_idx,
-                          selected_token_start_idx + num_seqs))
+                selected_token_indices.extend(range(selected_token_start_idx, selected_token_start_idx + num_seqs))
                 selected_token_start_idx += num_seqs
 
                 categorized_sample_indices[
@@ -339,9 +329,11 @@ class ModelRunner:
         if is_prompt:
             inputs = self._prepare_prompt(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
+            print ("prefilling {}".format(input_metadata))
         else:
             inputs = self._prepare_decode(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
+            print ("decoding {}".format(input_metadata))
 
         # Execute the model.
         if input_metadata.use_cuda_graph:
@@ -356,14 +348,10 @@ class ModelRunner:
             input_metadata=input_metadata,
         )
 
-        sampling_metadata = self._prepare_sample(seq_group_metadata_list,
-                                                 input_metadata.prompt_lens)
-
+        sampling_metadata = self._prepare_sample(seq_group_metadata_list, input_metadata.prompt_lens)
+ 
         # Sample the next token.
-        output = self.model.sample(
-            hidden_states=hidden_states,
-            sampling_metadata=sampling_metadata,
-        )
+        output = self.model.sample(hidden_states=hidden_states, sampling_metadata=sampling_metadata,)
         return output
 
     @torch.inference_mode()
@@ -378,8 +366,7 @@ class ModelRunner:
         # number of tokens equal to max_num_batched_tokens.
         seqs: List[SequenceGroupMetadata] = []
         for group_id in range(max_num_seqs):
-            seq_len = (max_num_batched_tokens // max_num_seqs +
-                       (group_id < max_num_batched_tokens % max_num_seqs))
+            seq_len = (max_num_batched_tokens // max_num_seqs + (group_id < max_num_batched_tokens % max_num_seqs))
             seq_data = SequenceData([0] * seq_len)
             seq = SequenceGroupMetadata(
                 request_id=str(group_id),
@@ -448,6 +435,20 @@ class ModelRunner:
         # This usually takes < 10 seconds.
         logger.info(f"Graph capturing finished in {elapsed_time:.0f} secs.")
 
+class CPUModelRunner:
+    def __init__(
+        self,
+        model_config: ModelConfig,
+        parallel_config: ParallelConfig,
+        scheduler_config: SchedulerConfig,
+    ):
+        self.model_config = model_config
+        self.parallel_config = parallel_config
+        self.scheduler_config = scheduler_config
+
+        self.sliding_window = (model_config.get_sliding_window() if model_config is not None else None)   
+        self.model = None
+        self.block_size = None  # Set after initial profiling.    
 
 class CUDAGraphRunner:
 
@@ -544,11 +545,8 @@ def _make_tensor_with_pad(
     pin_memory: bool = False,
 ) -> torch.Tensor:
     padded_x = [_pad_to_max(x_i, max_len, pad) for x_i in x]
-    return torch.tensor(padded_x,
-                        dtype=dtype,
-                        device=device,
-                        pin_memory=pin_memory and str(device) == "cpu")
-
+    return torch.tensor(padded_x, dtype=dtype, device=device,  pin_memory=pin_memory and str(device) == "cpu")
+                        
 
 def _get_graph_batch_size(batch_size: int) -> int:
     if batch_size <= 2:

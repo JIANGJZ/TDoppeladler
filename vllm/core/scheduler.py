@@ -85,7 +85,8 @@ class Scheduler:
         # Sequence groups in the SWAPPED state.
         self.swapped: List[SequenceGroup] = []
 
-        self.total_padding = 0
+        # Seqence groups swapped to CPU for computing
+        self.swapped_cpu: List[SequenceGroup] = []
 
     def print_all_waiting(self):
         temp = []
@@ -95,9 +96,9 @@ class Scheduler:
 
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
         # Add sequence groups to the waiting queue.
-        # index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
-        # self.waiting.insert(index, seq_group)    
-        self.waiting.append(seq_group)
+        index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
+        self.waiting.insert(index, seq_group)    
+        # self.waiting.append(seq_group)
 
     def abort_seq_group(self, request_id: Union[str, Iterable[str]]) -> None:
         if isinstance(request_id, str):
@@ -253,7 +254,6 @@ class Scheduler:
         self.swapped = self.policy.sort_by_priority(now, self.swapped)
         if not preempted:
             num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running)
-
             while self.swapped:
                 seq_group = self.swapped[0]
                 # If the sequence group cannot be swapped in, stop.
@@ -322,10 +322,7 @@ class Scheduler:
         self.block_manager.free(seq)
 
     def free_finished_seq_groups(self) -> None:
-        self.running = [
-            seq_group for seq_group in self.running
-            if not seq_group.is_finished()
-        ]
+        self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
 
     def _allocate(self, seq_group: SequenceGroup) -> None:
         self.block_manager.allocate(seq_group)
@@ -365,7 +362,7 @@ class Scheduler:
         # sequences. This may require a more sophisticated CUDA kernel.
         if preemption_mode is None:
             if seq_group.get_max_num_running_seqs() == 1:
-                preemption_mode = PreemptionMode.RECOMPUTE
+                preemption_mode = PreemptionMode.SWAP
             else:
                 preemption_mode = PreemptionMode.SWAP
         if preemption_mode == PreemptionMode.RECOMPUTE:
@@ -395,16 +392,16 @@ class Scheduler:
         seq_group: SequenceGroup,
         blocks_to_swap_out: Dict[int, int],
     ) -> None:
-        # print ("swapout seq!")
         self._swap_out(seq_group, blocks_to_swap_out)
-        self.swapped.append(seq_group)
+        # self.swapped.append(seq_group)
+        self.swapped_cpu.append(seq_group)
 
     def _swap_in(
         self,
         seq_group: SequenceGroup,
         blocks_to_swap_in: Dict[int, int],
     ) -> None:
-        print ("swapin seq!")
+        # print ("swapin seq!")
         mapping = self.block_manager.swap_in(seq_group)
         blocks_to_swap_in.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.SWAPPED):
@@ -418,9 +415,7 @@ class Scheduler:
         if not self.block_manager.can_swap_out(seq_group):
             # FIXME(woosuk): Abort the sequence group instead of aborting the
             # entire engine.
-            raise RuntimeError(
-                "Aborted due to the lack of CPU swap space. Please increase "
-                "the swap space to avoid this error.")
+            raise RuntimeError("Aborted due to the lack of CPU swap space. Please increase the swap space to avoid this error.")
         mapping = self.block_manager.swap_out(seq_group)
         blocks_to_swap_out.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):

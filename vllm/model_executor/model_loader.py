@@ -38,10 +38,7 @@ def get_model(model_config: ModelConfig) -> nn.Module:
     # Get the (maybe quantized) linear method.
     linear_method = None
     if model_config.quantization is not None:
-        quant_config = get_quant_config(model_config.quantization,
-                                        model_config.model,
-                                        model_config.hf_config,
-                                        model_config.download_dir)
+        quant_config = get_quant_config(model_config.quantization, model_config.model, model_config.hf_config, model_config.download_dir)           
         capability = torch.cuda.get_device_capability()
         capability = capability[0] * 10 + capability[1]
         if capability < quant_config.get_min_capability():
@@ -69,6 +66,5 @@ def get_model(model_config: ModelConfig) -> nn.Module:
             initialize_dummy_weights(model)
         else:
             # Load the weights from the cached or downloaded files.
-            model.load_weights(model_config.model, model_config.download_dir,
-                               model_config.load_format, model_config.revision)
+            model.load_weights(model_config.model, model_config.download_dir, model_config.load_format, model_config.revision)            
     return model.eval()

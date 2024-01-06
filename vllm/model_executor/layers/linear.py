@@ -4,13 +4,9 @@ from typing import Any, Dict, List, Optional
 import torch
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
-
-from vllm.model_executor.parallel_utils.parallel_state import (
-    get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size)
-from vllm.model_executor.parallel_utils.communication_op import (
-    tensor_model_parallel_all_reduce, tensor_model_parallel_all_gather)
-from vllm.model_executor.parallel_utils.utils import (
-    divide, split_tensor_along_last_dim)
+from vllm.model_executor.parallel_utils.parallel_state import (get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size)
+from vllm.model_executor.parallel_utils.communication_op import (tensor_model_parallel_all_reduce, tensor_model_parallel_all_gather)
+from vllm.model_executor.parallel_utils.utils import (divide, split_tensor_along_last_dim)
 from vllm.model_executor.utils import set_weight_attrs
 from vllm.logger import init_logger
 
@@ -29,10 +25,7 @@ class LinearMethodBase(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def apply_weights(self,
-                      weights: Dict[str, torch.Tensor],
-                      x: torch.Tensor,
-                      bias: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def apply_weights(self, weights: Dict[str, torch.Tensor], x: torch.Tensor, bias: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Apply the weights to the input tensor."""
         raise NotImplementedError
 
@@ -41,8 +34,7 @@ class UnquantizedLinearMethod(LinearMethodBase):
     """Linear method without quantization.
 
     Args:
-        separate_bias_add: If true, add bias separately after matrix
-                           multiplication.
+        separate_bias_add: If true, add bias separately after matrix multiplication.                 
     """
 
     def __init__(self, separate_bias_add: bool = False):
@@ -199,17 +191,14 @@ class ColumnParallelLinear(torch.nn.Module):
         if output_dim is not None:
             shard_size = param_data.shape[output_dim]
             start_idx = tp_rank * shard_size
-            loaded_weight = loaded_weight.narrow(output_dim, start_idx,
-                                                 shard_size)
+            loaded_weight = loaded_weight.narrow(output_dim, start_idx, shard_size)             
         assert param_data.shape == loaded_weight.shape
         param_data.copy_(loaded_weight)
 
     def forward(self, input_):
         bias = self.bias if not self.skip_bias_add else None
-
         # Matrix multiply.
-        output_parallel = self.linear_method.apply_weights(
-            self.linear_weights, input_, bias)
+        output_parallel = self.linear_method.apply_weights(self.linear_weights, input_, bias)
         if self.gather_output:
             # All-gather across the partitions.
             output = tensor_model_parallel_all_gather(output_parallel)
@@ -297,11 +286,9 @@ class MergedColumnParallelLinear(ColumnParallelLinear):
             if packed_dim == output_dim:
                 shard_size = shard_size // param.pack_factor
                 shard_offset = shard_offset // param.pack_factor
-            param_data = param_data.narrow(output_dim, shard_offset,
-                                           shard_size)
+            param_data = param_data.narrow(output_dim, shard_offset, shard_size)    
             start_idx = tp_rank * shard_size
-            loaded_weight = loaded_weight.narrow(output_dim, start_idx,
-                                                 shard_size)
+            loaded_weight = loaded_weight.narrow(output_dim, start_idx, shard_size)                     
         else:
             ignore_warning = getattr(param, "ignore_warning", False)
             if not ignore_warning:
@@ -359,16 +346,14 @@ class QKVParallelLinear(ColumnParallelLinear):
         self.num_heads = divide(self.total_num_heads, tp_size)
         if tp_size >= self.total_num_kv_heads:
             self.num_kv_heads = 1
-            self.num_kv_head_replicas = divide(tp_size,
-                                               self.total_num_kv_heads)
+            self.num_kv_head_replicas = divide(tp_size, self.total_num_kv_heads)                                  
         else:
             self.num_kv_heads = divide(self.total_num_kv_heads, tp_size)
             self.num_kv_head_replicas = 1
         input_size = self.hidden_size
-        output_size = (self.num_heads +
-                       2 * self.num_kv_heads) * tp_size * self.head_size
-        super().__init__(input_size, output_size, bias, False, skip_bias_add,
-                         params_dtype, linear_method)
+        output_size = (self.num_heads + 2 * self.num_kv_heads) * tp_size * self.head_size
+        super().__init__(input_size, output_size, bias, False, skip_bias_add, params_dtype, linear_method)
+                         
 
     def weight_loader(self,
                       param: Parameter,
@@ -412,8 +397,7 @@ class QKVParallelLinear(ColumnParallelLinear):
                 shard_offset = self.num_heads * self.head_size
                 shard_size = self.num_kv_heads * self.head_size
             elif loaded_shard_id == "v":
-                shard_offset = (self.num_heads +
-                                self.num_kv_heads) * self.head_size
+                shard_offset = (self.num_heads + self.num_kv_heads) * self.head_size
                 shard_size = self.num_kv_heads * self.head_size
             # If quantized, we need to adjust the offset and size to account
             # for the packing.
@@ -421,12 +405,11 @@ class QKVParallelLinear(ColumnParallelLinear):
             if packed_dim == output_dim:
                 shard_size = shard_size // param.pack_factor
                 shard_offset = shard_offset // param.pack_factor
-            param_data = param_data.narrow(output_dim, shard_offset,
-                                           shard_size)
+            param_data = param_data.narrow(output_dim, shard_offset,shard_size)
+                                           
             shard_id = tp_rank // self.num_kv_head_replicas
             start_idx = shard_id * shard_size
-            loaded_weight = loaded_weight.narrow(output_dim, start_idx,
-                                                 shard_size)
+            loaded_weight = loaded_weight.narrow(output_dim, start_idx, shard_size)                                      
         else:
             ignore_warning = getattr(param, "ignore_warning", False)
             if not ignore_warning:
@@ -501,9 +484,8 @@ class RowParallelLinear(torch.nn.Module):
                 set_weight_attrs(weight, {"weight_loader": self.weight_loader})
 
         if not reduce_results and (bias and not skip_bias_add):
-            raise ValueError("When not reduce the results, adding bias to the "
-                             "results can lead to incorrect results")
-
+            raise ValueError("When not reduce the results, adding bias to the results can lead to incorrect results")
+                             
         if bias:
             self.bias = Parameter(
                 torch.empty(self.output_size,
@@ -523,8 +505,7 @@ class RowParallelLinear(torch.nn.Module):
         if input_dim is not None:
             shard_size = param_data.shape[input_dim]
             start_idx = tp_rank * shard_size
-            loaded_weight = loaded_weight.narrow(input_dim, start_idx,
-                                                 shard_size)
+            loaded_weight = loaded_weight.narrow(input_dim, start_idx, shard_size)     
         assert param_data.shape == loaded_weight.shape
         param_data.copy_(loaded_weight)
 
@@ -534,13 +515,11 @@ class RowParallelLinear(torch.nn.Module):
             input_parallel = input_
         else:
             tp_rank = get_tensor_model_parallel_rank()
-            splitted_input = split_tensor_along_last_dim(
-                input_, num_partitions=self.tp_size)
+            splitted_input = split_tensor_along_last_dim(input_, num_partitions=self.tp_size)
             input_parallel = splitted_input[tp_rank].contiguous()
 
         # Matrix multiply.
-        output_parallel = self.linear_method.apply_weights(
-            self.linear_weights, input_parallel)
+        output_parallel = self.linear_method.apply_weights(self.linear_weights, input_parallel)
         if self.reduce_results and self.tp_size > 1:
             output_ = tensor_model_parallel_all_reduce(output_parallel)
         else:

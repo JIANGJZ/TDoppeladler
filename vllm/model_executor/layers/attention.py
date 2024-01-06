@@ -53,8 +53,8 @@ class PagedAttention(nn.Module):
         self.num_queries_per_kv = self.num_heads // self.num_kv_heads
 
         if self.head_size not in _SUPPORTED_HEAD_SIZES:
-            raise ValueError(f"head_size ({self.head_size}) is not supported. "
-                             f"Supported head sizes: {_SUPPORTED_HEAD_SIZES}.")
+            raise ValueError(f"head_size ({self.head_size}) is not supported. Supported head sizes: {_SUPPORTED_HEAD_SIZES}.")
+                             
 
     def forward(
         self,
@@ -105,32 +105,21 @@ class PagedAttention(nn.Module):
                 # project the key and value tensors to the desired number of
                 # heads.
                 # TODO(woosuk): Use MQA/GQA kernels for higher performance.
-                query = query.view(query.shape[0], self.num_kv_heads,
-                                   self.num_queries_per_kv, query.shape[-1])
-                key = key[:, :,
-                          None, :].expand(key.shape[0], self.num_kv_heads,
-                                          self.num_queries_per_kv,
-                                          key.shape[-1])
-                value = value[:, :, None, :].expand(value.shape[0],
-                                                    self.num_kv_heads,
-                                                    self.num_queries_per_kv,
-                                                    value.shape[-1])
+                query = query.view(query.shape[0], self.num_kv_heads, self.num_queries_per_kv, query.shape[-1])           
+                key = key[:, :, None, :].expand(key.shape[0], self.num_kv_heads, self.num_queries_per_kv, key.shape[-1])
+                value = value[:, :, None, :].expand(value.shape[0], self.num_kv_heads, self.num_queries_per_kv, value.shape[-1])
 
             # Set attention bias if not provided. This typically happens at the
             # very attention layer of every iteration.
             # FIXME(woosuk): This is a hack.
             if input_metadata.attn_bias is None:
                 if self.alibi_slopes is None:
-                    attn_bias = BlockDiagonalCausalMask.from_seqlens(
-                        [seq_len] * batch_size)
+                    attn_bias = BlockDiagonalCausalMask.from_seqlens([seq_len] * batch_size)
                     if self.sliding_window is not None:
-                        attn_bias = attn_bias.make_local_attention(
-                            self.sliding_window)
+                        attn_bias = attn_bias.make_local_attention(self.sliding_window)   
                     input_metadata.attn_bias = attn_bias
                 else:
-                    input_metadata.attn_bias = _make_alibi_bias(
-                        self.alibi_slopes, self.num_kv_heads, batch_size,
-                        seq_len, query.dtype)
+                    input_metadata.attn_bias = _make_alibi_bias(self.alibi_slopes, self.num_kv_heads, batch_size, seq_len, query.dtype)
 
             # TODO(woosuk): Too many view operations. Let's try to reduce them
             # in the future for code readability.
@@ -219,12 +208,9 @@ def _paged_attention(
     alibi_slopes: Optional[torch.Tensor],
 ) -> torch.Tensor:
     output = torch.empty_like(query)
-
     block_size = value_cache.shape[3]
     num_seqs, num_heads, head_size = query.shape
-    max_num_partitions = (
-        (input_metadata.max_context_len + _PARTITION_SIZE - 1) //
-        _PARTITION_SIZE)
+    max_num_partitions = ((input_metadata.max_context_len + _PARTITION_SIZE - 1) // _PARTITION_SIZE)  
     # NOTE(woosuk): We use a simple heuristic to decide whether to use
     # PagedAttention V1 or V2. If the number of partitions is 1, we use
     # V1 to avoid the overhead of reduction. Also, if the number of
@@ -232,8 +218,7 @@ def _paged_attention(
     # to parallelize.
     # TODO(woosuk): Tune this heuristic.
     # For context len > 8192, use V2 kernel to avoid shared memory shortage.
-    use_v1 = input_metadata.max_context_len <= 8192 and (
-        max_num_partitions == 1 or num_seqs * num_heads > 512)
+    use_v1 = input_metadata.max_context_len <= 8192 and (max_num_partitions == 1 or num_seqs * num_heads > 512)
     if use_v1:
         # Run PagedAttention V1.
         ops.paged_attention_v1(

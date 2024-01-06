@@ -143,9 +143,11 @@ class RotaryEmbedding(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # ops.rotary_embedding() is an in-place operation that
         # updates the query and key tensors.
-        ops.rotary_embedding(positions, query, key, self.head_size,
-                             self.cos_sin_cache, self.is_neox_style)
-        return query, key
+        if query.device == torch.device('cpu'):
+            return self._forward(positions, query, key)
+        else:
+            ops.rotary_embedding(positions, query, key, self.head_size, self.cos_sin_cache, self.is_neox_style)              
+            return query, key
 
 
 class LinearScalingRotaryEmbedding(RotaryEmbedding):
