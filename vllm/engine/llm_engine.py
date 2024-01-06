@@ -12,9 +12,7 @@ from vllm.engine.ray_utils import RayWorkerVllm, initialize_cluster, ray
 from vllm.logger import init_logger
 from vllm.outputs import RequestOutput
 from vllm.sampling_params import SamplingParams
-from vllm.sequence import (SamplerOutput, Sequence, SequenceGroup,
-                           SequenceGroupMetadata, SequenceGroupOutput,
-                           SequenceOutput, SequenceStatus)
+from vllm.sequence import (SamplerOutput, Sequence, SequenceGroup, SequenceGroupMetadata, SequenceGroupOutput, SequenceOutput, SequenceStatus)                     
 from vllm.transformers_utils.tokenizer import (detokenize_incrementally, get_tokenizer)                           
 from vllm.utils import Counter
 
@@ -94,12 +92,8 @@ class LLMEngine:
         self.log_stats = log_stats
         self._verify_args()
 
-        self.tokenizer = get_tokenizer(
-            model_config.tokenizer,
-            tokenizer_mode=model_config.tokenizer_mode,
-            trust_remote_code=model_config.trust_remote_code,
-            tokenizer_revision=model_config.tokenizer_revision,
-            revision=model_config.revision)
+        self.tokenizer = get_tokenizer(model_config.tokenizer, tokenizer_mode=model_config.tokenizer_mode, trust_remote_code=model_config.trust_remote_code, tokenizer_revision=model_config.tokenizer_revision, revision=model_config.revision)
+            
         self.seq_counter = Counter()
 
         # Create the parallel GPU workers.
@@ -111,6 +105,7 @@ class LLMEngine:
             self._init_workers_ray(placement_group)
         else:
             self._init_workers(distributed_init_method)
+            self._init_cpu_workers()
 
         # Profile the memory usage and initialize the cache.
         self._init_cache()
@@ -137,36 +132,26 @@ class LLMEngine:
         # Lazy import the Worker to avoid importing torch.cuda/xformers
         # before CUDA_VISIBLE_DEVICES is set in the Worker
         from vllm.worker.worker import Worker
-
-        assert self.parallel_config.world_size == 1, (
-            "Ray is required if parallel_config.world_size > 1.")
-
+        assert self.parallel_config.world_size == 1, ("Ray is required if parallel_config.world_size > 1.")
         self.workers: List[Worker] = []
-        worker = Worker(
-            self.model_config,
-            self.parallel_config,
-            self.scheduler_config,
-            0,
-            distributed_init_method,
-        )
+        worker = Worker(self.model_config, self.parallel_config, self.scheduler_config, 0, distributed_init_method,)
         self.workers.append(worker)
-        self._run_workers(
-            "init_model",
-            get_all_outputs=True,
-        )
-        self._run_workers(
-            "load_model",
-            get_all_outputs=True,
-            max_concurrent_workers=self.parallel_config.
-            max_parallel_loading_workers,
-        )
+        self._run_workers("init_model", get_all_outputs=True,)
+        self._run_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)            
+        
 
-    def _init_workers_ray(self, placement_group: "PlacementGroup",
-                          **ray_remote_kwargs):
+    def _init_cpu_workers(self, ):
+        from vllm.worker.worker import CPUWorker
+        self.cpu_workers: List[CPUWorker] = []
+        worker = CPUWorker(self.model_config, self.parallel_config, self.scheduler_config,)
+        self.cpu_workers.append(worker)
+            
+
+    def _init_workers_ray(self, placement_group: "PlacementGroup", **ray_remote_kwargs):
+                          
         # Lazy import the Worker to avoid importing torch.cuda/xformers
         # before CUDA_VISIBLE_DEVICES is set in the Worker
         from vllm.worker.worker import Worker
-
         self.workers: List[Worker] = []
         for bundle in placement_group.bundle_specs:
             if not bundle.get("GPU", 0):
@@ -175,14 +160,7 @@ class LLMEngine:
                 num_gpus = self.cache_config.gpu_memory_utilization
             else:
                 num_gpus = 1
-            worker = ray.remote(
-                num_cpus=0,
-                num_gpus=num_gpus,
-                scheduling_strategy=PlacementGroupSchedulingStrategy(
-                    placement_group=placement_group,
-                    placement_group_capture_child_tasks=True),
-                **ray_remote_kwargs,
-            )(RayWorkerVllm).remote(self.model_config.trust_remote_code)
+            worker = ray.remote(num_cpus=0, num_gpus=num_gpus, scheduling_strategy=PlacementGroupSchedulingStrategy(placement_group=placement_group, placement_group_capture_child_tasks=True), **ray_remote_kwargs, )(RayWorkerVllm).remote(self.model_config.trust_remote_code)
             self.workers.append(worker)
 
         # Initialize torch distributed process group for the workers.
@@ -190,26 +168,11 @@ class LLMEngine:
         model_config = copy.deepcopy(self.model_config)
         parallel_config = copy.deepcopy(self.parallel_config)
         scheduler_config = copy.deepcopy(self.scheduler_config)
-        self._run_workers("init_worker",
-                          get_all_outputs=True,
-                          worker_init_fn=lambda: Worker(
-                              model_config,
-                              parallel_config,
-                              scheduler_config,
-                              None,
-                              None,
-                          ))
-        self._run_workers(
-            "init_model",
-            get_all_outputs=True,
-        )
-        self._run_workers(
-            "load_model",
-            get_all_outputs=True,
-            max_concurrent_workers=self.parallel_config.
-            max_parallel_loading_workers,
-        )
-
+        self._run_workers("init_worker", get_all_outputs=True, worker_init_fn=lambda: Worker(model_config, parallel_config, scheduler_config, None, None,))
+        self._run_workers("init_model", get_all_outputs=True,)
+        self._run_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)
+            
+            
     def _verify_args(self) -> None:
         self.model_config.verify_with_parallel_config(self.parallel_config)
         self.cache_config.verify_with_parallel_config(self.parallel_config)
@@ -231,13 +194,10 @@ class LLMEngine:
         num_gpu_blocks = min(b[0] for b in num_blocks)
         num_cpu_blocks = min(b[1] for b in num_blocks)
         # FIXME(woosuk): Change to debug log.
-        logger.info(f"# GPU blocks: {num_gpu_blocks}, "
-                    f"# CPU blocks: {num_cpu_blocks}")
-
+        logger.info(f"# GPU blocks: {num_gpu_blocks}, # CPU blocks: {num_cpu_blocks}")
+                    
         if num_gpu_blocks <= 0:
-            raise ValueError("No available memory for the cache blocks. "
-                             "Try increasing `gpu_memory_utilization` when "
-                             "initializing the engine.")
+            raise ValueError("No available memory for the cache blocks. Try increasing `gpu_memory_utilization` when initializing the engine.")          
         max_seq_len = self.cache_config.block_size * num_gpu_blocks
         if self.model_config.max_model_len > max_seq_len:
             raise ValueError(
@@ -263,23 +223,13 @@ class LLMEngine:
         engine_configs = engine_args.create_engine_configs()
         parallel_config = engine_configs[2]
         # Initialize the cluster.
-        distributed_init_method, placement_group = initialize_cluster(
-            parallel_config)
+        distributed_init_method, placement_group = initialize_cluster(parallel_config)
         # Create the LLM engine.
-        engine = cls(*engine_configs,
-                     distributed_init_method,
-                     placement_group,
-                     log_stats=not engine_args.disable_log_stats)
+        engine = cls(*engine_configs, distributed_init_method, placement_group, log_stats=not engine_args.disable_log_stats)    
         return engine
 
-    def add_request(
-        self,
-        request_id: str,
-        prompt: Optional[str],
-        sampling_params: SamplingParams,
-        prompt_token_ids: Optional[List[int]] = None,
-        arrival_time: Optional[float] = None,
-    ) -> None:
+    def add_request(self, request_id: str, prompt: Optional[str], sampling_params: SamplingParams, prompt_token_ids: Optional[List[int]] = None, arrival_time: Optional[float] = None, ) -> None:
+    
         """Add a request to the engine's request pool.
 
         The request is added to the request pool and will be processed by the
@@ -314,7 +264,6 @@ class LLMEngine:
 
     def abort_request(self, request_id: Union[str, Iterable[str]]) -> None:
         """Aborts a request(s) with the given ID.
-
         Args:
             request_id: The ID(s) of the request to abort.
         """
@@ -332,58 +281,35 @@ class LLMEngine:
         """Returns True if there are unfinished requests."""
         return self.scheduler.has_unfinished_seqs()
 
-    def _schedule(
-        self
-    ) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs,
-               List[RequestOutput]]:
+    def _schedule(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]: 
         seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule()
-        return seq_group_metadata_list, scheduler_outputs, [
-            RequestOutput.from_seq_group(seq_group)
-            for seq_group in scheduler_outputs.ignored_seq_groups
-        ]
+        return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
 
-    def _check_beam_search_early_stopping(
-        self,
-        early_stopping: Union[bool, str],
-        sampling_params: SamplingParams,
-        best_running_seq: Sequence,
-        current_worst_seq: Sequence,
-    ) -> bool:
+
+    def _check_beam_search_early_stopping(self, early_stopping: Union[bool, str], sampling_params: SamplingParams, best_running_seq: Sequence, current_worst_seq: Sequence,) -> bool:
         assert sampling_params.use_beam_search
         length_penalty = sampling_params.length_penalty
         if early_stopping is True:
             return True
 
-        current_worst_score = (current_worst_seq.get_beam_search_score(
-            length_penalty=length_penalty,
-            eos_token_id=self.tokenizer.eos_token_id))
+        current_worst_score = (current_worst_seq.get_beam_search_score(length_penalty=length_penalty, eos_token_id=self.tokenizer.eos_token_id))
+            
         if early_stopping is False:
-            highest_attainable_score = (best_running_seq.get_beam_search_score(
-                length_penalty=length_penalty,
-                eos_token_id=self.tokenizer.eos_token_id))
+            highest_attainable_score = (best_running_seq.get_beam_search_score(length_penalty=length_penalty,eos_token_id=self.tokenizer.eos_token_id))      
         else:
             assert early_stopping == "never"
             if length_penalty > 0.0:
                 # If length_penalty > 0.0, beam search will prefer longer
                 # sequences. The highest attainable score calculation is
                 # based on the longest possible sequence length in this case.
-                max_possible_length = max(
-                    best_running_seq.get_prompt_len() +
-                    sampling_params.max_tokens,
-                    self.scheduler_config.max_model_len)
-                highest_attainable_score = (
-                    best_running_seq.get_beam_search_score(
-                        length_penalty=length_penalty,
-                        eos_token_id=self.tokenizer.eos_token_id,
-                        seq_len=max_possible_length))
+                max_possible_length = max(best_running_seq.get_prompt_len() + sampling_params.max_tokens, self.scheduler_config.max_model_len)
+            
+                highest_attainable_score = (best_running_seq.get_beam_search_score(length_penalty=length_penalty, eos_token_id=self.tokenizer.eos_token_id, seq_len=max_possible_length))          
             else:
                 # Otherwise, beam search will prefer shorter sequences. The
                 # highest attainable score calculation is based on the current
                 # sequence length.
-                highest_attainable_score = (
-                    best_running_seq.get_beam_search_score(
-                        length_penalty=length_penalty,
-                        eos_token_id=self.tokenizer.eos_token_id))
+                highest_attainable_score = (best_running_seq.get_beam_search_score(length_penalty=length_penalty,eos_token_id=self.tokenizer.eos_token_id))        
         return current_worst_score >= highest_attainable_score
 
     def _process_sequence_group_outputs(self, seq_group: SequenceGroup, outputs: SequenceGroupOutput) -> None:         
@@ -396,10 +322,8 @@ class LLMEngine:
         samples = outputs.samples
         parent_seqs = seq_group.get_seqs(status=SequenceStatus.RUNNING)
         existing_finished_seqs = seq_group.get_finished_seqs()
-        parent_child_dict = {
-            parent_seq.seq_id: []
-            for parent_seq in parent_seqs
-        }
+        parent_child_dict = {parent_seq.seq_id: [] for parent_seq in parent_seqs}
+
         for sample in samples:
             parent_child_dict[sample.parent_seq_id].append(sample)
         # List of (child, parent)
@@ -467,9 +391,7 @@ class LLMEngine:
         new_finished_seqs = [(seq, parent, True) for seq, parent in child_seqs if seq.is_finished()]
         all_finished_seqs = existing_finished_seqs + new_finished_seqs
         # Sort the finished sequences by their scores.
-        all_finished_seqs.sort(key=lambda x: x[0].get_beam_search_score(
-            length_penalty=length_penalty,
-            eos_token_id=self.tokenizer.eos_token_id), reverse=True)
+        all_finished_seqs.sort(key=lambda x: x[0].get_beam_search_score(length_penalty=length_penalty, eos_token_id=self.tokenizer.eos_token_id), reverse=True)   
                                
         for seq, parent, is_new in all_finished_seqs[:beam_width]:
             if is_new:
@@ -495,10 +417,7 @@ class LLMEngine:
         running_child_seqs = [(seq, parent) for seq, parent in child_seqs if not seq.is_finished()]
                               
         # Sort the running sequences by their scores.
-        running_child_seqs.sort(key=lambda x: x[0].get_beam_search_score(
-            length_penalty=length_penalty,
-            eos_token_id=self.tokenizer.eos_token_id), reverse=True)
-                                
+        running_child_seqs.sort(key=lambda x: x[0].get_beam_search_score(length_penalty=length_penalty,eos_token_id=self.tokenizer.eos_token_id), reverse=True)
 
         # Check if we can stop the beam search.
         if len(running_child_seqs) == 0:
@@ -511,10 +430,7 @@ class LLMEngine:
             # Check the early stopping criteria
             best_running_seq = running_child_seqs[0][0]
             current_worst_seq = all_finished_seqs[beam_width - 1][0]
-            stop_beam_search = self._check_beam_search_early_stopping(
-                seq_group.sampling_params.early_stopping,
-                seq_group.sampling_params, best_running_seq, current_worst_seq)
-
+            stop_beam_search = self._check_beam_search_early_stopping(seq_group.sampling_params.early_stopping, seq_group.sampling_params, best_running_seq, current_worst_seq)
         if stop_beam_search:
             # Stop the beam search and remove all the running sequences from
             # the sequence group.
@@ -597,13 +513,7 @@ class LLMEngine:
 
         return self._process_model_outputs(output, scheduler_outputs)
 
-    def _log_system_stats(
-        self,
-        prompt_run: bool,
-        num_batched_tokens: int,
-        num_real_prompt_tokens: int,
-        num_recompute_tokens:int,
-    ) -> None:
+    def _log_system_stats(self, prompt_run: bool, num_batched_tokens: int, num_real_prompt_tokens: int, num_recompute_tokens:int,) -> None:
         now = time.monotonic()
         # Log the number of batched input tokens.
         if prompt_run:
@@ -714,8 +624,7 @@ class LLMEngine:
 
     def _decode_sequence(self, seq: Sequence, prms: SamplingParams) -> None:
         """Decodes the new token for a sequence."""
-        (new_tokens, new_output_text, prefix_offset,
-         read_offset) = detokenize_incrementally(
+        (new_tokens, new_output_text, prefix_offset, read_offset) = detokenize_incrementally(
              self.tokenizer,
              all_input_ids=seq.get_token_ids(),
              prev_tokens=seq.tokens,
@@ -732,8 +641,7 @@ class LLMEngine:
         seq.read_offset = read_offset
         seq.output_text += new_output_text
 
-    def _check_stop(self, seq: Sequence,
-                    sampling_params: SamplingParams) -> None:
+    def _check_stop(self, seq: Sequence, sampling_params: SamplingParams) -> None:    
         """Stop the finished sequences."""
         for stop_str in sampling_params.stop:
             if seq.output_text.endswith(stop_str):
@@ -758,18 +666,11 @@ class LLMEngine:
             return
 
         # Check if the sequence has generated the EOS token.
-        if ((not sampling_params.ignore_eos)
-                and seq.get_last_token_id() == self.tokenizer.eos_token_id):
+        if ((not sampling_params.ignore_eos) and seq.get_last_token_id() == self.tokenizer.eos_token_id): 
             seq.status = SequenceStatus.FINISHED_STOPPED
             return
 
-    def _run_workers_in_batch(
-        self,
-        workers,
-        method: str,
-        *args,
-        **kwargs,
-    ):
+    def _run_workers_in_batch(self, workers, method: str, *args, **kwargs, ):
         all_outputs = []
         for worker in workers:
             if self.parallel_config.worker_use_ray:
@@ -783,27 +684,16 @@ class LLMEngine:
             all_outputs = ray.get(all_outputs)
         return all_outputs
 
-    def _run_workers(
-        self,
-        method: str,
-        *args,
-        get_all_outputs: bool = False,
-        max_concurrent_workers: Optional[int] = None,
-        **kwargs,
-    ) -> Any:
+    def _run_workers(self, method: str, *args, get_all_outputs: bool = False, max_concurrent_workers: Optional[int] = None, **kwargs, ) -> Any:
         """Runs the given method on all workers."""
         all_outputs = []
         if max_concurrent_workers:
-            work_groups = [
-                self.workers[i:i + max_concurrent_workers]
-                for i in range(0, len(self.workers), max_concurrent_workers)
-            ]
+            work_groups = [self.workers[i:i + max_concurrent_workers] for i in range(0, len(self.workers), max_concurrent_workers)]
         else:
             work_groups = [self.workers]
 
         for workers in work_groups:
-            all_outputs.extend(
-                self._run_workers_in_batch(workers, method, *args, **kwargs))
+            all_outputs.extend(self._run_workers_in_batch(workers, method, *args, **kwargs))
 
         if get_all_outputs:
             return all_outputs

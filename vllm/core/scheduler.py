@@ -27,7 +27,6 @@ class PreemptionMode(enum.Enum):
 
 
 class SchedulerOutputs:
-
     def __init__(
         self,
         scheduled_seq_groups: List[SequenceGroup],
@@ -54,16 +53,12 @@ class SchedulerOutputs:
 
     def is_empty(self) -> bool:
         # NOTE: We do not consider the ignored sequence groups.
-        return (not self.scheduled_seq_groups and not self.blocks_to_swap_in
-                and not self.blocks_to_swap_out and not self.blocks_to_copy)
+        return (not self.scheduled_seq_groups and not self.blocks_to_swap_in and not self.blocks_to_swap_out and not self.blocks_to_copy)
+                
 
 
 class Scheduler:
-    def __init__(
-        self,
-        scheduler_config: SchedulerConfig,
-        cache_config: CacheConfig,
-    ) -> None:
+    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, ) -> None:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
 
@@ -329,11 +324,7 @@ class Scheduler:
         for seq in seq_group.get_seqs(status=SequenceStatus.WAITING):
             seq.status = SequenceStatus.RUNNING
 
-    def _append_slot(
-        self,
-        seq_group: SequenceGroup,
-        blocks_to_copy: Dict[int, List[int]],
-    ) -> None:
+    def _append_slot(self, seq_group: SequenceGroup, blocks_to_copy: Dict[int, List[int]],) -> None:
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
             ret = self.block_manager.append_slot(seq)
             if ret is not None:
@@ -343,12 +334,7 @@ class Scheduler:
                 else:
                     blocks_to_copy[src_block] = [dst_block]
 
-    def _preempt(
-        self,
-        seq_group: SequenceGroup,
-        blocks_to_swap_out: Dict[int, int],
-        preemption_mode: Optional[PreemptionMode] = None,
-    ) -> None:
+    def _preempt(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],  preemption_mode: Optional[PreemptionMode] = None,) -> None:
         # If preemption mode is not specified, we determine the mode as follows:
         # We use recomputation by default since it incurs lower overhead than
         # swapping. However, when the sequence group has multiple sequences
@@ -372,10 +358,7 @@ class Scheduler:
         else:
             raise AssertionError("Invalid preemption mode.")
 
-    def _preempt_by_recompute(
-        self,
-        seq_group: SequenceGroup,
-    ) -> None:
+    def _preempt_by_recompute(self, seq_group: SequenceGroup,) -> None:
         seqs = seq_group.get_seqs(status=SequenceStatus.RUNNING)
         assert len(seqs) == 1
         for seq in seqs:
@@ -387,31 +370,19 @@ class Scheduler:
         seq_group.set_recompute(True)
         self.waiting.insert(0, seq_group)
 
-    def _preempt_by_swap(
-        self,
-        seq_group: SequenceGroup,
-        blocks_to_swap_out: Dict[int, int],
-    ) -> None:
+    def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
         # self.swapped.append(seq_group)
         self.swapped_cpu.append(seq_group)
 
-    def _swap_in(
-        self,
-        seq_group: SequenceGroup,
-        blocks_to_swap_in: Dict[int, int],
-    ) -> None:
+    def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         # print ("swapin seq!")
         mapping = self.block_manager.swap_in(seq_group)
         blocks_to_swap_in.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.SWAPPED):
             seq.status = SequenceStatus.RUNNING
 
-    def _swap_out(
-        self,
-        seq_group: SequenceGroup,
-        blocks_to_swap_out: Dict[int, int],
-    ) -> None:
+    def _swap_out(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         if not self.block_manager.can_swap_out(seq_group):
             # FIXME(woosuk): Abort the sequence group instead of aborting the
             # entire engine.

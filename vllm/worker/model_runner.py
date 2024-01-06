@@ -1,10 +1,8 @@
 import time
 from typing import Dict, List, Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn as nn
-
 from vllm.config import ModelConfig, ParallelConfig, SchedulerConfig
 from vllm.logger import init_logger
 from vllm.model_executor import get_model, InputMetadata, SamplingMetadata
@@ -22,12 +20,7 @@ _BATCH_SIZES_TO_CAPTURE = [1, 2, 4] + [8 * i for i in range(1, 33)]
 
 
 class ModelRunner:
-    def __init__(
-        self,
-        model_config: ModelConfig,
-        parallel_config: ParallelConfig,
-        scheduler_config: SchedulerConfig,
-    ):
+    def __init__(self, model_config: ModelConfig, parallel_config: ParallelConfig, scheduler_config: SchedulerConfig, ):
         self.model_config = model_config
         self.parallel_config = parallel_config
         self.scheduler_config = scheduler_config
@@ -41,9 +34,7 @@ class ModelRunner:
         self.graph_runners: Dict[int, CUDAGraphRunner] = {}
         self.graph_memory_pool = None  # Set during graph capture.
 
-        self.max_context_len_to_capture = (
-            self.model_config.max_context_len_to_capture
-            if self.model_config is not None else 0)
+        self.max_context_len_to_capture = (self.model_config.max_context_len_to_capture if self.model_config is not None else 0)
         # When using CUDA graph, the input block tables must be padded to
         # max_context_len_to_capture. However, creating the block table in
         # Python can be expensive. To optimize this, we cache the block table
@@ -59,14 +50,10 @@ class ModelRunner:
 
     def set_block_size(self, block_size: int) -> None:
         self.block_size = block_size
-
         max_num_blocks = (self.max_context_len_to_capture + block_size - 1) // block_size                
         self.graph_block_tables = np.zeros((max(_BATCH_SIZES_TO_CAPTURE), max_num_blocks), dtype=np.int32)
 
-    def _prepare_prompt(
-        self,
-        seq_group_metadata_list: List[SequenceGroupMetadata],
-    ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
+    def _prepare_prompt(self, seq_group_metadata_list: List[SequenceGroupMetadata], ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
         assert len(seq_group_metadata_list) > 0
         input_tokens: List[List[int]] = []
         input_positions: List[List[int]] = []
@@ -140,10 +127,7 @@ class ModelRunner:
         )
         return input_tokens, input_positions, input_metadata
 
-    def _prepare_decode(
-        self,
-        seq_group_metadata_list: List[SequenceGroupMetadata],
-    ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
+    def _prepare_decode(self, seq_group_metadata_list: List[SequenceGroupMetadata], ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
         assert len(seq_group_metadata_list) > 0
         input_tokens: List[List[int]] = []
         input_positions: List[List[int]] = []
@@ -180,10 +164,8 @@ class ModelRunner:
 
         batch_size = len(input_tokens)
         max_context_len = max(context_lens)
-        use_captured_graph = (
-            not self.model_config.enforce_eager
-            and batch_size <= _BATCH_SIZES_TO_CAPTURE[-1]
-            and max_context_len <= self.max_context_len_to_capture)
+        use_captured_graph = (not self.model_config.enforce_eager and batch_size <= _BATCH_SIZES_TO_CAPTURE[-1] and max_context_len <= self.max_context_len_to_capture)
+            
         if use_captured_graph:
             # Pad the input tokens, positions, and slot mapping to match the
             # batch size of the captured graph.
@@ -201,28 +183,10 @@ class ModelRunner:
         # because they will be eventually copied to the designated GPU buffer.
         device = "cpu" if use_captured_graph else "cuda"
         pin_memory = use_captured_graph and not self.in_wsl
-        input_tokens = _make_tensor_with_pad(input_tokens,
-                                             max_len=1,
-                                             pad=0,
-                                             dtype=torch.long,
-                                             device=device,
-                                             pin_memory=pin_memory)
-        input_positions = _make_tensor_with_pad(input_positions,
-                                                max_len=1,
-                                                pad=0,
-                                                dtype=torch.long,
-                                                device=device,
-                                                pin_memory=pin_memory)
-        slot_mapping = _make_tensor_with_pad(slot_mapping,
-                                             max_len=1,
-                                             pad=_PAD_SLOT_ID,
-                                             dtype=torch.long,
-                                             device=device,
-                                             pin_memory=pin_memory)
-        context_lens = torch.tensor(context_lens,
-                                    dtype=torch.int,
-                                    device=device,
-                                    pin_memory=pin_memory)
+        input_tokens = _make_tensor_with_pad(input_tokens, max_len=1, pad=0, dtype=torch.long, device=device, pin_memory=pin_memory)                                              
+        input_positions = _make_tensor_with_pad(input_positions, max_len=1, pad=0, dtype=torch.long, device=device, pin_memory=pin_memory)                                                              
+        slot_mapping = _make_tensor_with_pad(slot_mapping, max_len=1, pad=_PAD_SLOT_ID, dtype=torch.long, device=device, pin_memory=pin_memory)                                      
+        context_lens = torch.tensor(context_lens, dtype=torch.int, device=device, pin_memory=pin_memory)
 
         if use_captured_graph:
             # The shape of graph_block_tables is
@@ -233,28 +197,13 @@ class ModelRunner:
                     input_block_tables[i, :len(block_table)] = block_table
             block_tables = torch.tensor(input_block_tables, device=device)
         else:
-            block_tables = _make_tensor_with_pad(
-                block_tables,
-                max_len=max_context_len,
-                pad=0,
-                dtype=torch.int,
-            )
+            block_tables = _make_tensor_with_pad(block_tables, max_len=max_context_len, pad=0, dtype=torch.int, )
+                
+        input_metadata = InputMetadata(prompt_lens=[], slot_mapping=slot_mapping, max_context_len=max_context_len, context_lens=context_lens, block_tables=block_tables, use_cuda_graph=use_captured_graph,)
 
-        input_metadata = InputMetadata(
-            prompt_lens=[],
-            slot_mapping=slot_mapping,
-            max_context_len=max_context_len,
-            context_lens=context_lens,
-            block_tables=block_tables,
-            use_cuda_graph=use_captured_graph,
-        )
         return input_tokens, input_positions, input_metadata
 
-    def _prepare_sample(
-        self,
-        seq_group_metadata_list: List[SequenceGroupMetadata],
-        prompt_lens: List[int],
-    ) -> SamplingMetadata:
+    def _prepare_sample(self, seq_group_metadata_list: List[SequenceGroupMetadata], prompt_lens: List[int], ) -> SamplingMetadata:
         seq_groups: List[Tuple[List[int], SamplingParams]] = []
         selected_token_indices: List[int] = []
         selected_token_start_idx = 0
@@ -317,11 +266,7 @@ class ModelRunner:
         return sampling_metadata
 
     @torch.inference_mode()
-    def execute_model(
-        self,
-        seq_group_metadata_list: List[SequenceGroupMetadata],
-        kv_caches: List[Tuple[torch.Tensor, torch.Tensor]],
-    ) -> SamplerOutput:
+    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], kv_caches: List[Tuple[torch.Tensor, torch.Tensor]], ) -> SamplerOutput:
         # NOTE: We assume that all sequences in the group are all prompts or
         # all decodes.
         is_prompt = seq_group_metadata_list[0].is_prompt
@@ -334,22 +279,14 @@ class ModelRunner:
             inputs = self._prepare_decode(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
             print ("decoding {}".format(input_metadata))
-
         # Execute the model.
         if input_metadata.use_cuda_graph:
             graph_batch_size = input_tokens.shape[0]
             model_executable = self.graph_runners[graph_batch_size]
         else:
             model_executable = self.model
-        hidden_states = model_executable(
-            input_ids=input_tokens,
-            positions=input_positions,
-            kv_caches=kv_caches,
-            input_metadata=input_metadata,
-        )
-
+        hidden_states = model_executable(input_ids=input_tokens, positions=input_positions, kv_caches=kv_caches, input_metadata=input_metadata,)
         sampling_metadata = self._prepare_sample(seq_group_metadata_list, input_metadata.prompt_lens)
- 
         # Sample the next token.
         output = self.model.sample(hidden_states=hidden_states, sampling_metadata=sampling_metadata,)
         return output
@@ -399,8 +336,7 @@ class ModelRunner:
         # Prepare dummy inputs. These will be reused for all batch sizes.
         max_batch_size = max(_BATCH_SIZES_TO_CAPTURE)
         input_tokens = torch.zeros(max_batch_size, 1, dtype=torch.long).cuda()
-        input_positions = torch.zeros(max_batch_size, 1,
-                                      dtype=torch.long).cuda()
+        input_positions = torch.zeros(max_batch_size, 1, dtype=torch.long).cuda()                           
         slot_mapping = torch.empty(max_batch_size, 1, dtype=torch.long).cuda()
         slot_mapping.fill_(_PAD_SLOT_ID)
         context_lens = torch.ones(max_batch_size, dtype=torch.int32).cuda()
@@ -436,12 +372,7 @@ class ModelRunner:
         logger.info(f"Graph capturing finished in {elapsed_time:.0f} secs.")
 
 class CPUModelRunner:
-    def __init__(
-        self,
-        model_config: ModelConfig,
-        parallel_config: ParallelConfig,
-        scheduler_config: SchedulerConfig,
-    ):
+    def __init__(self, model_config: ModelConfig, parallel_config: ParallelConfig,  scheduler_config: SchedulerConfig,):
         self.model_config = model_config
         self.parallel_config = parallel_config
         self.scheduler_config = scheduler_config

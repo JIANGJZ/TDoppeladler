@@ -4,13 +4,12 @@ from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.distributed
-
 from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig)    
 from vllm.model_executor import set_random_seed
 from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_parallel)
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.cache_engine import CacheEngine
-from vllm.worker.model_runner import ModelRunner
+from vllm.worker.model_runner import ModelRunner, CPUModelRunner
 
 
 class Worker:
@@ -20,15 +19,7 @@ class Worker:
     maintaining the KV cache and executing the model on the GPU. In case of
     distributed inference, each worker is assigned a partition of the model.
     """
-
-    def __init__(
-        self,
-        model_config: ModelConfig,
-        parallel_config: ParallelConfig,
-        scheduler_config: SchedulerConfig,
-        rank: Optional[int] = None,
-        distributed_init_method: Optional[str] = None,
-    ) -> None:
+    def __init__(self, model_config: ModelConfig, parallel_config: ParallelConfig, scheduler_config: SchedulerConfig, rank: Optional[int] = None, distributed_init_method: Optional[str] = None,) -> None:
         self.model_config = model_config
         self.parallel_config = parallel_config
         self.scheduler_config = scheduler_config
@@ -67,12 +58,7 @@ class Worker:
         self.model_runner.load_model()
 
     @torch.inference_mode()
-    def profile_num_available_blocks(
-        self,
-        block_size: int,
-        gpu_memory_utilization: float,
-        cpu_swap_space: int,
-    ) -> Tuple[int, int]:
+    def profile_num_available_blocks(self, block_size: int, gpu_memory_utilization: float, cpu_swap_space: int,) -> Tuple[int, int]:
         # Profile the memory usage of the model and get the maximum number of
         # cache blocks that can be allocated with the remaining free memory.
         torch.cuda.empty_cache()
@@ -145,7 +131,7 @@ class Worker:
         return output
 
 
-class CPUworker:
+class CPUWorker:
     def __init__(
         self,
         model_config: ModelConfig,
@@ -182,8 +168,6 @@ class CPUworker:
         self.model_runner.set_block_size(self.cache_engine.block_size)
 
 
-
-
 def _init_distributed_environment(
     parallel_config: ParallelConfig,
     rank: int,
@@ -211,9 +195,8 @@ def _init_distributed_environment(
 
     # A small all_reduce for warmup.
     torch.distributed.all_reduce(torch.zeros(1).cuda())
-    initialize_model_parallel(parallel_config.tensor_parallel_size,
-                              parallel_config.pipeline_parallel_size)
-
+    initialize_model_parallel(parallel_config.tensor_parallel_size, parallel_config.pipeline_parallel_size)
+                              
 
 def _check_if_gpu_supports_dtype(torch_dtype: torch.dtype):
     # Check if the GPU supports the dtype.
