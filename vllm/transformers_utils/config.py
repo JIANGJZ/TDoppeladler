@@ -16,15 +16,11 @@ _CONFIG_REGISTRY = {
 }
 
 
-def get_config(model: str,
-               trust_remote_code: bool,
-               revision: Optional[str] = None) -> PretrainedConfig:
+def get_config(model: str, trust_remote_code: bool, revision: Optional[str] = None) -> PretrainedConfig:
     try:
-        config = AutoConfig.from_pretrained(
-            model, trust_remote_code=trust_remote_code, revision=revision)
-    except ValueError as e:
-        if (not trust_remote_code and
-                "requires you to execute the configuration file" in str(e)):
+        config = AutoConfig.from_pretrained(model, trust_remote_code=trust_remote_code, revision=revision)
+    except ValueError as e: 
+        if (not trust_remote_code and "requires you to execute the configuration file" in str(e)):
             err_msg = (
                 "Failed to load the model config. If the model is a custom "
                 "model not yet available in the HuggingFace transformers "

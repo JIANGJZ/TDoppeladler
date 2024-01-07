@@ -7,7 +7,6 @@ from transformers import PretrainedConfig
 from vllm.logger import init_logger
 from vllm.transformers_utils.config import get_config
 from vllm.utils import get_cpu_memory, is_hip
-
 logger = init_logger(__name__)
 
 _GB = 1 << 30
@@ -91,9 +90,8 @@ class ModelConfig:
             # download model from ModelScope hub,
             # lazy import so that modelscope is not required for normal use.
             from modelscope.hub.snapshot_download import snapshot_download  # pylint: disable=C
-            model_path = snapshot_download(model_id=model,
-                                           cache_dir=download_dir,
-                                           revision=revision)
+            model_path = snapshot_download(model_id=model, cache_dir=download_dir, revision=revision)
+                         
             self.model = model_path
             self.download_dir = model_path
             self.tokenizer = model_path
@@ -109,9 +107,8 @@ class ModelConfig:
 
     def _verify_load_format(self) -> None:
         load_format = self.load_format.lower()
-        supported_load_format = [
-            "auto", "pt", "safetensors", "npcache", "dummy"
-        ]
+        supported_load_format = ["auto", "pt", "safetensors", "npcache", "dummy"]
+
         rocm_not_supported_load_format = []
         if load_format not in supported_load_format:
             raise ValueError(
@@ -130,17 +127,13 @@ class ModelConfig:
         # TODO: Remove this check once HF updates the pt weights of Mixtral.
         architectures = getattr(self.hf_config, "architectures", [])
         if "MixtralForCausalLM" in architectures and load_format == "pt":
-            raise ValueError(
-                "Currently, the 'pt' format is not supported for Mixtral. "
-                "Please use the 'safetensors' format instead. ")
+            raise ValueError("Currently, the 'pt' format is not supported for Mixtral. Please use the 'safetensors' format instead. ")
         self.load_format = load_format
 
     def _verify_tokenizer_mode(self) -> None:
         tokenizer_mode = self.tokenizer_mode.lower()
         if tokenizer_mode not in ["auto", "slow"]:
-            raise ValueError(
-                f"Unknown tokenizer mode: {self.tokenizer_mode}. Must be "
-                "either 'auto' or 'slow'.")
+            raise ValueError(f"Unknown tokenizer mode: {self.tokenizer_mode}. Must be either 'auto' or 'slow'.")
         self.tokenizer_mode = tokenizer_mode
 
     def _verify_quantization(self) -> None:
@@ -167,8 +160,7 @@ class ModelConfig:
                 raise ValueError(
                     f"Unknown quantization method: {self.quantization}. Must "
                     f"be one of {supported_quantization}.")
-            if is_hip(
-            ) and self.quantization in rocm_not_supported_quantization:
+            if is_hip() and self.quantization in rocm_not_supported_quantization:
                 raise ValueError(
                     f"{self.quantization} quantization is currently not supported "
                     f"in ROCm.")
@@ -179,13 +171,10 @@ class ModelConfig:
     def _verify_cuda_graph(self) -> None:
         if self.max_context_len_to_capture is None:
             self.max_context_len_to_capture = self.max_model_len
-        self.max_context_len_to_capture = min(self.max_context_len_to_capture,
-                                              self.max_model_len)
-        if (self.quantization in ["gptq", "squeezellm"]
-                and not self.enforce_eager):
-            # Related issue: https://github.com/vllm-project/vllm/issues/2147
-            logger.warning(f"{self.quantization} does not support CUDA graph "
-                           "yet. Disabling CUDA graph.")
+        self.max_context_len_to_capture = min(self.max_context_len_to_capture, self.max_model_len)
+                                              
+        if (self.quantization in ["gptq", "squeezellm"] and not self.enforce_eager):
+            logger.warning(f"{self.quantization} does not support CUDA graph yet. Disabling CUDA graph.")
             self.enforce_eager = True
 
     def verify_with_parallel_config(
@@ -235,8 +224,7 @@ class ModelConfig:
         new_decoder_arch_falcon = (
             self.hf_config.model_type in falcon_model_types
             and getattr(self.hf_config, "new_decoder_architecture", False))
-        if not new_decoder_arch_falcon and getattr(self.hf_config,
-                                                   "multi_query", False):
+        if not new_decoder_arch_falcon and getattr(self.hf_config, "multi_query", False):                                    
             # Multi-query attention, only one KV head.
             # Currently, tensor parallelism is not supported in this case.
             return 1
@@ -312,10 +300,7 @@ class CacheConfig:
                 "GPU memory utilization must be less than 1.0. Got "
                 f"{self.gpu_memory_utilization}.")
 
-    def verify_with_parallel_config(
-        self,
-        parallel_config: "ParallelConfig",
-    ) -> None:
+    def verify_with_parallel_config(self, parallel_config: "ParallelConfig", ) -> None:    
         total_cpu_memory = get_cpu_memory()
         # FIXME(woosuk): Here, it is assumed that the GPUs in a tensor parallel
         # group are in the same node. However, the GPUs may span multiple nodes.

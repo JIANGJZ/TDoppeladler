@@ -15,12 +15,8 @@ logger = init_logger(__name__)
 
 class LinearMethodBase(ABC):
     """Base class for different (maybe quantized) linear methods."""
-
     @abstractmethod
-    def create_weights(self, input_size_per_partition: int,
-                       output_size_per_partition: int, input_size: int,
-                       output_size: int,
-                       params_dtype: torch.dtype) -> Dict[str, Any]:
+    def create_weights(self, input_size_per_partition: int, output_size_per_partition: int, input_size: int, output_size: int, params_dtype: torch.dtype) -> Dict[str, Any]:            
         """Create weights for a linear layer."""
         raise NotImplementedError
 
@@ -40,22 +36,12 @@ class UnquantizedLinearMethod(LinearMethodBase):
     def __init__(self, separate_bias_add: bool = False):
         self.separate_bias_add = separate_bias_add
 
-    def create_weights(self, input_size_per_partition: int,
-                       output_size_per_partition: int, input_size: int,
-                       output_size: int,
-                       params_dtype: torch.dtype) -> Dict[str, Any]:
-        weight = Parameter(torch.empty(output_size_per_partition,
-                                       input_size_per_partition,
-                                       device=torch.cuda.current_device(),
-                                       dtype=params_dtype),
-                           requires_grad=False)
+    def create_weights(self, input_size_per_partition: int, output_size_per_partition: int, input_size: int, output_size: int, params_dtype: torch.dtype) -> Dict[str, Any]:            
+        weight = Parameter(torch.empty(output_size_per_partition, input_size_per_partition, device=torch.cuda.current_device(), dtype=params_dtype), requires_grad=False)             
         set_weight_attrs(weight, {"input_dim": 1, "output_dim": 0})
         return {"weight": weight}
 
-    def apply_weights(self,
-                      weights: Dict[str, torch.Tensor],
-                      x: torch.Tensor,
-                      bias: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def apply_weights(self,  weights: Dict[str, torch.Tensor], x: torch.Tensor, bias: Optional[torch.Tensor] = None) -> torch.Tensor:
         weight = weights["weight"]
         if self.separate_bias_add:
             if bias:
@@ -76,15 +62,7 @@ class ReplicatedLinear(torch.nn.Module):
         linear_method: (Maybe quantized) linear method.
     """
 
-    def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        bias: bool = True,
-        skip_bias_add: bool = False,
-        params_dtype: Optional[torch.dtype] = None,
-        linear_method: Optional[LinearMethodBase] = None,
-    ):
+    def __init__(self, input_size: int, output_size: int, bias: bool = True, skip_bias_add: bool = False, params_dtype: Optional[torch.dtype] = None, linear_method: Optional[LinearMethodBase] = None,):
         super().__init__()
 
         # Keep input parameters
@@ -97,17 +75,12 @@ class ReplicatedLinear(torch.nn.Module):
         if linear_method is None:
             linear_method = UnquantizedLinearMethod()
         self.linear_method = linear_method
-        self.linear_weights = self.linear_method.create_weights(
-            self.input_size, self.output_size, self.input_size,
-            self.output_size, self.params_dtype)
+        self.linear_weights = self.linear_method.create_weights(self.input_size, self.output_size, self.input_size, self.output_size, self.params_dtype)
         for name, weight in self.linear_weights.items():
             if isinstance(weight, torch.Tensor):
                 self.register_parameter(name, weight)
         if bias:
-            self.bias = Parameter(
-                torch.empty(self.output_size,
-                            device=torch.cuda.current_device(),
-                            dtype=self.params_dtype))
+            self.bias = Parameter(torch.empty(self.output_size, device=torch.cuda.current_device(), dtype=self.params_dtype))            
             set_weight_attrs(self.bias, {"output_dim": 0})
         else:
             self.register_parameter("bias", None)
@@ -139,18 +112,8 @@ class ColumnParallelLinear(torch.nn.Module):
         linear_method: (Maybe quantized) linear method.
     """
 
-    def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        bias: bool = True,
-        gather_output: bool = False,
-        skip_bias_add: bool = False,
-        params_dtype: Optional[torch.dtype] = None,
-        linear_method: Optional[LinearMethodBase] = None,
-    ):
+    def __init__(self, input_size: int, output_size: int, bias: bool = True, gather_output: bool = False, skip_bias_add: bool = False, params_dtype: Optional[torch.dtype] = None, linear_method: Optional[LinearMethodBase] = None,):
         super().__init__()
-
         # Keep input parameters
         self.input_size = input_size
         self.output_size = output_size
@@ -173,14 +136,8 @@ class ColumnParallelLinear(torch.nn.Module):
                 self.register_parameter(name, weight)
                 set_weight_attrs(weight, {"weight_loader": self.weight_loader})
         if bias:
-            self.bias = Parameter(
-                torch.empty(self.output_size_per_partition,
-                            device=torch.cuda.current_device(),
-                            dtype=params_dtype))
-            set_weight_attrs(self.bias, {
-                "output_dim": 0,
-                "weight_loader": self.weight_loader,
-            })
+            self.bias = Parameter(torch.empty(self.output_size_per_partition, device=torch.cuda.current_device(), dtype=params_dtype))
+            set_weight_attrs(self.bias, {"output_dim": 0, "weight_loader": self.weight_loader,})
         else:
             self.register_parameter("bias", None)
 
@@ -242,13 +199,10 @@ class MergedColumnParallelLinear(ColumnParallelLinear):
         self.output_sizes = output_sizes
         tp_size = get_tensor_model_parallel_world_size()
         assert all(output_size % tp_size == 0 for output_size in output_sizes)
-        super().__init__(input_size, sum(output_sizes), bias, gather_output,
-                         skip_bias_add, params_dtype, linear_method)
+        super().__init__(input_size, sum(output_sizes), bias, gather_output, skip_bias_add, params_dtype, linear_method)
+                         
 
-    def weight_loader(self,
-                      param: Parameter,
-                      loaded_weight: torch.Tensor,
-                      loaded_shard_id: Optional[int] = None):
+    def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor, loaded_shard_id: Optional[int] = None):  
         param_data = param.data
         output_dim = getattr(param, "output_dim", None)
         if loaded_shard_id is None:
@@ -269,8 +223,7 @@ class MergedColumnParallelLinear(ColumnParallelLinear):
                 if packed_dim == output_dim:
                     shard_size = shard_size // param.pack_factor
                     shard_offset = shard_offset // param.pack_factor
-                loaded_weight_shard = loaded_weight.narrow(
-                    output_dim, shard_offset, shard_size)
+                loaded_weight_shard = loaded_weight.narrow(output_dim, shard_offset, shard_size)
                 self.weight_loader(param, loaded_weight_shard, shard_id)
             return
 
@@ -355,10 +308,7 @@ class QKVParallelLinear(ColumnParallelLinear):
         super().__init__(input_size, output_size, bias, False, skip_bias_add, params_dtype, linear_method)
                          
 
-    def weight_loader(self,
-                      param: Parameter,
-                      loaded_weight: torch.Tensor,
-                      loaded_shard_id: Optional[str] = None):
+    def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor, loaded_shard_id: Optional[str] = None):
         param_data = param.data
         output_dim = getattr(param, "output_dim", None)
         if loaded_shard_id is None:
@@ -382,8 +332,7 @@ class QKVParallelLinear(ColumnParallelLinear):
                 if packed_dim == output_dim:
                     shard_size = shard_size // param.pack_factor
                     shard_offset = shard_offset // param.pack_factor
-                loaded_weight_shard = loaded_weight.narrow(
-                    output_dim, shard_offset, shard_size)
+                loaded_weight_shard = loaded_weight.narrow(output_dim, shard_offset, shard_size)
                 self.weight_loader(param, loaded_weight_shard, shard_id)
             return
 
@@ -475,9 +424,7 @@ class RowParallelLinear(torch.nn.Module):
         if linear_method is None:
             linear_method = UnquantizedLinearMethod()
         self.linear_method = linear_method
-        self.linear_weights = self.linear_method.create_weights(
-            self.input_size_per_partition, self.output_size, self.input_size,
-            self.output_size, self.params_dtype)
+        self.linear_weights = self.linear_method.create_weights(self.input_size_per_partition, self.output_size, self.input_size, self.output_size, self.params_dtype) 
         for name, weight in self.linear_weights.items():
             if isinstance(weight, torch.Tensor):
                 self.register_parameter(name, weight)
@@ -487,14 +434,8 @@ class RowParallelLinear(torch.nn.Module):
             raise ValueError("When not reduce the results, adding bias to the results can lead to incorrect results")
                              
         if bias:
-            self.bias = Parameter(
-                torch.empty(self.output_size,
-                            device=torch.cuda.current_device(),
-                            dtype=params_dtype))
-            set_weight_attrs(self.bias, {
-                "output_dim": 0,
-                "weight_loader": self.weight_loader,
-            })
+            self.bias = Parameter(torch.empty(self.output_size, device=torch.cuda.current_device(), dtype=params_dtype))
+            set_weight_attrs(self.bias, {"output_dim": 0, "weight_loader": self.weight_loader,})
         else:
             self.register_parameter("bias", None)
 

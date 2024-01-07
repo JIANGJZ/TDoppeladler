@@ -8,9 +8,8 @@ from transformers import PretrainedConfig
 
 from vllm.config import ModelConfig
 from vllm.model_executor.models import ModelRegistry
-from vllm.model_executor.weight_utils import (get_quant_config,
-                                              initialize_dummy_weights)
-
+from vllm.model_executor.weight_utils import (get_quant_config, initialize_dummy_weights)
+                                              
 
 @contextlib.contextmanager
 def _set_default_torch_dtype(dtype: torch.dtype):

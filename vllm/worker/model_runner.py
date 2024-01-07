@@ -104,27 +104,12 @@ class ModelRunner:
                 slot_mapping[-1].append(slot)
 
         max_prompt_len = max(prompt_lens)
-        input_tokens = _make_tensor_with_pad(input_tokens,
-                                             max_prompt_len,
-                                             pad=0,
-                                             dtype=torch.long)
-        input_positions = _make_tensor_with_pad(input_positions,
-                                                max_prompt_len,
-                                                pad=0,
-                                                dtype=torch.long)
-        slot_mapping = _make_tensor_with_pad(slot_mapping,
-                                             max_prompt_len,
-                                             pad=_PAD_SLOT_ID,
-                                             dtype=torch.long)
+        input_tokens = _make_tensor_with_pad(input_tokens, max_prompt_len, pad=0, dtype=torch.long)        
+        input_positions = _make_tensor_with_pad(input_positions, max_prompt_len, pad=0, dtype=torch.long)                    
+        slot_mapping = _make_tensor_with_pad(slot_mapping, max_prompt_len, pad=_PAD_SLOT_ID, dtype=torch.long)                    
 
-        input_metadata = InputMetadata(
-            prompt_lens=prompt_lens,
-            slot_mapping=slot_mapping,
-            max_context_len=None,
-            context_lens=None,
-            block_tables=None,
-            use_cuda_graph=False,
-        )
+        input_metadata = InputMetadata(prompt_lens=prompt_lens, slot_mapping=slot_mapping, max_context_len=None, context_lens=None,  block_tables=None, use_cuda_graph=False,)
+            
         return input_tokens, input_positions, input_metadata
 
     def _prepare_decode(self, seq_group_metadata_list: List[SequenceGroupMetadata], ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
@@ -223,9 +208,7 @@ class ModelRunner:
                     # NOTE: prompt token positions do not need sample, skip
                     categorized_sample_indices_start_idx += prompt_len - 1
 
-                categorized_sample_indices[
-                    sampling_params.sampling_type].append(
-                        categorized_sample_indices_start_idx)
+                categorized_sample_indices[sampling_params.sampling_type].append(categorized_sample_indices_start_idx)
                 categorized_sample_indices_start_idx += 1
 
                 if sampling_params.prompt_logprobs is not None:
@@ -238,15 +221,10 @@ class ModelRunner:
                 selected_token_indices.extend(range(selected_token_start_idx, selected_token_start_idx + num_seqs))
                 selected_token_start_idx += num_seqs
 
-                categorized_sample_indices[
-                    sampling_params.sampling_type].extend(
-                        range(categorized_sample_indices_start_idx,
-                              categorized_sample_indices_start_idx + num_seqs))
+                categorized_sample_indices[sampling_params.sampling_type].extend(range(categorized_sample_indices_start_idx, categorized_sample_indices_start_idx + num_seqs))     
                 categorized_sample_indices_start_idx += num_seqs
 
-        selected_token_indices = _async_h2d(selected_token_indices,
-                                            dtype=torch.long,
-                                            pin_memory=not self.in_wsl)
+        selected_token_indices = _async_h2d(selected_token_indices, dtype=torch.long, pin_memory=not self.in_wsl)               
         categorized_sample_indices = {
             t: _async_h2d(seq_ids, dtype=torch.int, pin_memory=not self.in_wsl)
             for t, seq_ids in categorized_sample_indices.items()
@@ -256,13 +234,7 @@ class ModelRunner:
         for seq_group_metadata in seq_group_metadata_list:
             seq_data.update(seq_group_metadata.seq_data)
 
-        sampling_metadata = SamplingMetadata(
-            seq_groups=seq_groups,
-            seq_data=seq_data,
-            prompt_lens=prompt_lens,
-            selected_token_indices=selected_token_indices,
-            categorized_sample_indices=categorized_sample_indices,
-        )
+        sampling_metadata = SamplingMetadata(seq_groups=seq_groups, seq_data=seq_data, prompt_lens=prompt_lens, selected_token_indices=selected_token_indices, categorized_sample_indices=categorized_sample_indices,)
         return sampling_metadata
 
     @torch.inference_mode()
