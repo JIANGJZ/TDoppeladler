@@ -11,7 +11,6 @@ from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.cache_engine import CacheEngine
 from vllm.worker.model_runner import ModelRunner, CPUModelRunner
 
-
 class Worker:
     """A worker class that executes (a partition of) the model on a GPU.
 
@@ -98,13 +97,7 @@ class Worker:
         set_random_seed(self.model_config.seed)
 
     @torch.inference_mode()
-    def execute_model(
-        self,
-        seq_group_metadata_list: List[SequenceGroupMetadata],
-        blocks_to_swap_in: Dict[int, int],
-        blocks_to_swap_out: Dict[int, int],
-        blocks_to_copy: Dict[int, List[int]],
-    ) -> SamplerOutput:
+    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int], blocks_to_swap_out: Dict[int, int], blocks_to_copy: Dict[int, List[int]],) -> SamplerOutput:
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_in:
@@ -132,14 +125,7 @@ class Worker:
 
 
 class CPUWorker:
-    def __init__(
-        self,
-        model_config: ModelConfig,
-        parallel_config: ParallelConfig,
-        scheduler_config: SchedulerConfig,
-        rank: Optional[int] = None,
-        distributed_init_method: Optional[str] = None,
-    ) -> None:
+    def __init__(self, model_config: ModelConfig, parallel_config: ParallelConfig, scheduler_config: SchedulerConfig, rank: Optional[int] = None, distributed_init_method: Optional[str] = None,) -> None:
         self.model_config = model_config
         self.parallel_config = parallel_config
         self.scheduler_config = scheduler_config
@@ -168,11 +154,7 @@ class CPUWorker:
         self.model_runner.set_block_size(self.cache_engine.block_size)
 
 
-def _init_distributed_environment(
-    parallel_config: ParallelConfig,
-    rank: int,
-    distributed_init_method: Optional[str] = None,
-) -> None:
+def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, distributed_init_method: Optional[str] = None,) -> None:
     """Initialize the distributed environment."""
     if torch.distributed.is_initialized():
         torch_world_size = torch.distributed.get_world_size()

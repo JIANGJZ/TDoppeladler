@@ -22,13 +22,7 @@ KVCache = Tuple[torch.Tensor, torch.Tensor]
 
 
 class LlamaMLP(nn.Module):
-    def __init__(
-        self,
-        hidden_size: int,
-        intermediate_size: int,
-        hidden_act: str,
-        linear_method: Optional[LinearMethodBase] = None,
-    ) -> None:
+    def __init__(self, hidden_size: int, intermediate_size: int, hidden_act: str, linear_method: Optional[LinearMethodBase] = None,) -> None:
         super().__init__()
         self.gate_up_proj = MergedColumnParallelLinear(hidden_size, [intermediate_size] * 2, bias=False, linear_method=linear_method)
         self.down_proj = RowParallelLinear(intermediate_size, hidden_size, bias=False, linear_method=linear_method)
@@ -122,12 +116,7 @@ class LlamaDecoderLayer(nn.Module):
             hidden_states = self.input_layernorm(hidden_states)
         else:
             hidden_states, residual = self.input_layernorm(hidden_states, residual)
-        hidden_states = self.self_attn(
-            positions=positions,
-            hidden_states=hidden_states,
-            kv_cache=kv_cache,
-            input_metadata=input_metadata,
-        )
+        hidden_states = self.self_attn(positions=positions, hidden_states=hidden_states, kv_cache=kv_cache, input_metadata=input_metadata,)
         # Fully Connected
         hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
         hidden_states = self.mlp(hidden_states)
@@ -163,13 +152,7 @@ class LlamaForCausalLM(nn.Module):
         self.lm_head = ParallelLMHead(config.vocab_size, config.hidden_size)
         self.sampler = Sampler(config.vocab_size)
 
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        positions: torch.Tensor,
-        kv_caches: List[KVCache],
-        input_metadata: InputMetadata,
-    ) -> torch.Tensor:
+    def forward(self, input_ids: torch.Tensor, positions: torch.Tensor, kv_caches: List[KVCache], input_metadata: InputMetadata,) -> torch.Tensor:
         # print ("input_metadata = {}".format(input_metadata))
         hidden_states = self.model(input_ids, positions, kv_caches, input_metadata)          
         return hidden_states

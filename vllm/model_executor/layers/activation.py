@@ -71,8 +71,10 @@ class FastGELU(nn.Module):
 
 class ScaledActivation(nn.Module):
     """An activation function with post-scale parameters.
+
     This is used for some quantization methods like AWQ.
     """
+
     def __init__(
         self,
         act_module: nn.Module,

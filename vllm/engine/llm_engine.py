@@ -513,6 +513,9 @@ class LLMEngine:
 
         return self._process_model_outputs(output, scheduler_outputs)
 
+    def step_cpu(self)->List[RequestOutput]:
+        pass
+
     def _log_system_stats(self, prompt_run: bool, num_batched_tokens: int, num_real_prompt_tokens: int, num_recompute_tokens:int,) -> None:
         now = time.monotonic()
         # Log the number of batched input tokens.

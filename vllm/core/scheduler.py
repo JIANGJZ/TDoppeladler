@@ -81,7 +81,8 @@ class Scheduler:
         self.swapped: List[SequenceGroup] = []
 
         # Seqence groups swapped to CPU for computing
-        self.swapped_cpu: List[SequenceGroup] = []
+        self.waiting_cpu: List[SequenceGroup] = []
+        self.running_cpu: List[SequenceGroup] = []
 
     def print_all_waiting(self):
         temp = []
@@ -122,6 +123,12 @@ class Scheduler:
     def get_num_unfinished_seq_groups(self) -> int:
         return len(self.waiting) + len(self.running) + len(self.swapped)
 
+    def _schedule_cpu(self)-> SchedulerOutputs:
+        now = time.monotonic()
+
+        while self.waiting_cpu:
+            seq_group = self.waiting_cpu[0]
+
     def _schedule(self) -> SchedulerOutputs:
         # Blocks that need to be swaped or copied before model execution.
         blocks_to_swap_in: Dict[int, int] = {}
@@ -130,8 +137,6 @@ class Scheduler:
 
         # Fix the current time.
         now = time.monotonic()
-
-        # self.print_all_waiting()
 
         # Join waiting sequences if possible.
         if not self.swapped:
@@ -284,6 +289,9 @@ class Scheduler:
         )
         return scheduler_outputs
 
+    def schedule_cpu(self)-> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
+        pass
+
     def schedule(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
         # Schedule sequence groups.
         # This function call changes the internal states of the scheduler
@@ -373,7 +381,7 @@ class Scheduler:
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
         # self.swapped.append(seq_group)
-        self.swapped_cpu.append(seq_group)
+        self.waiting_cpu.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         # print ("swapin seq!")
