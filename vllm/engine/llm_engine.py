@@ -4,7 +4,7 @@ import time
 from functools import partial
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
 
-from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig)        
+from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig)        
 from vllm.core.scheduler import Scheduler, SchedulerOutputs
 from vllm.engine.arg_utils import EngineArgs
 from vllm.engine.metrics import record_metrics
@@ -63,6 +63,7 @@ class LLMEngine:
         cache_config: CacheConfig,
         parallel_config: ParallelConfig,
         scheduler_config: SchedulerConfig,
+        cpuscheduler_config: CPUSchedulerConfig,
         distributed_init_method: str,
         placement_group: Optional["PlacementGroup"],
         log_stats: bool,
@@ -89,6 +90,7 @@ class LLMEngine:
         self.cache_config = cache_config
         self.parallel_config = parallel_config
         self.scheduler_config = scheduler_config
+        self.cpuscheduler_config = cpuscheduler_config
         self.log_stats = log_stats
         self._verify_args()
 
@@ -111,7 +113,7 @@ class LLMEngine:
         self._init_cache()
 
         # Create the scheduler.
-        self.scheduler = Scheduler(scheduler_config, cache_config)
+        self.scheduler = Scheduler(scheduler_config, cache_config, cpuscheduler_config)
 
         # Logging.
         self.last_logging_time = time.monotonic()

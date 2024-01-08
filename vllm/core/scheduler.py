@@ -3,7 +3,7 @@ import time
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 import bisect
 
-from vllm.config import CacheConfig, SchedulerConfig
+from vllm.config import CacheConfig, SchedulerConfig, CPUSchedulerConfig
 from vllm.core.block_manager import AllocStatus, BlockSpaceManager
 from vllm.core.policy import PolicyFactory
 from vllm.logger import init_logger
@@ -58,7 +58,7 @@ class SchedulerOutputs:
 
 
 class Scheduler:
-    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, ) -> None:
+    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig) -> None:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
 
@@ -126,8 +126,10 @@ class Scheduler:
     def _schedule_cpu(self)-> SchedulerOutputs:
         now = time.monotonic()
 
+        num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running_cpu)
         while self.waiting_cpu:
             seq_group = self.waiting_cpu[0]
+            waiting_seqs = seq_group.get_seqs(status=SequenceStatus.WAITING_CPU)
 
     def _schedule(self) -> SchedulerOutputs:
         # Blocks that need to be swaped or copied before model execution.
@@ -290,7 +292,7 @@ class Scheduler:
         return scheduler_outputs
 
     def schedule_cpu(self)-> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
-        pass
+        scheduler_outputs = self._schedule_cpu()
 
     def schedule(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
         # Schedule sequence groups.

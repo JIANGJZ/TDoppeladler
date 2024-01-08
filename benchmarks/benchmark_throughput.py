@@ -6,8 +6,7 @@ import time
 from typing import List, Optional, Tuple
 
 import torch
-from transformers import (AutoModelForCausalLM, AutoTokenizer,
-                          PreTrainedTokenizerBase)
+from transformers import (AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizerBase)         
 from tqdm import tqdm
 
 

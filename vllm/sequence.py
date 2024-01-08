@@ -20,6 +20,9 @@ class SequenceStatus(enum.Enum):
     FINISHED_ABORTED = enum.auto()
     FINISHED_IGNORED = enum.auto()
 
+    WAITING_CPU = enum.auto()
+    RUNNING_CPU = enum.auto()
+
     @staticmethod
     def is_finished(status: "SequenceStatus") -> bool:
         return status in [

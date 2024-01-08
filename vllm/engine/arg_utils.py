@@ -3,8 +3,8 @@ import dataclasses
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from vllm.config import (CacheConfig, ModelConfig, ParallelConfig,
-                         SchedulerConfig)
+from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig)
+                         
 
 
 @dataclass
@@ -214,7 +214,7 @@ class EngineArgs:
 
     def create_engine_configs(
         self,
-    ) -> Tuple[ModelConfig, CacheConfig, ParallelConfig, SchedulerConfig]:
+    ) -> Tuple[ModelConfig, CacheConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig]:
         model_config = ModelConfig(self.model, self.tokenizer,
                                    self.tokenizer_mode, self.trust_remote_code,
                                    self.download_dir, self.load_format,
@@ -234,7 +234,11 @@ class EngineArgs:
                                            self.max_num_seqs,
                                            model_config.max_model_len,
                                            self.max_paddings)
-        return model_config, cache_config, parallel_config, scheduler_config
+        cpu_scheduler_config = CPUSchedulerConfig(self.max_num_batched_tokens,
+                                           self.max_num_seqs,
+                                           model_config.max_model_len,
+                                           self.max_paddings)
+        return model_config, cache_config, parallel_config, scheduler_config, cpu_scheduler_config
 
 
 @dataclass

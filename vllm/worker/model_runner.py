@@ -351,7 +351,27 @@ class CPUModelRunner:
 
         self.sliding_window = (model_config.get_sliding_window() if model_config is not None else None)   
         self.model = None
-        self.block_size = None  # Set after initial profiling.    
+        self.block_size = None  # Set after initial profiling.   
+
+    def load_model(self) -> None:
+        pass 
+
+    def _prepare_decode(self, seq_group_metadata_list: List[SequenceGroupMetadata], ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
+        pass
+
+    def _prepare_sample(self, seq_group_metadata_list: List[SequenceGroupMetadata], prompt_lens: List[int], ) -> SamplingMetadata:
+        pass
+
+    @torch.inference_mode()
+    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], kv_caches: List[Tuple[torch.Tensor, torch.Tensor]], ) -> SamplerOutput:
+        inputs = self._prepare_decode(seq_group_metadata_list)
+        input_tokens, input_positions, input_metadata = inputs
+        print ("decoding {}".format(input_metadata))
+        hidden_states = self.model(input_ids=input_tokens, positions=input_positions, kv_caches=kv_caches, input_metadata=input_metadata,)
+        sampling_metadata = self._prepare_sample(seq_group_metadata_list, input_metadata.prompt_lens)
+        output = self.model.sample(hidden_states=hidden_states, sampling_metadata=sampling_metadata,)
+        return output
+
 
 class CUDAGraphRunner:
 
