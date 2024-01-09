@@ -84,6 +84,8 @@ class Scheduler:
         self.waiting_cpu: List[SequenceGroup] = []
         self.running_cpu: List[SequenceGroup] = []
 
+        self.swapped_num = 0
+
     def print_all_waiting(self):
         temp = []
         for group in self.waiting:
@@ -382,8 +384,11 @@ class Scheduler:
 
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
-        # self.swapped.append(seq_group)
-        self.waiting_cpu.append(seq_group)
+        self.swapped_num += 1
+        if self.swapped_num % 2 == 0:
+            self.swapped.append(seq_group)
+        else:
+            self.waiting_cpu.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         # print ("swapin seq!")

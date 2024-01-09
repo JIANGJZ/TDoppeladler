@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from vllm.config import ModelConfig, ParallelConfig, SchedulerConfig
 from vllm.logger import init_logger
-from vllm.model_executor import get_model, InputMetadata, SamplingMetadata
+from vllm.model_executor import get_model, get_model_cpu, InputMetadata, SamplingMetadata
 from vllm.sampling_params import SamplingParams, SamplingType
 from vllm.sequence import SamplerOutput, SequenceData, SequenceGroupMetadata
 from vllm.utils import in_wsl
@@ -354,13 +354,107 @@ class CPUModelRunner:
         self.block_size = None  # Set after initial profiling.   
 
     def load_model(self) -> None:
-        pass 
+        self.model = get_model_cpu(self.model_config)
+
+    def set_block_size(self, block_size: int) -> None:
+        self.block_size = block_size
 
     def _prepare_decode(self, seq_group_metadata_list: List[SequenceGroupMetadata], ) -> Tuple[torch.Tensor, torch.Tensor, InputMetadata]:
-        pass
+        assert len(seq_group_metadata_list) > 0
+        input_tokens: List[List[int]] = []
+        input_positions: List[List[int]] = []
+        slot_mapping: List[List[int]] = []
+        context_lens: List[int] = []
+        block_tables: List[List[int]] = []
+
+        for seq_group_metadata in seq_group_metadata_list:
+            assert not seq_group_metadata.is_prompt
+
+            seq_ids = list(seq_group_metadata.seq_data.keys())
+            for seq_id in seq_ids:
+                seq_data = seq_group_metadata.seq_data[seq_id]
+                generation_token = seq_data.get_last_token_id()
+                input_tokens.append([generation_token])
+
+                seq_len = seq_data.get_len()
+                position = seq_len - 1
+                input_positions.append([position])
+
+                context_len = seq_len if self.sliding_window is None else min(seq_len, self.sliding_window)
+                context_lens.append(context_len)
+
+                block_table = seq_group_metadata.block_tables[seq_id]
+                block_number = block_table[position // self.block_size]
+                block_offset = position % self.block_size
+                slot = block_number * self.block_size + block_offset
+                slot_mapping.append([slot])
+
+                if self.sliding_window is not None:
+                    sliding_window_blocks = (self.sliding_window // self.block_size)
+                    block_table = block_table[-sliding_window_blocks:]
+                block_tables.append(block_table)
+
+        batch_size = len(input_tokens)
+        max_context_len = max(context_lens)
+
+        device = "cpu"
+        pin_memory = True
+
+        input_tokens = _make_tensor_with_pad(input_tokens, max_len=1, pad=0, dtype=torch.long, device=device, pin_memory=pin_memory)                                              
+        input_positions = _make_tensor_with_pad(input_positions, max_len=1, pad=0, dtype=torch.long, device=device, pin_memory=pin_memory)                                                              
+        slot_mapping = _make_tensor_with_pad(slot_mapping, max_len=1, pad=_PAD_SLOT_ID, dtype=torch.long, device=device, pin_memory=pin_memory)                                      
+        context_lens = torch.tensor(context_lens, dtype=torch.int, device=device, pin_memory=pin_memory)
+
+        block_tables = _make_tensor_with_pad(block_tables, max_len=max_context_len, pad=0, dtype=torch.int, )
+
+        input_metadata = InputMetadata(prompt_lens=[], slot_mapping=slot_mapping, max_context_len=max_context_len, context_lens=context_lens, block_tables=block_tables, use_cuda_graph=False,)
+
+        return input_tokens, input_positions, input_metadata
+
 
     def _prepare_sample(self, seq_group_metadata_list: List[SequenceGroupMetadata], prompt_lens: List[int], ) -> SamplingMetadata:
-        pass
+        seq_groups: List[Tuple[List[int], SamplingParams]] = []
+        selected_token_indices: List[int] = []
+        selected_token_start_idx = 0
+        categorized_sample_indices = {t: [] for t in SamplingType}
+        categorized_sample_indices_start_idx = 0
+
+        max_prompt_len = max(prompt_lens) if prompt_lens else 1
+        for i, seq_group_metadata in enumerate(seq_group_metadata_list):
+            seq_ids = list(seq_group_metadata.seq_data.keys())
+            sampling_params = seq_group_metadata.sampling_params
+            seq_groups.append((seq_ids, sampling_params))
+
+            if seq_group_metadata.is_prompt:
+                assert len(seq_ids) == 1
+                prompt_len = prompt_lens[i]
+                if sampling_params.prompt_logprobs is not None:
+                    # NOTE: prompt token positions do not need sample, skip
+                    categorized_sample_indices_start_idx += prompt_len - 1
+
+                categorized_sample_indices[sampling_params.sampling_type].append(categorized_sample_indices_start_idx)
+                categorized_sample_indices_start_idx += 1
+
+                if sampling_params.prompt_logprobs is not None:
+                    selected_token_indices.extend(range(selected_token_start_idx, selected_token_start_idx + prompt_len - 1)) 
+                selected_token_indices.append(selected_token_start_idx + prompt_len - 1)
+                                              
+                selected_token_start_idx += max_prompt_len
+            else:
+                num_seqs = len(seq_ids)
+                selected_token_indices.extend(range(selected_token_start_idx, selected_token_start_idx + num_seqs))
+                selected_token_start_idx += num_seqs
+
+                categorized_sample_indices[sampling_params.sampling_type].extend(range(categorized_sample_indices_start_idx, categorized_sample_indices_start_idx + num_seqs))     
+                categorized_sample_indices_start_idx += num_seqs
+
+            seq_data: Dict[int, SequenceData] = {}
+            for seq_group_metadata in seq_group_metadata_list:
+                seq_data.update(seq_group_metadata.seq_data)
+
+            sampling_metadata = SamplingMetadata(seq_groups=seq_groups, seq_data=seq_data, prompt_lens=prompt_lens, selected_token_indices=selected_token_indices, categorized_sample_indices=categorized_sample_indices,)
+            return sampling_metadata
+
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], kv_caches: List[Tuple[torch.Tensor, torch.Tensor]], ) -> SamplerOutput:

@@ -85,12 +85,11 @@ class LlamaAttention(nn.Module):
 class LlamaDecoderLayer(nn.Module):
     def __init__(self, config: LlamaConfig, linear_method: Optional[LinearMethodBase] = None,) -> None:
         super().__init__()
-        self.hidden_size = config.hidden_size
         rope_theta = getattr(config, "rope_theta", 10000)
         rope_scaling = getattr(config, "rope_scaling", None)
         max_position_embeddings = getattr(config, "max_position_embeddings",8192)                                          
         self.self_attn = LlamaAttention(
-            hidden_size=self.hidden_size,
+            hidden_size=config.hidden_size,
             num_heads=config.num_attention_heads,
             num_kv_heads=config.num_key_value_heads,
             rope_theta=rope_theta,
@@ -99,7 +98,7 @@ class LlamaDecoderLayer(nn.Module):
             linear_method=linear_method,
         )
         self.mlp = LlamaMLP(
-            hidden_size=self.hidden_size,
+            hidden_size=config.hidden_size,
             intermediate_size=config.intermediate_size,
             hidden_act=config.hidden_act,
             linear_method=linear_method,
@@ -137,7 +136,7 @@ class LlamaModel(nn.Module):
         residual = None
         for i in range(len(self.layers)):
             layer = self.layers[i]
-            hidden_states, residual = layer(positions, hidden_states, kv_caches[i], input_metadata,residual,)       
+            hidden_states, residual = layer(positions, hidden_states, kv_caches[i], input_metadata, residual,)       
         hidden_states, _ = self.norm(hidden_states, residual)
         return hidden_states
 

@@ -149,9 +149,14 @@ class CPUWorker:
     def init_cache_engine(self, cache_config: CacheConfig) -> None:
         self.cache_config = cache_config
         self.cache_engine = CacheEngine(self.cache_config, self.model_config, self.parallel_config)            
-        self.cache_events = self.cache_engine.events
         self.cpu_cache = self.cache_engine.cpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
+
+    @torch.inference_mode()
+    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata]) -> SamplerOutput:
+        if not seq_group_metadata_list:
+            return {}
+        output = self.model_runner.execute_model(seq_group_metadata_list, self.cpu_cache)        
 
 
 def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, distributed_init_method: Optional[str] = None,) -> None:

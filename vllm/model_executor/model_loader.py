@@ -67,3 +67,17 @@ def get_model(model_config: ModelConfig) -> nn.Module:
             # Load the weights from the cached or downloaded files.
             model.load_weights(model_config.model, model_config.download_dir, model_config.load_format, model_config.revision)            
     return model.eval()
+
+
+def get_model_cpu(model_config: ModelConfig) -> nn.Module:
+    model_class = _get_model_architecture(model_config.hf_config)
+
+    linear_method = None
+    with _set_default_torch_dtype(model_config.dtype):
+        with torch.device("cpu"):
+            model = model_class(model_config.hf_config, linear_method)
+        if model_config.load_format == "dummy":
+            initialize_dummy_weights(model)
+        else:
+            model.load_weights(model_config.model, model_config.download_dir, model_config.load_format, model_config.revision)
+    return model.eval()
