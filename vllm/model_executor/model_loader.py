@@ -8,6 +8,7 @@ from transformers import PretrainedConfig
 
 from vllm.config import ModelConfig
 from vllm.model_executor.models import ModelRegistry
+from vllm.model_executor.models_cpu import CPUModelRegistry
 from vllm.model_executor.weight_utils import (get_quant_config, initialize_dummy_weights)
                                               
 
@@ -30,6 +31,16 @@ def _get_model_architecture(config: PretrainedConfig) -> Type[nn.Module]:
         f"Model architectures {architectures} are not supported for now. "
         f"Supported architectures: {ModelRegistry.get_supported_archs()}")
 
+
+def _get_cpu_model_architecture(config: PretrainedConfig) -> Type[nn.Module]:
+    architectures = getattr(config, "architectures", [])
+    for arch in architectures:
+        model_cls = CPUModelRegistry.load_model_cls(arch)
+        if model_cls is not None:
+            return model_cls
+    raise ValueError(
+        f"Model architectures {architectures} are not supported for now. "
+        f"Supported architectures: {CPUModelRegistry.get_supported_archs()}")
 
 def get_model(model_config: ModelConfig) -> nn.Module:
     model_class = _get_model_architecture(model_config.hf_config)
@@ -70,7 +81,7 @@ def get_model(model_config: ModelConfig) -> nn.Module:
 
 
 def get_model_cpu(model_config: ModelConfig) -> nn.Module:
-    model_class = _get_model_architecture(model_config.hf_config)
+    model_class = _get_cpu_model_architecture(model_config.hf_config)
 
     linear_method = None
     with _set_default_torch_dtype(model_config.dtype):

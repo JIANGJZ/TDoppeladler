@@ -291,7 +291,8 @@ class LLMEngine:
         return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
 
     def _schedule_cpu(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]:
-        pass     
+        seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule_cpu()
+        return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]  
 
     def _check_beam_search_early_stopping(self, early_stopping: Union[bool, str], sampling_params: SamplingParams, best_running_seq: Sequence, current_worst_seq: Sequence,) -> bool:
         assert sampling_params.use_beam_search
@@ -500,17 +501,22 @@ class LLMEngine:
         return request_outputs
 
     def _process_model_outputs_cpu(self, output: SamplerOutput, scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
-        pass    
+        scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
+        for seq_group, outputs in zip(scheduled_seq_groups, output):
+            self._process_sequence_group_outputs_cpu(seq_group, outputs)
+
+        # Free the finished sequence groups.
+        self.scheduler.free_finished_seq_groups_cpu()
+
+        # Create the outputs.
+        request_outputs: List[RequestOutput] = []
+        for seq_group in (scheduled_seq_groups + scheduler_outputs.ignored_seq_groups):  
+            request_output = RequestOutput.from_seq_group(seq_group)
+            request_outputs.append(request_output)  
+
+        return request_outputs
 
     def step(self) -> List[RequestOutput]:
-        """Performs one decoding iteration and returns newly generated results.
-
-        This function performs one decoding iteration of the engine. It first
-        schedules the sequences to be executed in the next iteration and the
-        token blocks to be swapped in/out/copy. Then, it executes the model
-        and updates the scheduler with the model outputs. Finally, it decodes
-        the sequences and returns the newly generated results.
-        """
         seq_group_metadata_list, scheduler_outputs, ignored = self._schedule()
         if scheduler_outputs.is_empty():
             return ignored
@@ -527,7 +533,17 @@ class LLMEngine:
         return self._process_model_outputs(output, scheduler_outputs)
 
     def step_cpu(self)->List[RequestOutput]:
-        pass
+        seq_group_metadata_list, scheduler_outputs, ignored = self._schedule_cpu()
+        if scheduler_outputs.is_empty():
+            return ignored
+
+        # Execute the model.
+        output = self._run_cpu_workers(
+            "execute_model",
+            seq_group_metadata_list=seq_group_metadata_list,
+        )
+
+        return self._process_model_outputs_cpu(output, scheduler_outputs)
 
     def _log_system_stats(self, prompt_run: bool, num_batched_tokens: int, num_real_prompt_tokens: int, num_recompute_tokens:int,) -> None:
         now = time.monotonic()
@@ -686,6 +702,7 @@ class LLMEngine:
             seq.status = SequenceStatus.FINISHED_STOPPED
             return
 
+
     def _run_workers_in_batch(self, workers, method: str, *args, **kwargs, ):
         all_outputs = []
         for worker in workers:
@@ -733,12 +750,12 @@ class LLMEngine:
     def  _run_cpu_workers(self, method: str, *args, get_all_outputs: bool = False, max_concurrent_workers: Optional[int] = None, **kwargs, ) -> Any:
         all_outputs = []
         if max_concurrent_workers:
-            work_groups = [self.workers[i:i + max_concurrent_workers] for i in range(0, len(self.workers), max_concurrent_workers)]
+            cpu_work_groups = [self.cpu_workers[i:i + max_concurrent_workers] for i in range(0, len(self.cpu_workers), max_concurrent_workers)]
         else:
-            work_groups = [self.workers]
+            cpu_work_groups = [self.cpu_workers]
 
-        for workers in work_groups:
-            all_outputs.extend(self._run_workers_in_batch(workers, method, *args, **kwargs))
+        for workers in cpu_work_groups:
+            all_outputs.extend(self._run_cpu_workers_in_batch(workers, method, *args, **kwargs))
 
         if get_all_outputs:
             return all_outputs

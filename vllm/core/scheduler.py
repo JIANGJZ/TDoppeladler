@@ -331,6 +331,9 @@ class Scheduler:
     def free_finished_seq_groups(self) -> None:
         self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
 
+    def free_finished_seq_groups_cpu(self) -> None:
+        self.running_cpu = [seq_group for seq_group in self.running_cpu if not seq_group.is_finished()]
+
     def _allocate(self, seq_group: SequenceGroup) -> None:
         self.block_manager.allocate(seq_group)
         for seq in seq_group.get_seqs(status=SequenceStatus.WAITING):

@@ -144,6 +144,7 @@ class CPUWorker:
         set_random_seed(self.model_config.seed)
 
     def load_model(self):
+        print ("loading CPU model")
         self.model_runner.load_model()
 
     def init_cache_engine(self, cache_config: CacheConfig) -> None:
