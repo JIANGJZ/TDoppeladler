@@ -15,7 +15,6 @@ logger = init_logger(__name__)
 
 class PreemptionMode(enum.Enum):
     """Preemption modes.
-
     1. Swapping: Swap out the blocks of the preempted sequences to CPU memory
     and swap them back in when the sequences are resumed.
     2. Recomputation: Discard the blocks of the preempted sequences and
@@ -350,20 +349,9 @@ class Scheduler:
                     blocks_to_copy[src_block] = [dst_block]
 
     def _preempt(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],  preemption_mode: Optional[PreemptionMode] = None,) -> None:
-        # If preemption mode is not specified, we determine the mode as follows:
-        # We use recomputation by default since it incurs lower overhead than
-        # swapping. However, when the sequence group has multiple sequences
-        # (e.g., beam search), recomputation is not currently supported. In
-        # such a case, we use swapping instead.
-        # FIXME(woosuk): This makes our scheduling policy a bit bizarre.
-        # As swapped sequences are prioritized over waiting sequences,
-        # sequence groups with multiple sequences are implicitly prioritized
-        # over sequence groups with a single sequence.
-        # TODO(woosuk): Support recomputation for sequence groups with multiple
-        # sequences. This may require a more sophisticated CUDA kernel.
         if preemption_mode is None:
             if seq_group.get_max_num_running_seqs() == 1:
-                preemption_mode = PreemptionMode.RECOMPUTE
+                preemption_mode = PreemptionMode.SWAP
             else:
                 preemption_mode = PreemptionMode.SWAP
         if preemption_mode == PreemptionMode.RECOMPUTE:
@@ -379,22 +367,18 @@ class Scheduler:
         for seq in seqs:
             seq.status = SequenceStatus.WAITING
             self.block_manager.free(seq)
-        # NOTE: For FCFS, we insert the preempted sequence group to the front
-        # of the waiting queue.
-        # print ("recompute seq!")
         seq_group.set_recompute(True)
         self.waiting.insert(0, seq_group)
 
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
         self.swapped_num += 1
-        if self.swapped_num % 1 == 0:
+        if self.swapped_num % 100000 == 0:
             self.waiting_cpu.append(seq_group)
         else:
             self.swapped.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
-        # print ("swapin seq!")
         mapping = self.block_manager.swap_in(seq_group)
         blocks_to_swap_in.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.SWAPPED):

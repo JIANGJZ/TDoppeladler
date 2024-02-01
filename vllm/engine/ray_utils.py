@@ -68,9 +68,7 @@ def initialize_cluster(
                 "serving.")
         # Connect to a ray cluster.
         if is_hip():
-            ray.init(address=ray_address,
-                     ignore_reinit_error=True,
-                     num_gpus=parallel_config.world_size)
+            ray.init(address=ray_address, ignore_reinit_error=True, num_gpus=parallel_config.world_size)    
         else:
             ray.init(address=ray_address, ignore_reinit_error=True)
 

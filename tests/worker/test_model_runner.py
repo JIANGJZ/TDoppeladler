@@ -30,19 +30,14 @@ def test_prepare_prompt():
     selected_token_start_idx = 0
     max_seq_len = max(prompt_lens)
     for prompt_len in prompt_lens:
-        expected_selected_token_indices.append(selected_token_start_idx +
-                                               prompt_len - 1)
+        expected_selected_token_indices.append(selected_token_start_idx + prompt_len - 1)                               
         selected_token_start_idx += max_seq_len
-    input_tokens, input_positions, _ = model_runner._prepare_prompt(
-        seq_group_metadata_list)
-    sampling_metadata = model_runner._prepare_sample(seq_group_metadata_list,
-                                                     prompt_lens)
+    input_tokens, input_positions, _ = model_runner._prepare_prompt(seq_group_metadata_list)
+    sampling_metadata = model_runner._prepare_sample(seq_group_metadata_list, prompt_lens)                              
     assert input_tokens.shape == (batch_size, max_seq_len)
     assert input_positions.shape == (batch_size, max_seq_len)
     torch.testing.assert_close(input_tokens, input_positions)
 
     actual = sampling_metadata.selected_token_indices
-    expected = torch.tensor(expected_selected_token_indices,
-                            device=actual.device,
-                            dtype=actual.dtype)
+    expected = torch.tensor(expected_selected_token_indices, device=actual.device,  dtype=actual.dtype)
     torch.testing.assert_close(actual, expected)

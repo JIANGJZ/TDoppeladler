@@ -8,7 +8,7 @@ from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConf
 from vllm.model_executor import set_random_seed
 from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_parallel)
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
-from vllm.worker.cache_engine import CacheEngine
+from vllm.worker.gpu_cache_engine import GPUCacheEngine
 from vllm.worker.model_runner import ModelRunner, CPUModelRunner
 
 class Worker:
@@ -72,7 +72,7 @@ class Worker:
         free_gpu_memory, total_gpu_memory = torch.cuda.mem_get_info()
         peak_memory = total_gpu_memory - free_gpu_memory
 
-        cache_block_size = CacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
+        cache_block_size = GPUCacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
 
         num_gpu_blocks = int((total_gpu_memory * gpu_memory_utilization - peak_memory) // cache_block_size)
           
@@ -84,7 +84,7 @@ class Worker:
 
     def init_cache_engine(self, cache_config: CacheConfig) -> None:
         self.cache_config = cache_config
-        self.cache_engine = CacheEngine(self.cache_config, self.model_config, self.parallel_config)            
+        self.cache_engine = GPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)            
         self.cache_events = self.cache_engine.events
         self.gpu_cache = self.cache_engine.gpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
@@ -149,7 +149,7 @@ class CPUWorker:
 
     def init_cache_engine(self, cache_config: CacheConfig) -> None:
         self.cache_config = cache_config
-        self.cache_engine = CacheEngine(self.cache_config, self.model_config, self.parallel_config)            
+        self.cache_engine = GPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)            
         self.cpu_cache = self.cache_engine.cpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
 
@@ -165,14 +165,10 @@ def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, di
     if torch.distributed.is_initialized():
         torch_world_size = torch.distributed.get_world_size()
         if torch_world_size != parallel_config.world_size:
-            raise RuntimeError(
-                "torch.distributed is already initialized but the torch world "
-                "size does not match parallel_config.world_size "
-                f"({torch_world_size} vs. {parallel_config.world_size}).")
+            raise RuntimeError("torch.distributed is already initialized but the torch world size does not match parallel_config.world_size ({torch_world_size} vs. {parallel_config.world_size}).")
+                
     elif not distributed_init_method:
-        raise ValueError(
-            "distributed_init_method must be set if torch.distributed "
-            "is not already initialized")
+        raise ValueError("distributed_init_method must be set if torch.distributed is not already initialized") 
     else:
         torch.distributed.init_process_group(
             backend="nccl",

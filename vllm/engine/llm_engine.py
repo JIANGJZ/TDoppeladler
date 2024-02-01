@@ -46,14 +46,12 @@ class LLMEngine:
 
     Args:
         model_config: The configuration related to the LLM model.
-        cache_config: The configuration related to the KV cache memory
-            management.
+        cache_config: The configuration related to the KV cache memory management.   
         parallel_config: The configuration related to distributed execution.
         scheduler_config: The configuration related to the request scheduler.
-        distributed_init_method: The initialization method for distributed
-            execution. See `torch.distributed.init_process_group` for details.
-        placement_group: Ray placement group for distributed execution.
-            Required for distributed execution.
+        distributed_init_method: The initialization method for distributed execution. See `torch.distributed.init_process_group` for details.
+        placement_group: Ray placement group for distributed execution. Required for distributed execution.
+            
         log_stats: Whether to log statistics.
     """
 
@@ -150,10 +148,8 @@ class LLMEngine:
         self._run_cpu_workers("init_model", get_all_outputs=True,)
         self._run_cpu_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)
 
-            
 
-    def _init_workers_ray(self, placement_group: "PlacementGroup", **ray_remote_kwargs):
-                          
+    def _init_workers_ray(self, placement_group: "PlacementGroup", **ray_remote_kwargs):   
         # Lazy import the Worker to avoid importing torch.cuda/xformers
         # before CUDA_VISIBLE_DEVICES is set in the Worker
         from vllm.worker.worker import Worker
