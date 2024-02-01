@@ -239,15 +239,6 @@ def _beam_search_sample(
     seq_data: Dict[int, SequenceData],
     logprobs: torch.Tensor,
 ) -> List[Tuple[List[int], List[int]]]:
-    # We sample 2 * beam_width candidates to make sure that with high
-    # probability we can get `beam_width` candidates in addition to
-    # the finished sequences for the next iteration. See
-    # https://github.com/tensorflow/tensor2tensor/blob/bafdc1b67730430d38d6ab802cbd51f9d053ba2e/tensor2tensor/utils/beam_search.py#L557-L563
-    # for details. See also HF reference:
-    # https://github.com/huggingface/transformers/blob/a4dd53d88e4852f023332d284ff07a01afcd5681/src/transformers/generation/utils.py#L3063-L3065
-    #
-    # NOTE: Beam search is not vectorized, so its speed can be slower than
-    # other sampling methods.
     sample_idx = 0
     results = []
     for seq_group, is_prompt in zip(selected_seq_groups, is_prompts):
@@ -412,10 +403,7 @@ def _get_logprobs(
             prompt_tokens = sampling_metadata.seq_data[seq_ids[0]].prompt_token_ids
             group_prompt_logprobs: PromptLogprobs = [None]
             for token_id in prompt_tokens[1:]:
-                prompt_logprobs_dict = {
-                    token_id:
-                    batched_logprobs_query_result[query_result_idx].item()
-                }
+                prompt_logprobs_dict = {token_id: batched_logprobs_query_result[query_result_idx].item()}
                 if num_logprobs > 0:
                     prompt_logprobs_dict.update(zip(top_token_ids[sample_idx, :num_logprobs].tolist(), top_logprobs[sample_idx, :num_logprobs].tolist()))      
                 group_prompt_logprobs.append(prompt_logprobs_dict)
@@ -431,10 +419,7 @@ def _get_logprobs(
             num_logprobs = 0
         group_sample_logprobs: SampleLogprobs = []
         for next_token_id, parent_id in zip(next_token_ids, parent_ids):
-            sample_logprobs_dict = {
-                next_token_id:
-                batched_logprobs_query_result[query_result_idx].item()
-            }
+            sample_logprobs_dict = {next_token_id: batched_logprobs_query_result[query_result_idx].item()}
             query_result_idx += 1
             if num_logprobs > 0:
                 sample_logprobs_dict.update(zip(top_token_ids[sample_idx + parent_id, :num_logprobs].tolist(), top_logprobs[sample_idx + parent_id, :num_logprobs].tolist()))                       

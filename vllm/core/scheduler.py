@@ -94,9 +94,9 @@ class Scheduler:
 
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
         # Add sequence groups to the waiting queue.
-        index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
-        self.waiting.insert(index, seq_group)    
-        # self.waiting.append(seq_group)
+        # index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
+        # self.waiting.insert(index, seq_group)    
+        self.waiting.append(seq_group)
 
     def abort_seq_group(self, request_id: Union[str, Iterable[str]]) -> None:
         if isinstance(request_id, str):
@@ -363,7 +363,7 @@ class Scheduler:
         # sequences. This may require a more sophisticated CUDA kernel.
         if preemption_mode is None:
             if seq_group.get_max_num_running_seqs() == 1:
-                preemption_mode = PreemptionMode.SWAP
+                preemption_mode = PreemptionMode.RECOMPUTE
             else:
                 preemption_mode = PreemptionMode.SWAP
         if preemption_mode == PreemptionMode.RECOMPUTE:
@@ -388,10 +388,10 @@ class Scheduler:
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
         self.swapped_num += 1
-        if self.swapped_num % 2 == 0:
-            self.swapped.append(seq_group)
-        else:
+        if self.swapped_num % 1 == 0:
             self.waiting_cpu.append(seq_group)
+        else:
+            self.swapped.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         # print ("swapin seq!")

@@ -20,13 +20,7 @@ class CacheEngine:
     caches. It also provides methods for performing KV cache operations, such
     as swapping and copying.
     """
-
-    def __init__(
-        self,
-        cache_config: CacheConfig,
-        model_config: ModelConfig,
-        parallel_config: ParallelConfig,
-    ) -> None:
+    def __init__(self, cache_config: CacheConfig, model_config: ModelConfig, parallel_config: ParallelConfig,) -> None:
         self.cache_config = cache_config
         self.model_config = model_config
         self.parallel_config = parallel_config
@@ -53,19 +47,12 @@ class CacheEngine:
     def get_key_block_shape(self) -> Tuple[int, int, int, int]:
         element_size = torch.tensor([], dtype=self.dtype).element_size()
         x = 16 // element_size
-        return (
-            self.num_heads,
-            self.head_size // x,
-            self.block_size,
-            x,
-        )
+        return (self.num_heads, self.head_size // x, self.block_size, x,)
+              
 
     def get_value_block_shape(self) -> Tuple[int, int, int]:
-        return (
-            self.num_heads,
-            self.head_size,
-            self.block_size,
-        )
+        return (self.num_heads, self.head_size, self.block_size,)
+                
 
     def allocate_gpu_cache(self) -> List[KVCache]:
         gpu_cache: List[KVCache] = []
@@ -91,10 +78,7 @@ class CacheEngine:
         value_block_shape = self.get_value_block_shape()
         pin_memory = not in_wsl()
         if not pin_memory:
-            # Pinning memory in WSL is not supported.
-            # https://docs.nvidia.com/cuda/wsl-user-guide/index.html#known-limitations-for-linux-cuda-applications
-            logger.warning("Using 'pin_memory=False' as WSL is detected. "
-                           "This may slow down the performance.")
+            logger.warning("Using 'pin_memory=False' as WSL is detected. This may slow down the performance.")             
         for _ in range(self.num_layers):
             key_blocks = torch.empty(
                 size=(self.num_cpu_blocks, *key_block_shape),
@@ -109,12 +93,7 @@ class CacheEngine:
             cpu_cache.append((key_blocks, value_blocks))
         return cpu_cache
 
-    def _swap(
-        self,
-        src: List[KVCache],
-        dst: List[KVCache],
-        src_to_dst: Dict[int, int],
-    ) -> None:
+    def _swap(self, src: List[KVCache], dst: List[KVCache],  src_to_dst: Dict[int, int], ) -> None:
         with torch.cuda.stream(self.cache_stream):
             for i in range(self.num_layers):
                 src_key_cache, src_value_cache = src[i]
@@ -122,8 +101,7 @@ class CacheEngine:
                 # Copy the key blocks.
                 cache_ops.swap_blocks(src_key_cache, dst_key_cache, src_to_dst)
                 # Copy the value blocks.
-                cache_ops.swap_blocks(src_value_cache, dst_value_cache,
-                                      src_to_dst)
+                cache_ops.swap_blocks(src_value_cache, dst_value_cache, src_to_dst)     
                 event = self.events[i]
                 event.record(stream=self.cache_stream)
 
@@ -140,11 +118,7 @@ class CacheEngine:
         cache_ops.copy_blocks(key_caches, value_caches, src_to_dsts)
 
     @staticmethod
-    def get_cache_block_size(
-        block_size: int,
-        model_config: ModelConfig,
-        parallel_config: ParallelConfig,
-    ) -> int:
+    def get_cache_block_size(block_size: int, model_config: ModelConfig, parallel_config: ParallelConfig,) -> int:
         head_size = model_config.get_head_size()
         num_heads = model_config.get_num_kv_heads(parallel_config)
         num_layers = model_config.get_num_layers(parallel_config)

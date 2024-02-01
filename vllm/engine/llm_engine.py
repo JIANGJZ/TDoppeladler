@@ -107,7 +107,7 @@ class LLMEngine:
             self._init_workers_ray(placement_group)
         else:
             self._init_workers(distributed_init_method)
-            self._init_cpu_workers()
+            # self._init_cpu_workers()
 
         # Profile the memory usage and initialize the cache.
         self._init_cache()
@@ -653,6 +653,9 @@ class LLMEngine:
                     f"GPU KV cache usage: {gpu_cache_usage * 100:.1f}%, "
                     f"CPU KV cache usage: {cpu_cache_usage * 100:.1f}%")
         self.last_logging_time = now
+
+    def _log_cpu_system_stats(self, num_batched_tokens: int, num_real_prompt_tokens: int) -> None:
+        pass
 
     def _decode_sequence(self, seq: Sequence, prms: SamplingParams) -> None:
         """Decodes the new token for a sequence."""

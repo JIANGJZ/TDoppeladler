@@ -1,16 +1,11 @@
-# Copyright 2023 The vLLM team.
-# Adapted from
-# https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/utils.py
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
 from typing import Sequence
-
 import torch
 
 
 def ensure_divisibility(numerator, denominator):
     """Ensure that numerator is divisible by the denominator."""
-    assert numerator % denominator == 0, "{} is not divisible by {}".format(
-        numerator, denominator)
+    assert numerator % denominator == 0, "{} is not divisible by {}".format(numerator, denominator)
+        
 
 
 def divide(numerator, denominator):
@@ -30,9 +25,7 @@ def split_tensor_along_last_dim(
         Arguments:
             tensor: input tensor.
             num_partitions: number of partitions to split the tensor
-            contiguous_split_chunks: If True, make each chunk contiguous
-                                     in memory.
-
+            contiguous_split_chunks: If True, make each chunk contiguous in memory.
         Returns:
             A list of Tensors
     """

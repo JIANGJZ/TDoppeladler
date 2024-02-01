@@ -15,8 +15,7 @@ def tensor_model_parallel_all_reduce(input_):
     if get_tensor_model_parallel_world_size() == 1:
         return input_
     # All-reduce.
-    torch.distributed.all_reduce(input_,
-                                 group=get_tensor_model_parallel_group())
+    torch.distributed.all_reduce(input_, group=get_tensor_model_parallel_group())         
     return input_
 
 
@@ -33,15 +32,11 @@ def tensor_model_parallel_all_gather(input_, dim=-1):
         dim += input_.dim()
     input_size = input_.size()
     # Allocate output tensor.
-    output_tensor = torch.empty((world_size, ) + input_size,
-                                dtype=input_.dtype,
-                                device=input_.device)
+    output_tensor = torch.empty((world_size, ) + input_size, dtype=input_.dtype, device=input_.device)                 
     # All-gather.
-    torch.distributed.all_gather_into_tensor(
-        output_tensor, input_, group=get_tensor_model_parallel_group())
+    torch.distributed.all_gather_into_tensor(output_tensor, input_, group=get_tensor_model_parallel_group())
+        
     # Reshape
     output_tensor = output_tensor.movedim(0, dim)
-    output_tensor = output_tensor.reshape(input_size[:dim] +
-                                          (world_size * input_size[dim], ) +
-                                          input_size[dim + 1:])
+    output_tensor = output_tensor.reshape(input_size[:dim] + (world_size * input_size[dim], ) + input_size[dim + 1:])                     
     return output_tensor
