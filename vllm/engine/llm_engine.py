@@ -109,7 +109,7 @@ class LLMEngine:
             ray_usage = os.environ.get("RAY_USAGE_STATS_ENABLED", "0")
             if ray_usage != "1":
                 os.environ["RAY_USAGE_STATS_ENABLED"] = "0"
-            self._init_multiworker(placement_group)
+            self._init_multiworker()
             # self._init_cpu_workers()
             self._init_multiworker_cache()
         else:
@@ -183,15 +183,14 @@ class LLMEngine:
         self._run_cpu_workers("init_model")
         self._run_cpu_workers("load_model")
 
-    def _init_multiworker(self, placement_group: "PlacementGroup", **ray_remote_kwargs):
+    def _init_multiworker(self, **ray_remote_kwargs):
         from vllm.worker.multi_worker import MainWorker, AuxWorker
         self.workers: List[Worker] = []
-        for bundle in placement_group.bundle_specs:
-            if not bundle.get("GPU", 0):
-                continue
-            num_gpus = 1
-            worker = ray.remote(num_cpus=0, num_gpus=num_gpus, scheduling_strategy=PlacementGroupSchedulingStrategy(placement_group=placement_group, placement_group_capture_child_tasks=True), **ray_remote_kwargs, )(RayWorkerVllm).remote(self.model_config.trust_remote_code)
-            self.workers.append(worker)     
+
+        self.main_worker = ray.remote(num_cpus=0, num_gpus=1, **ray_remote_kwargs,)(RayWorkerVllm).remote(self.model_config.trust_remote_code)
+        self.workers.append(self.main_worker)   
+        self.aux_worker = ray.remote(num_cpus=0, num_gpus=1, **ray_remote_kwargs,)(RayWorkerVllm).remote(self.model_config.trust_remote_code)
+        self.workers.append(self.aux_worker)   
 
         init_torch_dist_process_group(self.workers, backend="nccl")
         model_config = copy.deepcopy(self.model_config)
@@ -832,13 +831,15 @@ class LLMEngine:
         return output
 
     def _run_main_worker(self, method: str, *args,**kwargs, ) -> Any:
-        executor = getattr(self.main_worker, method)
+        executor = partial(self.main_worker.execute_method.remote, method)
         output = executor(*args, **kwargs)
+        output = ray.get(output)
         return output
 
     def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
-        executor = getattr(self.aux_worker, method)
+        executor = partial(self.aux_worker.execute_method.remote, method)
         output = executor(*args, **kwargs)
+        output = ray.get(output)
         return output
         
 
