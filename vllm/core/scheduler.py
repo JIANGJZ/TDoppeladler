@@ -3,8 +3,9 @@ import time
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 import bisect
 
-from vllm.config import CacheConfig, SchedulerConfig, CPUSchedulerConfig
+from vllm.config import CacheConfig, SchedulerConfig, CPUSchedulerConfig, ParallelConfig
 from vllm.core.block_manager import AllocStatus, BlockSpaceManager
+from vllm.core.multi_block_manager import MultiBlockSpaceManager
 from vllm.core.policy import PolicyFactory
 from vllm.logger import init_logger
 from vllm.sequence import (Sequence, SequenceData, SequenceGroup, SequenceGroupMetadata, SequenceStatus)
@@ -57,19 +58,27 @@ class SchedulerOutputs:
 
 
 class Scheduler:
-    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig) -> None:
+    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig, parallel_config: ParallelConfig) -> None:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
+        self.parallel_config = parallel_config
 
         self.prompt_limit = min(self.scheduler_config.max_model_len, self.scheduler_config.max_num_batched_tokens)
         # Instantiate the scheduling policy.
         self.policy = PolicyFactory.get_policy(policy_name="fcfs")
         # Create the block space manager.
-        self.block_manager = BlockSpaceManager(
-            block_size=self.cache_config.block_size,
-            num_gpu_blocks=self.cache_config.num_gpu_blocks,
-            num_cpu_blocks=self.cache_config.num_cpu_blocks,
-            sliding_window=self.cache_config.sliding_window)
+        if self.parallel_config.multi_worker:
+            self.block_manager = MultiBlockSpaceManager(
+                block_size=self.cache_config.block_size,
+                num_gpu_blocks=self.cache_config.num_gpu_blocks,
+                num_cpu_blocks=self.cache_config.num_cpu_blocks,
+                sliding_window=self.cache_config.sliding_window)
+        else:
+            self.block_manager = BlockSpaceManager(
+                block_size=self.cache_config.block_size,
+                num_gpu_blocks=self.cache_config.num_gpu_blocks,
+                num_cpu_blocks=self.cache_config.num_cpu_blocks,
+                sliding_window=self.cache_config.sliding_window)
 
         # TODO(zhuohan): Use deque instead of list for better performance.
         # Sequence groups in the WAITING state.

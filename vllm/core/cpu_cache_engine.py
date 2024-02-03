@@ -3,7 +3,6 @@ import torch
 from vllm._C import cache_ops
 from vllm.config import CacheConfig, ModelConfig, ParallelConfig
 from vllm.logger import init_logger
-from vllm.utils import in_wsl
 logger = init_logger(__name__)
 KVCache = Tuple[torch.Tensor, torch.Tensor]
 
@@ -53,43 +52,3 @@ class CPUCacheEngine:
             value_blocks.share_memory_()
             cpu_cache.append((key_blocks, value_blocks))
         return cpu_cache
-
-    def _swap(self, src: List[KVCache], dst: List[KVCache],  src_to_dst: Dict[int, int], ) -> None:
-        with torch.cuda.stream(self.cache_stream):
-            for i in range(self.num_layers):
-                src_key_cache, src_value_cache = src[i]
-                dst_key_cache, dst_value_cache = dst[i]
-                # Copy the key blocks.
-                cache_ops.swap_blocks(src_key_cache, dst_key_cache, src_to_dst)
-                # Copy the value blocks.
-                cache_ops.swap_blocks(src_value_cache, dst_value_cache, src_to_dst)     
-                event = self.events[i]
-                event.record(stream=self.cache_stream)
-
-    def swap_in(self, src_to_dst: Dict[int, int], gpu_cache) -> None:
-        self._swap(self.cpu_cache, gpu_cache, src_to_dst)
-
-    def swap_out(self, src_to_dst: Dict[int, int], gpu_cache) -> None:
-        self._swap(gpu_cache, self.cpu_cache, src_to_dst)
-
-    def copy(self, src_to_dsts: Dict[int, List[int]], gpu_cache) -> None:
-        key_caches = [key_cache for key_cache, _ in gpu_cache]
-        value_caches = [value_cache for _, value_cache in gpu_cache]
-        # NOTE(woosuk): This operation implicitly synchronizes the CPU and GPU.
-        cache_ops.copy_blocks(key_caches, value_caches, src_to_dsts)
-
-    @staticmethod
-    def get_cache_block_size(block_size: int, model_config: ModelConfig, parallel_config: ParallelConfig,) -> int:
-        head_size = model_config.get_head_size()
-        num_heads = model_config.get_num_kv_heads(parallel_config)
-        num_layers = model_config.get_num_layers(parallel_config)
-
-        key_cache_block = block_size * num_heads * head_size
-        value_cache_block = key_cache_block
-        total = num_layers * (key_cache_block + value_cache_block)
-        dtype_size = _get_dtype_size(model_config.dtype)
-        return dtype_size * total
-
-
-def _get_dtype_size(dtype: torch.dtype) -> int:
-    return torch.tensor([], dtype=dtype).element_size()

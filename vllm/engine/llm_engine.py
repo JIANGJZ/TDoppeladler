@@ -15,6 +15,7 @@ from vllm.sampling_params import SamplingParams
 from vllm.sequence import (SamplerOutput, Sequence, SequenceGroup, SequenceGroupMetadata, SequenceGroupOutput, SequenceOutput, SequenceStatus)                     
 from vllm.transformers_utils.tokenizer import (detokenize_incrementally, get_tokenizer)                           
 from vllm.utils import Counter
+from vllm.core.cpu_cache_engine import CPUCacheEngine
 
 if ray:
     from ray.air.util.torch_dist import init_torch_dist_process_group
@@ -103,15 +104,24 @@ class LLMEngine:
             if ray_usage != "1":
                 os.environ["RAY_USAGE_STATS_ENABLED"] = "0"
             self._init_workers_ray(placement_group)
+            self._init_cache()
+        elif self.parallel_config.multi_worker:
+            ray_usage = os.environ.get("RAY_USAGE_STATS_ENABLED", "0")
+            if ray_usage != "1":
+                os.environ["RAY_USAGE_STATS_ENABLED"] = "0"
+            self._init_multiworker(placement_group)
+            # self._init_cpu_workers()
+            self._init_multiworker_cache()
         else:
             self._init_workers(distributed_init_method)
-            # self._init_cpu_workers()
+            self._init_cache()
+            
 
         # Profile the memory usage and initialize the cache.
-        self._init_cache()
+        
 
         # Create the scheduler.
-        self.scheduler = Scheduler(scheduler_config, cache_config, cpuscheduler_config)
+        self.scheduler = Scheduler(scheduler_config, cache_config, cpuscheduler_config, parallel_config)
 
         # Logging.
         self.last_logging_time = time.monotonic()
@@ -138,15 +148,6 @@ class LLMEngine:
         self.workers.append(worker)
         self._run_workers("init_model", get_all_outputs=True,)
         self._run_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)            
-        
-
-    def _init_cpu_workers(self, ):
-        from vllm.worker.worker import CPUWorker
-        self.cpu_workers: List[CPUWorker] = []
-        worker = CPUWorker(self.model_config, self.parallel_config, self.scheduler_config,)
-        self.cpu_workers.append(worker)
-        self._run_cpu_workers("init_model", get_all_outputs=True,)
-        self._run_cpu_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)
 
 
     def _init_workers_ray(self, placement_group: "PlacementGroup", **ray_remote_kwargs):   
@@ -172,6 +173,38 @@ class LLMEngine:
         self._run_workers("init_worker", get_all_outputs=True, worker_init_fn=lambda: Worker(model_config, parallel_config, scheduler_config, None, None,))
         self._run_workers("init_model", get_all_outputs=True,)
         self._run_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)
+
+
+    def _init_cpu_workers(self, ):
+        from vllm.worker.cpu_worker import CPUWorker
+        self.cpu_workers: List[CPUWorker] = []
+        worker = CPUWorker(self.model_config, self.parallel_config, self.scheduler_config,)
+        self.cpu_workers.append(worker)
+        self._run_cpu_workers("init_model")
+        self._run_cpu_workers("load_model")
+
+    def _init_multiworker(self, placement_group: "PlacementGroup", **ray_remote_kwargs):
+        from vllm.worker.multi_worker import MainWorker, AuxWorker
+        self.workers: List[Worker] = []
+        for bundle in placement_group.bundle_specs:
+            if not bundle.get("GPU", 0):
+                continue
+            num_gpus = 1
+            worker = ray.remote(num_cpus=0, num_gpus=num_gpus, scheduling_strategy=PlacementGroupSchedulingStrategy(placement_group=placement_group, placement_group_capture_child_tasks=True), **ray_remote_kwargs, )(RayWorkerVllm).remote(self.model_config.trust_remote_code)
+            self.workers.append(worker)     
+
+        init_torch_dist_process_group(self.workers, backend="nccl")
+        model_config = copy.deepcopy(self.model_config)
+        parallel_config = copy.deepcopy(self.parallel_config)
+        scheduler_config = copy.deepcopy(self.scheduler_config)
+
+        self._run_main_worker("init_worker", worker_init_fn=lambda: MainWorker(model_config, parallel_config, scheduler_config, None, None,))
+        self._run_main_worker("init_model")
+        self._run_main_worker("load_model")
+
+        self._run_aux_worker("init_worker", worker_init_fn=lambda: AuxWorker(model_config, parallel_config, scheduler_config, None, None,))
+        self._run_aux_worker("init_model")
+        self._run_aux_worker("load_model")
             
             
     def _verify_args(self) -> None:
@@ -216,6 +249,54 @@ class LLMEngine:
         # Warm up the model. This includes capturing the model into CUDA graph
         # if enforce_eager is False.
         self._run_workers("warm_up_model")
+
+
+    def _init_multiworker_cache(self)-> None:
+        num_main_blocks = self._run_main_worker(
+            "profile_num_available_blocks",
+            get_all_outputs=True,
+            block_size=self.cache_config.block_size,
+            gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
+            cpu_swap_space=self.cache_config.swap_space_bytes,
+        )
+
+        num_aux_blocks = self._run_aux_worker(
+            "profile_num_available_blocks",
+            get_all_outputs=True,
+            block_size=self.cache_config.block_size,
+            gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
+            cpu_swap_space=self.cache_config.swap_space_bytes,
+        )
+
+        num_main_gpu_blocks = min(b[0] for b in num_main_blocks)
+        num_cpu_blocks = min(b[1] for b in num_main_blocks)
+        num_aux_gpu_blocks = min(b[0] for b in num_aux_blocks)
+        logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
+                    
+        if num_main_gpu_blocks <= 0:
+            raise ValueError("No available memory for the cache blocks. Try increasing `gpu_memory_utilization` when initializing the engine.")          
+        max_seq_len = self.cache_config.block_size * num_main_gpu_blocks
+        if self.model_config.max_model_len > max_seq_len:
+            raise ValueError(
+                f"The model's max seq len ({self.model_config.max_model_len}) "
+                "is larger than the maximum number of tokens that can be "
+                f"stored in KV cache ({max_seq_len}). Try increasing "
+                "`gpu_memory_utilization` or decreasing `max_model_len` when "
+                "initializing the engine.")
+
+        self.cache_config.num_gpu_blocks = num_main_gpu_blocks
+        self.cache_config.num_cpu_blocks = num_cpu_blocks
+
+        self.cpu_cache_engine = CPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)   
+        # Initialize the cache.
+        self._run_main_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
+        self._run_main_worker("warm_up_model")  
+
+        self.cache_config.num_gpu_blocks = num_aux_gpu_blocks
+        self.cache_config.num_cpu_blocks = num_cpu_blocks      
+
+        self._run_aux_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
+        self._run_aux_worker("warm_up_model")
 
     @classmethod
     def from_engine_args(cls, engine_args: EngineArgs) -> "LLMEngine":
@@ -518,13 +599,22 @@ class LLMEngine:
             return ignored
 
         # Execute the model.
-        output = self._run_workers(
-            "execute_model",
-            seq_group_metadata_list=seq_group_metadata_list,
-            blocks_to_swap_in=scheduler_outputs.blocks_to_swap_in,
-            blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
-            blocks_to_copy=scheduler_outputs.blocks_to_copy,
-        )
+        if self.parallel_config.multi_worker:
+            all_outputs = []
+            output = self._run_main_worker(
+                "execute_model",
+                seq_group_metadata_list=seq_group_metadata_list,
+                blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
+                blocks_to_copy=scheduler_outputs.blocks_to_copy,
+            )
+        else:
+            output = self._run_workers(
+                "execute_model",
+                seq_group_metadata_list=seq_group_metadata_list,
+                blocks_to_swap_in=scheduler_outputs.blocks_to_swap_in,
+                blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
+                blocks_to_copy=scheduler_outputs.blocks_to_copy,
+            )
 
         return self._process_model_outputs(output, scheduler_outputs)
 
@@ -566,10 +656,15 @@ class LLMEngine:
         total_final_prompt_tokens =  total_real_prompt_tokens - total_recompute_tokens
 
         # print ((now, self.last_logging_time, self.total_prompt_tokens[0][0]))
-        avg_total_prompt_throughput = total_prompt_tokens / (now - self.total_prompt_tokens[0][0])
-        avg_total_real_prompt_throughput = total_real_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
-        avg_total_final_prompt_throughput = total_final_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
-        avg_total_generation_throughput = total_generation_tokens / (now - self.total_generation_tokens[0][0])
+        # avg_total_prompt_throughput = total_prompt_tokens / (now - self.total_prompt_tokens[0][0])
+        # avg_total_real_prompt_throughput = total_real_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
+        # avg_total_final_prompt_throughput = total_final_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
+        # avg_total_generation_throughput = total_generation_tokens / (now - self.total_generation_tokens[0][0])
+
+        avg_total_prompt_throughput = 0
+        avg_total_real_prompt_throughput = 0
+        avg_total_final_prompt_throughput = 0
+        avg_total_generation_throughput = 0
 
         # Discard the old stats.
         self.num_prompt_tokens = [(t, n) for t, n in self.num_prompt_tokens if now - t < _LOGGING_INTERVAL_SEC]         
@@ -736,31 +831,18 @@ class LLMEngine:
             assert output == other_output
         return output
 
+    def _run_main_worker(self, method: str, *args,**kwargs, ) -> Any:
+        executor = getattr(self.main_worker, method)
+        output = executor(*args, **kwargs)
+        return output
 
-    def _run_cpu_workers_in_batch(self, workers, method: str, *args, **kwargs, ):
-        all_outputs = []
-        for worker in workers:
-            executor = getattr(worker, method)
-            output = executor(*args, **kwargs)
-            all_outputs.append(output)
-            
-        return all_outputs
+    def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
+        executor = getattr(self.aux_worker, method)
+        output = executor(*args, **kwargs)
+        return output
+        
 
-    def  _run_cpu_workers(self, method: str, *args, get_all_outputs: bool = False, max_concurrent_workers: Optional[int] = None, **kwargs, ) -> Any:
-        all_outputs = []
-        if max_concurrent_workers:
-            cpu_work_groups = [self.cpu_workers[i:i + max_concurrent_workers] for i in range(0, len(self.cpu_workers), max_concurrent_workers)]
-        else:
-            cpu_work_groups = [self.cpu_workers]
-
-        for workers in cpu_work_groups:
-            all_outputs.extend(self._run_cpu_workers_in_batch(workers, method, *args, **kwargs))
-
-        if get_all_outputs:
-            return all_outputs
-
-        # Make sure all workers have the same results.
-        output = all_outputs[0]
-        for other_output in all_outputs[1:]:
-            assert output == other_output
+    def _run_cpu_workers(self, method: str, *args, **kwargs, ) -> Any:
+        executor = getattr(self.aux_worker, method)
+        output = executor(*args, **kwargs)
         return output

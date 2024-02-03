@@ -14,14 +14,14 @@ logger = init_logger(__name__)
 KVCache = Tuple[torch.Tensor, torch.Tensor]
 
 
-class GPUCacheEngine:
+class MultiGPUCacheEngine:
     """Manages the KV cache.
 
     This class is responsible for initializing and managing the GPU and CPU KV
     caches. It also provides methods for performing KV cache operations, such
     as swapping and copying.
     """
-    def __init__(self, cache_config: CacheConfig, model_config: ModelConfig, parallel_config: ParallelConfig) -> None:
+    def __init__(self, cache_config: CacheConfig, model_config: ModelConfig, parallel_config: ParallelConfig, cpu_cache_engine: CPUCacheEngine) -> None:
         self.cache_config = cache_config
         self.model_config = model_config
         self.parallel_config = parallel_config
@@ -37,7 +37,10 @@ class GPUCacheEngine:
 
         # Initialize the cache.
         self.num_cpu_blocks = cache_config.num_cpu_blocks
-        self.cpu_cache = self.allocate_cpu_cache()
+        # self.cpu_cache = self.allocate_cpu_cache()
+        self.cpu_cache_engine = cpu_cache_engine
+        self.cpu_cache = self.cpu_cache_engine.cpu_cache
+
 
         # Initialize the stream for caching operations.
         self.cache_stream = torch.cuda.Stream()
@@ -73,24 +76,24 @@ class GPUCacheEngine:
             gpu_cache.append((key_blocks, value_blocks))
         return gpu_cache
 
-    def allocate_cpu_cache(self) -> List[KVCache]:
-        cpu_cache: List[KVCache] = []
-        key_block_shape = self.get_key_block_shape()
-        value_block_shape = self.get_value_block_shape()
-        pin_memory = True            
-        for _ in range(self.num_layers):
-            key_blocks = torch.empty(
-                size=(self.num_cpu_blocks, *key_block_shape),
-                dtype=self.dtype,
-                pin_memory=pin_memory,
-            )
-            value_blocks = torch.empty(
-                size=(self.num_cpu_blocks, *value_block_shape),
-                dtype=self.dtype,
-                pin_memory=pin_memory,
-            )
-            cpu_cache.append((key_blocks, value_blocks))
-        return cpu_cache
+    # def allocate_cpu_cache(self) -> List[KVCache]:
+    #     cpu_cache: List[KVCache] = []
+    #     key_block_shape = self.get_key_block_shape()
+    #     value_block_shape = self.get_value_block_shape()
+    #     pin_memory = True            
+    #     for _ in range(self.num_layers):
+    #         key_blocks = torch.empty(
+    #             size=(self.num_cpu_blocks, *key_block_shape),
+    #             dtype=self.dtype,
+    #             pin_memory=pin_memory,
+    #         )
+    #         value_blocks = torch.empty(
+    #             size=(self.num_cpu_blocks, *value_block_shape),
+    #             dtype=self.dtype,
+    #             pin_memory=pin_memory,
+    #         )
+    #         cpu_cache.append((key_blocks, value_blocks))
+    #     return cpu_cache
 
     def _swap(self, src: List[KVCache], dst: List[KVCache],  src_to_dst: Dict[int, int], ) -> None:
         with torch.cuda.stream(self.cache_stream):
