@@ -104,12 +104,15 @@ class RequestOutput:
             outputs.append(output)
 
         # Every sequence in the sequence group should have the same prompt.
-        prompt = seq_group.prompt
-        prompt_token_ids = seq_group.prompt_token_ids
-        prompt_logprobs = seq_group.prompt_logprobs
+        # prompt = seq_group.prompt
+        # prompt_token_ids = seq_group.prompt_token_ids
+        # prompt_logprobs = seq_group.prompt_logprobs
+        prompt = None
+        prompt_token_ids = None
+        prompt_logprobs = None
         finished = seq_group.is_finished()
-        return cls(seq_group.request_id, prompt, prompt_token_ids,
-                   prompt_logprobs, outputs, finished)
+        return cls(seq_group.request_id, prompt, prompt_token_ids, prompt_logprobs, outputs, finished)
+                   
 
     def __repr__(self) -> str:
         return (f"RequestOutput(request_id={self.request_id}, "

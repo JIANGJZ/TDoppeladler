@@ -78,7 +78,7 @@ class LLM:
         tokenizer_revision: Optional[str] = None,
         seed: int = 0,
         gpu_memory_utilization: float = 0.9,
-        swap_space: int = 32,
+        swap_space: int = 8,
         enforce_eager: bool = False,
         max_context_len_to_capture: int = 8192,
         **kwargs,
@@ -136,8 +136,7 @@ class LLM:
         if isinstance(prompts, str):
             # Convert a single prompt to a list.
             prompts = [prompts]
-        if (prompts is not None and prompt_token_ids is not None
-                and len(prompts) != len(prompt_token_ids)):
+        if (prompts is not None and prompt_token_ids is not None and len(prompts) != len(prompt_token_ids)):
             raise ValueError("The lengths of prompts and prompt_token_ids must be the same.")
                              
         if sampling_params is None:

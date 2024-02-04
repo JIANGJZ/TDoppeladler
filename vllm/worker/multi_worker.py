@@ -7,7 +7,7 @@ from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConf
 from vllm.model_executor import set_random_seed
 from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_parallel)
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
-from vllm.worker.gpu_cache_engine import GPUCacheEngine
+from vllm.worker.multi_gpu_cache_engine import MultiGPUCacheEngine
 from vllm.worker.model_runner import ModelRunner, CPUModelRunner
 from vllm.core.cpu_cache_engine import CPUCacheEngine
 
@@ -37,24 +37,24 @@ class MainWorker:
         self.gpu_cache = None
 
     def init_model(self) -> None:
+        print ("enter init model")
         os.environ["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
 
-        # This env var set by Ray causes exceptions with graph building.
         os.environ.pop("NCCL_ASYNC_ERROR_HANDLING", None)
-        # Env vars will be set by Ray.
         self.rank = self.rank if self.rank is not None else int(os.getenv("RANK", "-1"))
         local_rank = int(os.getenv("LOCAL_RANK", "0"))
         self.device = torch.device(f"cuda:{local_rank}")
         if self.rank < 0:
             raise ValueError("Invalid or unspecified rank.")
         torch.cuda.set_device(self.device)
-
+        print ("set cuda device ={}".format(self.device))
         _check_if_gpu_supports_dtype(self.model_config.dtype)
 
         # Initialize the distributed environment.
         _init_distributed_environment(self.parallel_config, self.rank, self.distributed_init_method)
         # Initialize the model.
         set_random_seed(self.model_config.seed)
+        print ("exit init model")
 
     def load_model(self):
         self.model_runner.load_model()
@@ -75,7 +75,7 @@ class MainWorker:
         free_gpu_memory, total_gpu_memory = torch.cuda.mem_get_info()
         peak_memory = total_gpu_memory - free_gpu_memory
 
-        cache_block_size = GPUCacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
+        cache_block_size = MultiGPUCacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
 
         num_gpu_blocks = int((total_gpu_memory * gpu_memory_utilization - peak_memory) // cache_block_size)
           
@@ -85,9 +85,11 @@ class MainWorker:
         torch.cuda.empty_cache()
         return num_gpu_blocks, num_cpu_blocks
 
+
     def init_cache_engine(self, cache_config: CacheConfig, cpu_cache_engine:CPUCacheEngine) -> None:
+        print ("enter init cache engine")
         self.cache_config = cache_config
-        self.cache_engine = GPUCacheEngine(self.cache_config, self.model_config, self.parallel_config, cpu_cache_engine)            
+        self.cache_engine = MultiGPUCacheEngine(self.cache_config, self.model_config, self.parallel_config, cpu_cache_engine)            
         self.cache_events = self.cache_engine.events
         self.gpu_cache = self.cache_engine.gpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
@@ -101,6 +103,7 @@ class MainWorker:
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_out: Dict[int, int], blocks_to_copy: Dict[int, List[int]],) -> SamplerOutput:
+        # print ("**************** execute in main *********************")
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_out:
@@ -146,6 +149,7 @@ class AuxWorker:
         self.gpu_cache = None
 
     def init_model(self) -> None:
+        print ("enter aux init model")
         os.environ["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
 
         # This env var set by Ray causes exceptions with graph building.
@@ -164,8 +168,10 @@ class AuxWorker:
         _init_distributed_environment(self.parallel_config, self.rank, self.distributed_init_method)
         # Initialize the model.
         set_random_seed(self.model_config.seed)
+        print ("exit init model")
 
     def load_model(self):
+        print ("load model")
         self.model_runner.load_model()
 
     @torch.inference_mode()
@@ -184,7 +190,7 @@ class AuxWorker:
         free_gpu_memory, total_gpu_memory = torch.cuda.mem_get_info()
         peak_memory = total_gpu_memory - free_gpu_memory
 
-        cache_block_size = GPUCacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
+        cache_block_size = MultiGPUCacheEngine.get_cache_block_size(block_size, self.model_config, self.parallel_config)
 
         num_gpu_blocks = int((total_gpu_memory * gpu_memory_utilization - peak_memory) // cache_block_size)
           
@@ -196,7 +202,7 @@ class AuxWorker:
 
     def init_cache_engine(self, cache_config: CacheConfig, cpu_cache_engine:CPUCacheEngine) -> None:
         self.cache_config = cache_config
-        self.cache_engine = GPUCacheEngine(self.cache_config, self.model_config, self.parallel_config, cpu_cache_engine)            
+        self.cache_engine = MultiGPUCacheEngine(self.cache_config, self.model_config, self.parallel_config, cpu_cache_engine)            
         self.cache_events = self.cache_engine.events
         self.gpu_cache = self.cache_engine.gpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
@@ -211,6 +217,7 @@ class AuxWorker:
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int],) -> SamplerOutput:
         # Issue cache operations.
+        print ("**************** execute in aux *********************")
         issued_cache_op = False
         if blocks_to_swap_in:
             self.cache_engine.swap_in(blocks_to_swap_in)
@@ -233,14 +240,15 @@ class AuxWorker:
 
 def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, distributed_init_method: Optional[str] = None,) -> None:
     """Initialize the distributed environment."""
+    print ("init distributed")
     if torch.distributed.is_initialized():
         torch_world_size = torch.distributed.get_world_size()
-        if torch_world_size != parallel_config.world_size:
-            raise RuntimeError("torch.distributed is already initialized but the torch world size does not match parallel_config.world_size ({torch_world_size} vs. {parallel_config.world_size}).")
-                
+        # if torch_world_size != parallel_config.world_size:
+        #     raise RuntimeError("torch.distributed is already initialized but the torch world size does not match parallel_config.world_size ({torch_world_size} vs. {parallel_config.world_size}).")     
     elif not distributed_init_method:
         raise ValueError("distributed_init_method must be set if torch.distributed is not already initialized") 
     else:
+        print ("init distributed enviroment worldsize={}, rank={}".format(parallel_config.world_size, rank))
         torch.distributed.init_process_group(
             backend="nccl",
             world_size=parallel_config.world_size,
@@ -249,8 +257,8 @@ def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, di
         )
 
     # A small all_reduce for warmup.
-    torch.distributed.all_reduce(torch.zeros(1).cuda())
-    initialize_model_parallel(parallel_config.tensor_parallel_size, parallel_config.pipeline_parallel_size)
+    # torch.distributed.all_reduce(torch.zeros(1).cuda())
+    # initialize_model_parallel(parallel_config.tensor_parallel_size, parallel_config.pipeline_parallel_size)
                               
 
 def _check_if_gpu_supports_dtype(torch_dtype: torch.dtype):

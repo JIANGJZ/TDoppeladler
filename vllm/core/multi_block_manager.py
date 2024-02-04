@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from vllm.block import PhysicalTokenBlock
 from vllm.sequence import Sequence, SequenceGroup, SequenceStatus
 from vllm.utils import Device
+from vllm.core.alloc_status import AllocStatus
 
 # Mapping: logical block number -> physical block.
 BlockTable = List[PhysicalTokenBlock]
@@ -34,6 +35,7 @@ class BlockAllocator:
             self.free_blocks.append(block)
 
     def allocate(self) -> PhysicalTokenBlock:
+        # print ("allocate free blocks {} left".format(len(self.free_blocks)))
         if not self.free_blocks:
             raise ValueError("Out of memory! No free blocks are available.")
         block = self.free_blocks.pop()
@@ -51,18 +53,6 @@ class BlockAllocator:
         return len(self.free_blocks)
 
 
-class AllocStatus(enum.Enum):
-    """Result for BlockSpaceManager.can_allocate
-
-    1. Ok: seq_group can be allocated now.
-    2. Later: seq_group cannot be allocated.
-      The capacity of allocator is larger than seq_group required.
-    3. Never: seq_group can never be allocated.
-      The seq_group is too large to allocated in GPU.
-    """
-    OK = enum.auto()
-    LATER = enum.auto()
-    NEVER = enum.auto()
 
 
 class MultiBlockSpaceManager:
@@ -90,10 +80,10 @@ class MultiBlockSpaceManager:
         self.watermark = watermark
         assert watermark >= 0.0
 
-        self.watermark_blocks = int(watermark * num_gpu_blocks)
-        self.gpu_allocator = BlockAllocator(Device.GPU, block_size, num_gpu_blocks)                 
+        self.watermark_blocks = int(watermark * num_main_gpu_blocks)
+        self.main_gpu_allocator = BlockAllocator(Device.GPU, block_size, num_main_gpu_blocks)                 
         self.cpu_allocator = BlockAllocator(Device.CPU, block_size, num_cpu_blocks)
-        self.auxgpu_blocks_allocator = BlockAllocator(Device.GPU, block_size, num_auxgpu_blocks)   
+        self.aux_gpu_allocator = BlockAllocator(Device.GPU, block_size, num_aux_gpu_blocks)   
                                             
         # Mapping: seq_id -> BlockTable.
         self.block_tables: Dict[int, BlockTable] = {}
@@ -105,10 +95,10 @@ class MultiBlockSpaceManager:
         num_required_blocks = len(seq.logical_token_blocks)
         if self.block_sliding_window is not None:
             num_required_blocks = min(num_required_blocks, self.block_sliding_window)             
-        num_free_gpu_blocks = self.gpu_allocator.get_num_free_blocks()
+        num_free_gpu_blocks = self.main_gpu_allocator.get_num_free_blocks()
 
         # Use watermark to avoid frequent cache eviction.
-        if (self.num_total__main_gpu_blocks - num_required_blocks < self.watermark_blocks):
+        if (self.num_total_main_gpu_blocks - num_required_blocks < self.watermark_blocks):
             return AllocStatus.NEVER
         if num_free_gpu_blocks - num_required_blocks >= self.watermark_blocks:
             return AllocStatus.OK
@@ -126,7 +116,7 @@ class MultiBlockSpaceManager:
             if (self.block_sliding_window is not None and logical_idx >= self.block_sliding_window):
                 block = block_table[logical_idx % self.block_sliding_window]
             else:
-                block = self.gpu_allocator.allocate()
+                block = self.main_gpu_allocator.allocate()
             # Set the reference counts of the token blocks.
             block.ref_count = seq_group.num_seqs()
             block_table.append(block)
@@ -138,7 +128,7 @@ class MultiBlockSpaceManager:
     def can_append_slot(self, seq_group: SequenceGroup) -> bool:
         # Simple heuristic: If there is at least one free block
         # for each sequence, we can append.
-        num_free_gpu_blocks = self.gpu_allocator.get_num_free_blocks()
+        num_free_gpu_blocks = self.main_gpu_allocator.get_num_free_blocks()
         num_seqs = seq_group.num_seqs(status=SequenceStatus.RUNNING)
         return num_seqs <= num_free_gpu_blocks
 
@@ -154,7 +144,7 @@ class MultiBlockSpaceManager:
             else:
                 # The sequence has a new logical block.
                 # Allocate a new physical block.
-                block = self.gpu_allocator.allocate()
+                block = self.main_gpu_allocator.allocate()
                 block_table.append(block)
                 return None
 
@@ -167,9 +157,9 @@ class MultiBlockSpaceManager:
         else:
             # The last block is shared with other sequences.
             # Copy on Write: Allocate a new block and copy the tokens.
-            new_block = self.gpu_allocator.allocate()
+            new_block = self.main_gpu_allocator.allocate()
             block_table[-1] = new_block
-            self.gpu_allocator.free(last_block)
+            self.main_gpu_allocator.free(last_block)
             return last_block.block_number, new_block.block_number
 
     def fork(self, parent_seq: Sequence, child_seq: Sequence) -> None:
@@ -193,7 +183,7 @@ class MultiBlockSpaceManager:
     def can_swap_in(self, seq_group: SequenceGroup) -> bool:
         blocks = self._get_physical_blocks(seq_group)
         num_swapped_seqs = seq_group.num_seqs(status=SequenceStatus.SWAPPED)
-        num_free_blocks = self.auxgpu_blocks_allocator.get_num_free_blocks()
+        num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
         num_required_blocks = len(blocks) + num_swapped_seqs
         return num_free_blocks - num_required_blocks >= self.watermark_blocks
 
@@ -209,7 +199,7 @@ class MultiBlockSpaceManager:
                     gpu_block = mapping[cpu_block]
                     gpu_block.ref_count += 1
                 else:
-                    gpu_block = self.auxgpu_blocks_allocator.allocate()
+                    gpu_block = self.aux_gpu_allocator.allocate()
                     mapping[cpu_block] = gpu_block
                 new_block_table.append(gpu_block)
                 # Free the CPU block swapped in to GPU.
@@ -242,7 +232,7 @@ class MultiBlockSpaceManager:
                     mapping[gpu_block] = cpu_block
                 new_block_table.append(cpu_block)
                 # Free the GPU block swapped out to CPU.
-                self.gpu_allocator.free(gpu_block)
+                self.main_gpu_allocator.free(gpu_block)
             self.block_tables[seq.seq_id] = new_block_table
 
         block_number_mapping = {
@@ -254,7 +244,7 @@ class MultiBlockSpaceManager:
     def _free_block_table(self, block_table: BlockTable) -> None:
         for block in set(block_table):
             if block.device == Device.GPU:
-                self.gpu_allocator.free(block)
+                self.main_gpu_allocator.free(block)
             else:
                 self.cpu_allocator.free(block)
 
@@ -276,7 +266,7 @@ class MultiBlockSpaceManager:
         return [block.block_number for block in block_table]
 
     def get_num_free_gpu_blocks(self) -> int:
-        return self.gpu_allocator.get_num_free_blocks()
+        return self.main_gpu_allocator.get_num_free_blocks()
 
     def get_num_free_cpu_blocks(self) -> int:
         return self.cpu_allocator.get_num_free_blocks()

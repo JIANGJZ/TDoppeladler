@@ -244,6 +244,7 @@ class SequenceGroup:
         self.prompt_logprobs: Optional[PromptLogprobs] = None
         self.is_recompute = False
         self.is_cpu_compute = False
+        self.is_aux_compute = False
 
     @property
     def prompt(self) -> str:

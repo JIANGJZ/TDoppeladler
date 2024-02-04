@@ -44,7 +44,7 @@ def _get_cpu_model_architecture(config: PretrainedConfig) -> Type[nn.Module]:
 
 def get_model(model_config: ModelConfig) -> nn.Module:
     model_class = _get_model_architecture(model_config.hf_config)
-
+    print ("get model")
     # Get the (maybe quantized) linear method.
     linear_method = None
     if model_config.quantization is not None:
@@ -75,6 +75,7 @@ def get_model(model_config: ModelConfig) -> nn.Module:
             # random values to the weights.
             initialize_dummy_weights(model)
         else:
+            print ("load model weight")
             # Load the weights from the cached or downloaded files.
             model.load_weights(model_config.model, model_config.download_dir, model_config.load_format, model_config.revision)            
     return model.eval()

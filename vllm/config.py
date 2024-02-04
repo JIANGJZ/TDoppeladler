@@ -341,7 +341,7 @@ class ParallelConfig:
         self.max_parallel_loading_workers = max_parallel_loading_workers
 
         if self.multi_worker:
-            self.world_size = 2
+            self.world_size = 1
         else:
             self.world_size = pipeline_parallel_size * tensor_parallel_size
             if self.world_size > 1:
