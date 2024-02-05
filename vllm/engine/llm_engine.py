@@ -616,10 +616,12 @@ class LLMEngine:
     def step(self) -> List[RequestOutput]:
         # Execute the model.
         if self.parallel_config.multi_worker:
-            seq_group_metadata_list_main, scheduler_outputs_main, ignored = self._schedule_main()
-            if scheduler_outputs_main.is_empty():
-                return ignored
+            seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
+            seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
+            if scheduler_outputs_main.is_empty() and scheduler_outputs_aux.is_empty():
+                return ignored_main
             processoutput = []
+            print ("main list len = {}".format(len(seq_group_metadata_list_main)))
             main_output = self._run_main_worker(
                 "execute_model",
                 seq_group_metadata_list=seq_group_metadata_list_main,
@@ -629,9 +631,10 @@ class LLMEngine:
             main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
             processoutput.extend(main_processoutput)
 
-            seq_group_metadata_list_aux, scheduler_outputs_aux, ignored = self._schedule_aux()
-            if scheduler_outputs_aux.is_empty():
-                return ignored
+
+            # if scheduler_outputs_aux.is_empty():
+            #     return ignored
+            print ("aux list len = {}".format(len(seq_group_metadata_list_aux)))
             aux_output = self._run_aux_worker(
                 "execute_model",
                 seq_group_metadata_list=seq_group_metadata_list_aux,
