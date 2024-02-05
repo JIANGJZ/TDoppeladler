@@ -122,6 +122,7 @@ class ModelRunner:
 
         for seq_group_metadata in seq_group_metadata_list:
             assert not seq_group_metadata.is_prompt
+            # print (seq_group_metadata.seq_data)
 
             seq_ids = list(seq_group_metadata.seq_data.keys())
             for seq_id in seq_ids:
@@ -137,7 +138,13 @@ class ModelRunner:
                 context_lens.append(context_len)
 
                 block_table = seq_group_metadata.block_tables[seq_id]
-                block_number = block_table[position // self.block_size]
+                # assert (position // self.block_size) in range(0, len(block_table)), "seq_id ={}, len= {}, position={}, block_size={} \
+                # index = {}, block_table={}".format(seq_id, len(block_table), position, self.block_size, (position // self.block_size), block_table)
+                # print ( "seq_id ={}, len= {}, position={}, block_size={} index = {}, block_table={}".format(seq_id, len(block_table), position, self.block_size, (position // self.block_size), block_table))
+                if (position // self.block_size) in range(0, len(block_table)):
+                    block_number = block_table[position // self.block_size]
+                else:
+                    block_number = block_table[-1]
                 block_offset = position % self.block_size
                 slot = block_number * self.block_size + block_offset
                 slot_mapping.append([slot])

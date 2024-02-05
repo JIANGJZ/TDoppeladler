@@ -333,8 +333,8 @@ class SequenceGroupMetadata:
         is_prompt: Whether the request is at prompt stage.
         seq_data: The sequence data. (Seq id -> sequence data)
         sampling_params: The sampling parameters used to generate the outputs.
-        block_tables: The block tables. (Seq id -> list of physical block
-            numbers)
+        block_tables: The block tables. (Seq id -> list of physical block numbers)
+            
     """
 
     def __init__(
@@ -404,8 +404,8 @@ class SequenceGroupOutput:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SequenceGroupOutput):
             raise NotImplementedError()
-        return (self.samples == other.samples
-                and self.prompt_logprobs == other.prompt_logprobs)
+        return (self.samples == other.samples and self.prompt_logprobs == other.prompt_logprobs)
+                
 
 
 # For each sequence group, we generate a list of SequenceOutput object,

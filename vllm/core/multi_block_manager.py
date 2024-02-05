@@ -230,6 +230,7 @@ class MultiBlockSpaceManager:
                 # Free the CPU block swapped in to GPU.
                 self.cpu_allocator.free(cpu_block)
             del self.block_tables[seq.seq_id]
+            # print ("swap in new table ={}".format(new_block_table))
             self.aux_block_tables[seq.seq_id] = new_block_table
 
         block_number_mapping = {
@@ -269,6 +270,7 @@ class MultiBlockSpaceManager:
                 new_block_table.append(cpu_block)
                 # Free the GPU block swapped out to CPU.
                 self.main_gpu_allocator.free(gpu_block)
+            # print ("swap out new table ={}".format(new_block_table))
             self.block_tables[seq.seq_id] = new_block_table
 
         block_number_mapping = {
@@ -308,11 +310,12 @@ class MultiBlockSpaceManager:
         self.block_tables.clear()
         self.aux_block_tables.clear()
 
-    def get_block_table(self, seq: Sequence) -> List[int]:
-        if seq.seq_id in self.block_tables:
-            block_table = self.block_tables[seq.seq_id]
-        else:
-            block_table = self.aux_block_tables[seq.seq_id]
+    def get_main_block_table(self, seq: Sequence) -> List[int]:
+        block_table = self.block_tables[seq.seq_id]
+        return [block.block_number for block in block_table]
+
+    def get_aux_block_table(self, seq: Sequence)-> List[int]:
+        block_table = self.aux_block_tables[seq.seq_id]
         return [block.block_number for block in block_table]
 
     def get_num_free_gpu_blocks(self) -> int:

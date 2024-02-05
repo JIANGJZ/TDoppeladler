@@ -535,7 +535,6 @@ class MultiScheduler:
                 # If the sequence group cannot be allocated, stop.
                 can_allocate = self.block_manager.can_allocate(seq_group)
                 if can_allocate == AllocStatus.LATER:
-                    print ("not space for new running")
                     break
                 elif can_allocate == AllocStatus.NEVER:
                     logger.warning(f"Input prompt ({num_prompt_tokens} tokens) is too long and exceeds the capacity of block_manager")
@@ -552,19 +551,19 @@ class MultiScheduler:
                     new_seq_recompute_lens = new_seq_recompute_lens + [num_prompt_tokens]
                 num_batched_tokens = len(new_seq_lens) * max(new_seq_lens)
                 if (num_batched_tokens > self.scheduler_config.max_num_batched_tokens):
-                    print ("promt select exceed tokens total_tokens={}, new_tokens={}".format(num_batched_tokens, num_prompt_tokens))
+                    print ("prompt select exceed tokens total_tokens={}, new_tokens={}".format(num_batched_tokens, num_prompt_tokens))
                     break
 
                 # The total number of sequences in the RUNNING state should not
                 # exceed the maximum number of sequences.
                 num_new_seqs = seq_group.get_max_num_running_seqs()
                 if (num_curr_seqs + num_new_seqs > self.scheduler_config.max_num_seqs):
-                    print ("promt select exit seqs total_seqs={}, num_curr_seqs={}".format(num_curr_seqs + num_new_seqs, num_curr_seqs))
+                    print ("prompt select exit seqs total_seqs={}, num_curr_seqs={}".format(num_curr_seqs + num_new_seqs, num_curr_seqs))
                     break
 
                 num_paddings = num_batched_tokens - sum(new_seq_lens)
                 if num_paddings > self.scheduler_config.max_paddings:
-                    print ("promt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
+                    print ("prompt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
                     break
                 seq_lens = new_seq_lens
                 seq_recompute_lens = new_seq_recompute_lens
@@ -639,7 +638,7 @@ class MultiScheduler:
             for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
                 seq_id = seq.seq_id
                 seq_data[seq_id] = seq.data
-                block_tables[seq_id] = self.block_manager.get_block_table(seq)
+                block_tables[seq_id] = self.block_manager.get_aux_block_table(seq)
 
             seq_group_metadata = SequenceGroupMetadata(
                 request_id=seq_group.request_id,
@@ -648,6 +647,7 @@ class MultiScheduler:
                 sampling_params=seq_group.sampling_params,
                 block_tables=block_tables,
             )
+            # print (" sechedule_aux block_tables = {}".format(block_tables))
             seq_group_metadata_list.append(seq_group_metadata)
         return seq_group_metadata_list, scheduler_outputs
 
@@ -661,7 +661,7 @@ class MultiScheduler:
             for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
                 seq_id = seq.seq_id
                 seq_data[seq_id] = seq.data
-                block_tables[seq_id] = self.block_manager.get_block_table(seq)
+                block_tables[seq_id] = self.block_manager.get_main_block_table(seq)
 
             seq_group_metadata = SequenceGroupMetadata(
                 request_id=seq_group.request_id,
@@ -670,6 +670,7 @@ class MultiScheduler:
                 sampling_params=seq_group.sampling_params,
                 block_tables=block_tables,
             )
+            # print (" sechedule_main block_tables = {}".format(block_tables))
             seq_group_metadata_list.append(seq_group_metadata)
         return seq_group_metadata_list, scheduler_outputs
 

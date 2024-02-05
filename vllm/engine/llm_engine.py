@@ -579,8 +579,11 @@ class LLMEngine:
             self._process_sequence_group_outputs(seq_group, outputs)
 
         # Free the finished sequence groups.
-        self.scheduler.free_finished_aux_seq_groups()
-        self.scheduler.free_finished_main_seq_groups()
+        if self.parallel_config.multi_worker:
+            self.scheduler.free_finished_aux_seq_groups()
+            self.scheduler.free_finished_main_seq_groups()
+        else:
+             self.scheduler.free_finished_seq_groups()
 
         # Create the outputs.
         request_outputs: List[RequestOutput] = []
@@ -629,14 +632,12 @@ class LLMEngine:
             seq_group_metadata_list_aux, scheduler_outputs_aux, ignored = self._schedule_aux()
             if scheduler_outputs_aux.is_empty():
                 return ignored
-            if len(seq_group_metadata_list_aux) > 0:
-                print ("aux seq len = {}".format(len(seq_group_metadata_list_aux)))
-                aux_output = self._run_aux_worker(
-                    "execute_model",
-                    seq_group_metadata_list=seq_group_metadata_list_aux,
-                    blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
-                    blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
-                )
+            aux_output = self._run_aux_worker(
+                "execute_model",
+                seq_group_metadata_list=seq_group_metadata_list_aux,
+                blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
+                blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
+            )
             
             aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)
             processoutput.extend(aux_processoutput)    

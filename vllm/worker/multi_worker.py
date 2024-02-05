@@ -216,10 +216,11 @@ class AuxWorker:
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int], blocks_to_copy=Dict[int, int],) -> SamplerOutput:
-        # Issue cache operations.
         print ("**************** execute in aux *********************")
+        # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_in:
+            print ("swap in in aux worker")
             self.cache_engine.swap_in(blocks_to_swap_in)
             issued_cache_op = True
             
