@@ -263,7 +263,7 @@ class LLMEngine:
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
-
+        num_main_blocks = ray.get(num_main_blocks)
         print ("main blocks = {}".format(num_main_blocks))
 
         num_aux_blocks = self._run_aux_worker(
@@ -272,7 +272,8 @@ class LLMEngine:
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
-
+        num_aux_blocks = ray.get(num_aux_blocks)
+        
         num_main_gpu_blocks = num_main_blocks[0]
         num_cpu_blocks = num_main_blocks[1]
         num_aux_gpu_blocks = num_aux_blocks[0]
@@ -628,10 +629,6 @@ class LLMEngine:
                 blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
                 blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
             )
-            main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
-            processoutput.extend(main_processoutput)
-
-
             # if scheduler_outputs_aux.is_empty():
             #     return ignored
             print ("aux list len = {}".format(len(seq_group_metadata_list_aux)))
@@ -641,7 +638,10 @@ class LLMEngine:
                 blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
                 blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
             )
-            
+            main_output = ray.get(main_output)
+            aux_output = ray.get(aux_output)
+            main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
+            processoutput.extend(main_processoutput)
             aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)
             processoutput.extend(aux_processoutput)    
 
@@ -878,13 +878,11 @@ class LLMEngine:
     def _run_main_worker(self, method: str, *args,**kwargs, ) -> Any:
         executor = partial(self.main_worker.execute_method.remote, method)
         output = executor(*args, **kwargs)
-        output = ray.get(output)
         return output
 
     def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
         executor = partial(self.aux_worker.execute_method.remote, method)
         output = executor(*args, **kwargs)
-        output = ray.get(output)
         return output
         
 
