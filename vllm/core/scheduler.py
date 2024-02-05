@@ -406,6 +406,8 @@ class MultiScheduler:
         self.waiting_cpu: List[SequenceGroup] = []
         self.running_cpu: List[SequenceGroup] = []
 
+        self.running_aux: List[SequenceGroup] = []
+
 
         self.swapped_num = 0
 
@@ -419,7 +421,7 @@ class MultiScheduler:
         if isinstance(request_id, str):
             request_id = (request_id, )
         request_ids = set(request_id)
-        for state_queue in [self.waiting, self.running, self.swapped]:
+        for state_queue in [self.waiting, self.running, self.swapped, self.running_aux]:
             # We need to reverse the list as we are removing elements
             # from it as we iterate over it. If we don't do it,
             # indices will get messed up and we will skip over elements.
@@ -437,10 +439,10 @@ class MultiScheduler:
                         return
 
     def has_unfinished_seqs(self) -> bool:
-        return self.waiting or self.running or self.swapped
+        return self.waiting or self.running or self.swapped or self.running_aux
 
     def get_num_unfinished_seq_groups(self) -> int:
-        return len(self.waiting) + len(self.running) + len(self.swapped)
+        return len(self.waiting) + len(self.running) + len(self.swapped) + len(self.running_aux)
 
     def _schedule_cpu(self)-> SchedulerOutputs:
         now = time.monotonic()
@@ -450,7 +452,51 @@ class MultiScheduler:
             seq_group = self.waiting_cpu[0]
             waiting_seqs = seq_group.get_seqs(status=SequenceStatus.WAITING_CPU)
 
-    def _schedule(self) -> SchedulerOutputs:
+    def _schedule_aux(self)->SchedulerOutputs:
+        blocks_to_swap_in: Dict[int, int] = {}
+        blocks_to_swap_out: Dict[int, int] = {}
+        blocks_to_copy: Dict[int, List[int]] = {}
+
+        now = time.monotonic()
+
+        self.swapped = self.policy.sort_by_priority(now, self.swapped)
+        num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running_aux)
+        while self.swapped:
+            seq_group = self.swapped[0]
+            # If the sequence group cannot be swapped in, stop.
+            if not self.block_manager.can_swap_in(seq_group):
+                print ("can not swap in")
+                break
+
+            # The total number of sequences in the RUNNING state should not
+            # exceed the maximum number of sequences.
+            num_new_seqs = seq_group.get_max_num_running_seqs()
+            if (num_curr_seqs + num_new_seqs > self.scheduler_config.max_num_seqs):
+                print ("execeed max_num_seqs = {}".format(self.scheduler_config.max_num_seqs))
+                break
+
+            seq_group = self.swapped.pop(0)
+            self._swap_in(seq_group, blocks_to_swap_in)
+            self._append_aux_slot(seq_group, blocks_to_copy)
+            num_curr_seqs += num_new_seqs
+            self.running_aux.append(seq_group)
+
+        num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running_aux)
+        scheduler_outputs = SchedulerOutputs(
+            scheduled_seq_groups=self.running_aux,
+            prompt_run=False,
+            num_batched_tokens=num_batched_tokens,
+            num_real_prompt_tokens = 0,
+            num_recompute_tokens = 0,
+            blocks_to_swap_in=blocks_to_swap_in,
+            blocks_to_swap_out=blocks_to_swap_out,
+            blocks_to_copy=blocks_to_copy,
+            ignored_seq_groups=[],
+        )
+        return scheduler_outputs
+
+
+    def _schedule_main(self) -> SchedulerOutputs:
         # Blocks that need to be swaped or copied before model execution.
         blocks_to_swap_in: Dict[int, int] = {}
         blocks_to_swap_out: Dict[int, int] = {}
@@ -458,6 +504,7 @@ class MultiScheduler:
 
         # Fix the current time.
         now = time.monotonic()
+        print ("waiting = {}, running = {}, swapped = {}, running_aux = {}".format(len(self.waiting), len(self.running), len(self.swapped), len(self.running_aux)))
 
         # Join waiting sequences if possible.
         if not self.swapped:
@@ -488,6 +535,7 @@ class MultiScheduler:
                 # If the sequence group cannot be allocated, stop.
                 can_allocate = self.block_manager.can_allocate(seq_group)
                 if can_allocate == AllocStatus.LATER:
+                    print ("not space for new running")
                     break
                 elif can_allocate == AllocStatus.NEVER:
                     logger.warning(f"Input prompt ({num_prompt_tokens} tokens) is too long and exceeds the capacity of block_manager")
@@ -542,13 +590,12 @@ class MultiScheduler:
                 return scheduler_outputs
 
         self.running = self.policy.sort_by_priority(now, self.running)
-
         # Reserve new token slots for the running sequence groups.
         running: List[SequenceGroup] = []
         preempted: List[SequenceGroup] = []
         while self.running:
             seq_group = self.running.pop(0)
-            while not self.block_manager.can_append_slot(seq_group):
+            while not self.block_manager.can_append_main_slot(seq_group):
                 if self.running:
                     # Preempt the lowest-priority sequence groups.
                     victim_seq_group = self.running.pop(-1)
@@ -562,36 +609,10 @@ class MultiScheduler:
                     break
             else:
                 # Append new slots to the sequence group.
-                self._append_slot(seq_group, blocks_to_copy)
+                self._append_main_slot(seq_group, blocks_to_copy)
                 running.append(seq_group)
         self.running = running
 
-        # Swap in the sequence groups in the SWAPPED state if possible.
-        self.swapped = self.policy.sort_by_priority(now, self.swapped)
-        if not preempted:
-            num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running)
-            while self.swapped:
-                seq_group = self.swapped[0]
-                # If the sequence group cannot be swapped in, stop.
-                if not self.block_manager.can_swap_in(seq_group):
-                    break
-
-                # The total number of sequences in the RUNNING state should not
-                # exceed the maximum number of sequences.
-                num_new_seqs = seq_group.get_max_num_running_seqs()
-                if (num_curr_seqs + num_new_seqs > self.scheduler_config.max_num_seqs):
-                    break
-
-                seq_group = self.swapped.pop(0)
-                self._swap_in(seq_group, blocks_to_swap_in)
-                self._append_slot(seq_group, blocks_to_copy)
-                num_curr_seqs += num_new_seqs
-                seq_group.is_aux_compute = True
-                self.running.append(seq_group)
-
-        # Each sequence in the generation phase only takes one token slot.
-        # Therefore, the number of batched tokens is equal to the number of
-        # sequences in the RUNNING state.
         num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running)
         scheduler_outputs = SchedulerOutputs(
             scheduled_seq_groups=self.running,
@@ -609,10 +630,30 @@ class MultiScheduler:
     def schedule_cpu(self)-> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
         scheduler_outputs = self._schedule_cpu()
 
-    def schedule(self) -> Tuple[List[SequenceGroupMetadata], List[SequenceGroupMetadata], SchedulerOutputs]:
-        scheduler_outputs = self._schedule()
+    def schedule_aux(self)-> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
+        scheduler_outputs = self._schedule_aux()
         seq_group_metadata_list: List[SequenceGroupMetadata] = []
-        aux_seq_group_metadata_list: List[SequenceGroupMetadata] = []
+        for seq_group in scheduler_outputs.scheduled_seq_groups:
+            seq_data: Dict[int, SequenceData] = {}
+            block_tables: Dict[int, List[int]] = {}
+            for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
+                seq_id = seq.seq_id
+                seq_data[seq_id] = seq.data
+                block_tables[seq_id] = self.block_manager.get_block_table(seq)
+
+            seq_group_metadata = SequenceGroupMetadata(
+                request_id=seq_group.request_id,
+                is_prompt=scheduler_outputs.prompt_run,
+                seq_data=seq_data,
+                sampling_params=seq_group.sampling_params,
+                block_tables=block_tables,
+            )
+            seq_group_metadata_list.append(seq_group_metadata)
+        return seq_group_metadata_list, scheduler_outputs
+
+    def schedule_main(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
+        scheduler_outputs = self._schedule_main()
+        seq_group_metadata_list: List[SequenceGroupMetadata] = []
 
         for seq_group in scheduler_outputs.scheduled_seq_groups:
             seq_data: Dict[int, SequenceData] = {}
@@ -629,11 +670,8 @@ class MultiScheduler:
                 sampling_params=seq_group.sampling_params,
                 block_tables=block_tables,
             )
-            if seq_group.is_aux_compute:
-                aux_seq_group_metadata_list.append(seq_group_metadata)
-            else:
-                seq_group_metadata_list.append(seq_group_metadata)
-        return seq_group_metadata_list, aux_seq_group_metadata_list, scheduler_outputs
+            seq_group_metadata_list.append(seq_group_metadata)
+        return seq_group_metadata_list, scheduler_outputs
 
     def fork_seq(self, parent_seq: Sequence, child_seq: Sequence) -> None:
         self.block_manager.fork(parent_seq, child_seq)
@@ -641,8 +679,11 @@ class MultiScheduler:
     def free_seq(self, seq: Sequence) -> None:
         self.block_manager.free(seq)
 
-    def free_finished_seq_groups(self) -> None:
+    def free_finished_main_seq_groups(self) -> None:
         self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
+
+    def free_finished_aux_seq_groups(self) -> None:
+        self.running_aux = [seq_group for seq_group in self.running_aux if not seq_group.is_finished()]
 
     def free_finished_seq_groups_cpu(self) -> None:
         self.running_cpu = [seq_group for seq_group in self.running_cpu if not seq_group.is_finished()]
@@ -652,9 +693,19 @@ class MultiScheduler:
         for seq in seq_group.get_seqs(status=SequenceStatus.WAITING):
             seq.status = SequenceStatus.RUNNING
 
-    def _append_slot(self, seq_group: SequenceGroup, blocks_to_copy: Dict[int, List[int]],) -> None:
+    def _append_main_slot(self, seq_group: SequenceGroup, blocks_to_copy: Dict[int, List[int]],) -> None:
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
-            ret = self.block_manager.append_slot(seq)
+            ret = self.block_manager.append_main_slot(seq)
+            if ret is not None:
+                src_block, dst_block = ret
+                if src_block in blocks_to_copy:
+                    blocks_to_copy[src_block].append(dst_block)
+                else:
+                    blocks_to_copy[src_block] = [dst_block]
+
+    def _append_aux_slot(self, seq_group: SequenceGroup, blocks_to_copy: Dict[int, List[int]],) -> None:
+        for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
+            ret = self.block_manager.append_aux_slot(seq)
             if ret is not None:
                 src_block, dst_block = ret
                 if src_block in blocks_to_copy:
@@ -681,8 +732,6 @@ class MultiScheduler:
 
     def _swap_out(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         if not self.block_manager.can_swap_out(seq_group):
-            # FIXME(woosuk): Abort the sequence group instead of aborting the
-            # entire engine.
             raise RuntimeError("Aborted due to the lack of CPU swap space. Please increase the swap space to avoid this error.")
         mapping = self.block_manager.swap_out(seq_group)
         blocks_to_swap_out.update(mapping)

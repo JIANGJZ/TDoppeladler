@@ -374,10 +374,13 @@ class LLMEngine:
         seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule()
         return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
     
-    def _multischedule(self) -> Tuple[List[SequenceGroupMetadata], List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]: 
-        seq_group_metadata_list, aux_seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule()
-        return seq_group_metadata_list, aux_seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
+    def _schedule_main(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]: 
+        seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule_main()
+        return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
 
+    def _schedule_aux(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]: 
+        seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule_aux()
+        return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
 
     def _schedule_cpu(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]:
         seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule_cpu()
@@ -576,7 +579,8 @@ class LLMEngine:
             self._process_sequence_group_outputs(seq_group, outputs)
 
         # Free the finished sequence groups.
-        self.scheduler.free_finished_seq_groups()
+        self.scheduler.free_finished_aux_seq_groups()
+        self.scheduler.free_finished_main_seq_groups()
 
         # Create the outputs.
         request_outputs: List[RequestOutput] = []
@@ -609,25 +613,36 @@ class LLMEngine:
     def step(self) -> List[RequestOutput]:
         # Execute the model.
         if self.parallel_config.multi_worker:
-            seq_group_metadata_list, aux_seq_group_metadata_list, scheduler_outputs, ignored = self._multischedule()
-            if scheduler_outputs.is_empty():
+            seq_group_metadata_list_main, scheduler_outputs_main, ignored = self._schedule_main()
+            if scheduler_outputs_main.is_empty():
                 return ignored
-            output = []
+            processoutput = []
             main_output = self._run_main_worker(
                 "execute_model",
-                seq_group_metadata_list=seq_group_metadata_list,
-                blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
-                blocks_to_copy=scheduler_outputs.blocks_to_copy,
+                seq_group_metadata_list=seq_group_metadata_list_main,
+                blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
+                blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
             )
-            output.extend(main_output)
-            if len(aux_seq_group_metadata_list) > 0:
-                print ("aux seq len = {}".format(len(aux_seq_group_metadata_list)))
+            main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
+            processoutput.extend(main_processoutput)
+
+            seq_group_metadata_list_aux, scheduler_outputs_aux, ignored = self._schedule_aux()
+            if scheduler_outputs_aux.is_empty():
+                return ignored
+            if len(seq_group_metadata_list_aux) > 0:
+                print ("aux seq len = {}".format(len(seq_group_metadata_list_aux)))
                 aux_output = self._run_aux_worker(
                     "execute_model",
-                    seq_group_metadata_list=aux_seq_group_metadata_list,
-                    blocks_to_swap_in=scheduler_outputs.blocks_to_swap_in,
+                    seq_group_metadata_list=seq_group_metadata_list_aux,
+                    blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
+                    blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
                 )
-                output.extend(aux_output)
+            
+            aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)
+            processoutput.extend(aux_processoutput)    
+
+            return processoutput        
+
         else:
             seq_group_metadata_list, scheduler_outputs, ignored = self._schedule()
             if scheduler_outputs.is_empty():
@@ -640,7 +655,7 @@ class LLMEngine:
                 blocks_to_copy=scheduler_outputs.blocks_to_copy,
             )
 
-        return self._process_model_outputs(output, scheduler_outputs)
+            return self._process_model_outputs(output, scheduler_outputs)
 
     def step_cpu(self)->List[RequestOutput]:
         seq_group_metadata_list, scheduler_outputs, ignored = self._schedule_cpu()
@@ -719,6 +734,7 @@ class LLMEngine:
         total_num_gpu_blocks = self.cache_config.num_gpu_blocks
         num_free_gpu_blocks = (self.scheduler.block_manager.get_num_free_gpu_blocks())
         num_used_gpu_blocks = total_num_gpu_blocks - num_free_gpu_blocks
+        print ("total_num_gpu_blocks = {}, num_free_gpu_blocks={} num_used_gpu_blocks={} ".format(total_num_gpu_blocks, num_free_gpu_blocks, num_used_gpu_blocks ))
         gpu_cache_usage = num_used_gpu_blocks / total_num_gpu_blocks
 
         total_num_cpu_blocks = self.cache_config.num_cpu_blocks

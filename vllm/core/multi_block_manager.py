@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from vllm.block import PhysicalTokenBlock
 from vllm.sequence import Sequence, SequenceGroup, SequenceStatus
-from vllm.utils import Device
+from vllm.utils import MultiDevice
 from vllm.core.alloc_status import AllocStatus
 
 # Mapping: logical block number -> physical block.
@@ -20,7 +20,7 @@ class BlockAllocator:
     """
     def __init__(
         self,
-        device: Device,
+        device: MultiDevice,
         block_size: int,
         num_blocks: int,
     ) -> None:
@@ -81,12 +81,14 @@ class MultiBlockSpaceManager:
         assert watermark >= 0.0
 
         self.watermark_blocks = int(watermark * num_main_gpu_blocks)
-        self.main_gpu_allocator = BlockAllocator(Device.GPU, block_size, num_main_gpu_blocks)                 
-        self.cpu_allocator = BlockAllocator(Device.CPU, block_size, num_cpu_blocks)
-        self.aux_gpu_allocator = BlockAllocator(Device.GPU, block_size, num_aux_gpu_blocks)   
+        self.main_gpu_allocator = BlockAllocator(MultiDevice.MainGPU, block_size, num_main_gpu_blocks)                 
+        self.cpu_allocator = BlockAllocator(MultiDevice.CPU, block_size, num_cpu_blocks)
+        self.aux_gpu_allocator = BlockAllocator(MultiDevice.AuxGPU, block_size, num_aux_gpu_blocks)   
                                             
         # Mapping: seq_id -> BlockTable.
         self.block_tables: Dict[int, BlockTable] = {}
+
+        self.aux_block_tables: Dict[int, BlockTable] = {}
 
     def can_allocate(self, seq_group: SequenceGroup) -> AllocStatus:
         # FIXME(woosuk): Here we assume that all sequences in the group share
@@ -125,14 +127,14 @@ class MultiBlockSpaceManager:
         for seq in seq_group.get_seqs(status=SequenceStatus.WAITING):
             self.block_tables[seq.seq_id] = block_table.copy()
 
-    def can_append_slot(self, seq_group: SequenceGroup) -> bool:
+    def can_append_main_slot(self, seq_group: SequenceGroup) -> bool:
         # Simple heuristic: If there is at least one free block
         # for each sequence, we can append.
         num_free_gpu_blocks = self.main_gpu_allocator.get_num_free_blocks()
         num_seqs = seq_group.num_seqs(status=SequenceStatus.RUNNING)
         return num_seqs <= num_free_gpu_blocks
 
-    def append_slot(self, seq: Sequence) -> Optional[Tuple[int, int]]:
+    def append_main_slot(self, seq: Sequence) -> Optional[Tuple[int, int]]:
         """Allocate a physical slot for a new token."""
         logical_blocks = seq.logical_token_blocks
         block_table = self.block_tables[seq.seq_id]
@@ -150,7 +152,9 @@ class MultiBlockSpaceManager:
 
         # We want to append the token to the last physical block.
         last_block = block_table[-1]
-        assert last_block.device == Device.GPU
+        
+        assert last_block.device == MultiDevice.MainGPU,  "firstblock ={}, last_block.device {},\
+         seq_status {}".format(block_table[0], last_block.device, seq.status)
         if last_block.ref_count == 1:
             # Not shared with other sequences. Appendable.
             return None
@@ -162,6 +166,36 @@ class MultiBlockSpaceManager:
             self.main_gpu_allocator.free(last_block)
             return last_block.block_number, new_block.block_number
 
+    def append_aux_slot(self, seq: Sequence) -> Optional[Tuple[int, int]]:
+        """Allocate a physical slot for a new token."""
+        logical_blocks = seq.logical_token_blocks
+        block_table = self.aux_block_tables[seq.seq_id]
+
+        if len(block_table) < len(logical_blocks):
+            if (self.block_sliding_window and len(block_table) >= self.block_sliding_window):
+                # re-use a block
+                block_table.append(block_table[len(block_table) % self.block_sliding_window])                            
+            else:
+                # The sequence has a new logical block.
+                # Allocate a new physical block.
+                block = self.aux_gpu_allocator.allocate()
+                block_table.append(block)
+                return None
+
+        # We want to append the token to the last physical block.
+        last_block = block_table[-1]
+        assert last_block.device == MultiDevice.AuxGPU, "last_block.device {}".format(last_block.device)
+        if last_block.ref_count == 1:
+            # Not shared with other sequences. Appendable.
+            return None
+        else:
+            # The last block is shared with other sequences.
+            # Copy on Write: Allocate a new block and copy the tokens.
+            new_block = self.aux_gpu_allocator.allocate()
+            block_table[-1] = new_block
+            self.aux_gpu_allocator.free(last_block)
+            return last_block.block_number, new_block.block_number
+
     def fork(self, parent_seq: Sequence, child_seq: Sequence) -> None:
         # NOTE: fork does not allocate a new physical block.
         # Thus, it is always safe from OOM.
@@ -170,15 +204,6 @@ class MultiBlockSpaceManager:
         for block in src_block_table:
             block.ref_count += 1
 
-    def _get_physical_blocks(self, seq_group: SequenceGroup) -> List[PhysicalTokenBlock]:
-        # NOTE: Here, we assume that the physical blocks are only shared by
-        # the sequences in the same group.
-        blocks: Set[PhysicalTokenBlock] = set()
-        for seq in seq_group.get_seqs():
-            if seq.is_finished():
-                continue
-            blocks.update(self.block_tables[seq.seq_id])
-        return list(blocks)
 
     def can_swap_in(self, seq_group: SequenceGroup) -> bool:
         blocks = self._get_physical_blocks(seq_group)
@@ -204,13 +229,24 @@ class MultiBlockSpaceManager:
                 new_block_table.append(gpu_block)
                 # Free the CPU block swapped in to GPU.
                 self.cpu_allocator.free(cpu_block)
-            self.block_tables[seq.seq_id] = new_block_table
+            del self.block_tables[seq.seq_id]
+            self.aux_block_tables[seq.seq_id] = new_block_table
 
         block_number_mapping = {
             cpu_block.block_number: gpu_block.block_number
             for cpu_block, gpu_block in mapping.items()
         }
         return block_number_mapping
+
+    def _get_physical_blocks(self, seq_group: SequenceGroup) -> List[PhysicalTokenBlock]:
+        # NOTE: Here, we assume that the physical blocks are only shared by
+        # the sequences in the same group.
+        blocks: Set[PhysicalTokenBlock] = set()
+        for seq in seq_group.get_seqs():
+            if seq.is_finished():
+                continue
+            blocks.update(self.block_tables[seq.seq_id])
+        return list(blocks)
 
     def can_swap_out(self, seq_group: SequenceGroup) -> bool:
         blocks = self._get_physical_blocks(seq_group)
@@ -243,26 +279,40 @@ class MultiBlockSpaceManager:
 
     def _free_block_table(self, block_table: BlockTable) -> None:
         for block in set(block_table):
-            if block.device == Device.GPU:
+            if block.device == MultiDevice.MainGPU:
                 self.main_gpu_allocator.free(block)
+            elif block.device == MultiDevice.AuxGPU:
+                self.aux_gpu_allocator.free(block)
             else:
                 self.cpu_allocator.free(block)
 
     def free(self, seq: Sequence) -> None:
         if seq.seq_id not in self.block_tables:
             # Already freed or haven't been scheduled yet.
-            return
-        block_table = self.block_tables[seq.seq_id]
-        self._free_block_table(block_table)
-        del self.block_tables[seq.seq_id]
+            if seq.seq_id not in self.aux_block_tables:
+                return
+            else:
+                block_table = self.aux_block_tables[seq.seq_id]
+                self._free_block_table(block_table)
+                del self.aux_block_tables[seq.seq_id]
+        else:
+            block_table = self.block_tables[seq.seq_id]
+            self._free_block_table(block_table)
+            del self.block_tables[seq.seq_id]
 
     def reset(self) -> None:
         for block_table in self.block_tables.values():
             self._free_block_table(block_table)
+        for block_table in self.aux_block_tables.values():
+            self._free_block_table(block_table)
         self.block_tables.clear()
+        self.aux_block_tables.clear()
 
     def get_block_table(self, seq: Sequence) -> List[int]:
-        block_table = self.block_tables[seq.seq_id]
+        if seq.seq_id in self.block_tables:
+            block_table = self.block_tables[seq.seq_id]
+        else:
+            block_table = self.aux_block_tables[seq.seq_id]
         return [block.block_number for block in block_table]
 
     def get_num_free_gpu_blocks(self) -> int:

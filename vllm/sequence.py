@@ -188,16 +188,8 @@ class Sequence:
     def get_cumulative_logprob(self) -> float:
         return self.data.cumulative_logprob
 
-    def get_beam_search_score(self,
-                              length_penalty: float = 0.0,
-                              seq_len: Optional[int] = None,
-                              eos_token_id: Optional[int] = None) -> float:
-        """Calculate the beam search score with length penalty.
-
-        Adapted from
-
-        https://github.com/huggingface/transformers/blob/ccb92be23def445f2afdea94c31286f84b89eb5b/src/transformers/generation/beam_search.py#L938
-        """
+    def get_beam_search_score(self, length_penalty: float = 0.0, seq_len: Optional[int] = None, eos_token_id: Optional[int] = None) -> float:               
+        """Calculate the beam search score with length penalty."""
         if seq_len is None:
             seq_len = self.get_len()
             # NOTE: HF implementation does not count the EOS token
@@ -244,7 +236,6 @@ class SequenceGroup:
         self.prompt_logprobs: Optional[PromptLogprobs] = None
         self.is_recompute = False
         self.is_cpu_compute = False
-        self.is_aux_compute = False
 
     @property
     def prompt(self) -> str:
@@ -284,10 +275,7 @@ class SequenceGroup:
             # that are not finished yet.
             return self.num_unfinished_seqs()
 
-    def get_seqs(
-        self,
-        status: Optional[SequenceStatus] = None,
-    ) -> List[Sequence]:
+    def get_seqs(self, status: Optional[SequenceStatus] = None,) -> List[Sequence]:
         if status is None:
             return list(self.seqs_dict.values())
         else:

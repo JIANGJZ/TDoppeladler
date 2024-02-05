@@ -215,12 +215,16 @@ class AuxWorker:
         set_random_seed(self.model_config.seed)
 
     @torch.inference_mode()
-    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int],) -> SamplerOutput:
+    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int], blocks_to_copy=Dict[int, int],) -> SamplerOutput:
         # Issue cache operations.
         print ("**************** execute in aux *********************")
         issued_cache_op = False
         if blocks_to_swap_in:
             self.cache_engine.swap_in(blocks_to_swap_in)
+            issued_cache_op = True
+            
+        if blocks_to_copy:
+            self.cache_engine.copy(blocks_to_copy)
             issued_cache_op = True
 
         cache_events = self.cache_events if issued_cache_op else None

@@ -13,6 +13,11 @@ class Device(enum.Enum):
     GPU = enum.auto()
     CPU = enum.auto()
 
+class MultiDevice(enum.Enum):
+    MainGPU = enum.auto()
+    AuxGPU = enum.auto()
+    CPU = enum.auto()
+
 
 class Counter:
 
