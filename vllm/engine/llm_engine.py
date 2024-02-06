@@ -107,8 +107,15 @@ class LLMEngine:
             self._init_cache()
         elif self.parallel_config.multi_worker:
             ray_usage = os.environ.get("RAY_USAGE_STATS_ENABLED", "0")
+            print ("################### ray_usage {}".format(ray_usage))
             if ray_usage != "1":
                 os.environ["RAY_USAGE_STATS_ENABLED"] = "0"
+                # runtime_env = {
+                #     'env_vars': {
+                #         "RAY_memory_usage_threshold": "64"
+                #     }
+                # }
+                # ray.init(runtime_env=runtime_env)
             self._init_multiworker()
             # self._init_cpu_workers()
             self._init_multiworker_cache()
@@ -264,7 +271,6 @@ class LLMEngine:
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
         num_main_blocks = ray.get(num_main_blocks)
-        print ("main blocks = {}".format(num_main_blocks))
 
         num_aux_blocks = self._run_aux_worker(
             "profile_num_available_blocks",
@@ -274,9 +280,9 @@ class LLMEngine:
         )
         num_aux_blocks = ray.get(num_aux_blocks)
         
-        num_main_gpu_blocks = num_main_blocks[0]
+        num_main_gpu_blocks = 954
         num_cpu_blocks = num_main_blocks[1]
-        num_aux_gpu_blocks = num_aux_blocks[0]
+        num_aux_gpu_blocks = 954
         logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
                     
         if num_main_gpu_blocks <= 0:
@@ -629,8 +635,7 @@ class LLMEngine:
                 blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
                 blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
             )
-            # if scheduler_outputs_aux.is_empty():
-            #     return ignored
+
             print ("aux list len = {}".format(len(seq_group_metadata_list_aux)))
             aux_output = self._run_aux_worker(
                 "execute_model",

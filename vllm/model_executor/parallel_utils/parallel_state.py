@@ -13,7 +13,7 @@ _PIPELINE_MODEL_PARALLEL_GROUP = None
 _PIPELINE_GLOBAL_RANKS = None
 
 
-def initialize_model_parallel(tensor_model_parallel_size: int = 1, pipeline_model_parallel_size: int = 1,) -> None:
+def initialize_model_parallel(tensor_model_parallel_size: int = 1, pipeline_model_parallel_size: int = 1, multi_worker: bool=False) -> None:
     """
     Initialize model parallel groups.
 
@@ -37,40 +37,47 @@ def initialize_model_parallel(tensor_model_parallel_size: int = 1, pipeline_mode
     ranks 8 to 15 belong to the second box.
     """
     # Get world size and rank. Ensure some consistencies.
-    assert torch.distributed.is_initialized()
-    world_size: int = torch.distributed.get_world_size()
+    global _MULTI_WORKER 
+    if multi_worker:
+        _MULTI_WORKER = True
+    else:
+        _MULTI_WORKER = False
 
-    if (world_size != tensor_model_parallel_size * pipeline_model_parallel_size):
-        raise RuntimeError(
-            f"world_size ({world_size}) is not equal to "
-            f"tensor_model_parallel_size ({tensor_model_parallel_size}) x "
-            f"pipeline_model_parallel_size ({pipeline_model_parallel_size})")
+        assert torch.distributed.is_initialized()
+        world_size: int = torch.distributed.get_world_size()
 
-    num_tensor_model_parallel_groups: int = (world_size // tensor_model_parallel_size)                            
-    num_pipeline_model_parallel_groups: int = (world_size // pipeline_model_parallel_size)                 
-    rank = torch.distributed.get_rank()
+        if (world_size != tensor_model_parallel_size * pipeline_model_parallel_size):
+            raise RuntimeError(
+                f"world_size ({world_size}) is not equal to "
+                f"tensor_model_parallel_size ({tensor_model_parallel_size}) x "
+                f"pipeline_model_parallel_size ({pipeline_model_parallel_size})")
 
-    # Build the tensor model-parallel groups.
-    global _TENSOR_MODEL_PARALLEL_GROUP
-    assert _TENSOR_MODEL_PARALLEL_GROUP is None, (
-        "tensor model parallel group is already initialized")
-    for i in range(num_tensor_model_parallel_groups):
-        ranks = range(i * tensor_model_parallel_size, (i + 1) * tensor_model_parallel_size)            
-        group = torch.distributed.new_group(ranks)
-        if rank in ranks:
-            _TENSOR_MODEL_PARALLEL_GROUP = group
+        num_tensor_model_parallel_groups: int = (world_size // tensor_model_parallel_size)                            
+        num_pipeline_model_parallel_groups: int = (world_size // pipeline_model_parallel_size)                 
+        rank = torch.distributed.get_rank()
 
-    # Build the pipeline model-parallel groups.
-    global _PIPELINE_MODEL_PARALLEL_GROUP
-    global _PIPELINE_GLOBAL_RANKS
-    assert _PIPELINE_MODEL_PARALLEL_GROUP is None, (
-        "pipeline model parallel group is already initialized")
-    for i in range(num_pipeline_model_parallel_groups):
-        ranks = range(i, world_size, num_pipeline_model_parallel_groups)
-        group = torch.distributed.new_group(ranks)
-        if rank in ranks:
-            _PIPELINE_MODEL_PARALLEL_GROUP = group
-            _PIPELINE_GLOBAL_RANKS = ranks
+        # Build the tensor model-parallel groups.
+        global _TENSOR_MODEL_PARALLEL_GROUP
+        assert _TENSOR_MODEL_PARALLEL_GROUP is None, (
+            "tensor model parallel group is already initialized")
+        for i in range(num_tensor_model_parallel_groups):
+            ranks = range(i * tensor_model_parallel_size, (i + 1) * tensor_model_parallel_size)            
+            group = torch.distributed.new_group(ranks)
+            if rank in ranks:
+                _TENSOR_MODEL_PARALLEL_GROUP = group
+
+        # Build the pipeline model-parallel groups.
+        global _PIPELINE_MODEL_PARALLEL_GROUP
+        global _PIPELINE_GLOBAL_RANKS
+        assert _PIPELINE_MODEL_PARALLEL_GROUP is None, (
+            "pipeline model parallel group is already initialized")
+        for i in range(num_pipeline_model_parallel_groups):
+            ranks = range(i, world_size, num_pipeline_model_parallel_groups)
+            group = torch.distributed.new_group(ranks)
+            if rank in ranks:
+                _PIPELINE_MODEL_PARALLEL_GROUP = group
+                _PIPELINE_GLOBAL_RANKS = ranks
+
 
 
 def model_parallel_is_initialized():
@@ -93,8 +100,11 @@ def get_pipeline_model_parallel_group():
 
 def get_tensor_model_parallel_world_size():
     """Return world size for the tensor model parallel group."""
-    # return torch.distributed.get_world_size( group=get_tensor_model_parallel_group())
-    return 1
+    if _MULTI_WORKER:
+        return 1
+    else:
+        return torch.distributed.get_world_size( group=get_tensor_model_parallel_group())
+
        
 
 
@@ -106,8 +116,10 @@ def get_pipeline_model_parallel_world_size():
 
 def get_tensor_model_parallel_rank():
     """Return my rank for the tensor model parallel group."""
-    # return torch.distributed.get_rank(group=get_tensor_model_parallel_group())
-    return 0
+    if _MULTI_WORKER:
+        return 0
+    else:
+        return torch.distributed.get_rank(group=get_tensor_model_parallel_group())
 
 
 def get_pipeline_model_parallel_rank():
