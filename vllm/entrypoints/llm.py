@@ -8,63 +8,10 @@ from vllm.engine.llm_engine import LLMEngine
 from vllm.outputs import RequestOutput
 from vllm.sampling_params import SamplingParams
 from vllm.utils import Counter
+import asyncio
 
 
 class LLM:
-    """An LLM for generating texts from given prompts and sampling parameters.
-
-    This class includes a tokenizer, a language model (possibly distributed
-    across multiple GPUs), and GPU memory space allocated for intermediate
-    states (aka KV cache). Given a batch of prompts and sampling parameters,
-    this class generates texts from the model, using an intelligent batching
-    mechanism and efficient memory management.
-
-    NOTE: This class is intended to be used for offline inference. For online
-    serving, use the `AsyncLLMEngine` class instead.
-    NOTE: For the comprehensive list of arguments, see `EngineArgs`.
-
-    Args:
-        model: The name or path of a HuggingFace Transformers model.
-        tokenizer: The name or path of a HuggingFace Transformers tokenizer.
-        tokenizer_mode: The tokenizer mode. "auto" will use the fast tokenizer
-            if available, and "slow" will always use the slow tokenizer.
-        trust_remote_code: Trust remote code (e.g., from HuggingFace) when
-            downloading the model and tokenizer.
-        tensor_parallel_size: The number of GPUs to use for distributed
-            execution with tensor parallelism.
-        dtype: The data type for the model weights and activations. Currently,
-            we support `float32`, `float16`, and `bfloat16`. If `auto`, we use
-            the `torch_dtype` attribute specified in the model config file.
-            However, if the `torch_dtype` in the config is `float32`, we will
-            use `float16` instead.
-        quantization: The method used to quantize the model weights. Currently,
-            we support "awq", "gptq" and "squeezellm". If None, we first check
-            the `quantization_config` attribute in the model config file. If
-            that is None, we assume the model weights are not quantized and use
-            `dtype` to determine the data type of the weights.
-        revision: The specific model version to use. It can be a branch name,
-            a tag name, or a commit id.
-        tokenizer_revision: The specific tokenizer version to use. It can be a
-            branch name, a tag name, or a commit id.
-        seed: The seed to initialize the random number generator for sampling.
-        gpu_memory_utilization: The ratio (between 0 and 1) of GPU memory to
-            reserve for the model weights, activations, and KV cache. Higher
-            values will increase the KV cache size and thus improve the model's
-            throughput. However, if the value is too high, it may cause out-of-
-            memory (OOM) errors.
-        swap_space: The size (GiB) of CPU memory per GPU to use as swap space.
-            This can be used for temporarily storing the states of the requests
-            when their `best_of` sampling parameters are larger than 1. If all
-            requests will have `best_of=1`, you can safely set this to 0.
-            Otherwise, too small values may cause out-of-memory (OOM) errors.
-        enforce_eager: Whether to enforce eager execution. If True, we will
-            disable CUDA graph and always execute the model in eager mode.
-            If False, we will use CUDA graph and eager execution in hybrid.
-        max_context_len_to_capture: Maximum context len covered by CUDA graphs.
-            When a sequence has context length larger than this, we fall back
-            to eager mode.
-    """
-
     def __init__(
         self,
         model: str,
@@ -78,7 +25,7 @@ class LLM:
         tokenizer_revision: Optional[str] = None,
         seed: int = 0,
         gpu_memory_utilization: float = 0.9,
-        swap_space: int = 8,
+        swap_space: int = 12,
         enforce_eager: bool = False,
         max_context_len_to_capture: int = 8192,
         **kwargs,
@@ -112,24 +59,6 @@ class LLM:
         self.llm_engine.tokenizer = tokenizer
 
     def generate(self, prompts: Optional[Union[str, List[str]]] = None, sampling_params: Optional[SamplingParams] = None, prompt_token_ids: Optional[List[List[int]]] = None, use_tqdm: bool = True,) -> List[RequestOutput]:
-        """Generates the completions for the input prompts.
-
-        NOTE: This class automatically batches the given prompts, considering
-        the memory constraint. For the best performance, put all of your prompts
-        into a single list and pass it to this method.
-
-        Args:
-            prompts: A list of prompts to generate completions for.
-            sampling_params: The sampling parameters for text generation. If
-                None, we use the default sampling parameters.
-            prompt_token_ids: A list of token IDs for the prompts. If None, we
-                use the tokenizer to convert the prompts to token IDs.
-            use_tqdm: Whether to use tqdm to display the progress bar.
-
-        Returns:
-            A list of `RequestOutput` objects containing the generated
-            completions in the same order as the input prompts.
-        """
         if prompts is None and prompt_token_ids is None:
             raise ValueError("Either prompts or prompt_token_ids must be "
                              "provided.")
@@ -163,13 +92,15 @@ class LLM:
         # Run the engine.
         outputs: List[RequestOutput] = []
         while self.llm_engine.has_unfinished_requests():
-            step_outputs = self.llm_engine.step()
+            step_outputs =  self.llm_engine.step()
+            if len(step_outputs) > 0:
+                self.llm_engine.clear_step_output()
             # step_cpu_outputs = self.llm_engine.step_cpu()
-            for output in step_outputs:
-                if output.finished:
-                    outputs.append(output)
-                    if use_tqdm:
-                        pbar.update(1)
+                for output in step_outputs:
+                    if output.finished:
+                        outputs.append(output)
+                        if use_tqdm:
+                            pbar.update(1)
         if use_tqdm:
             pbar.close()
         # Sort the outputs by request ID.

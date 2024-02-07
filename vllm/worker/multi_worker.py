@@ -10,6 +10,7 @@ from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.multi_gpu_cache_engine import MultiGPUCacheEngine
 from vllm.worker.model_runner import ModelRunner, CPUModelRunner
 from vllm.core.cpu_cache_engine import CPUCacheEngine
+from vllm.core.scheduler import SchedulerOutputs
 
 
 
@@ -67,8 +68,9 @@ class MainWorker:
 
         # Execute a forward pass with dummy inputs to profile the memory usage
         # of the model.
+        print ("model runner = {}".format(self.model_runner))
         self.model_runner.profile_run()
-
+        print ("Call runner")
         # Calculate the number of blocks that can be allocated with the
         # profiled peak memory.
         torch.cuda.synchronize()
@@ -103,7 +105,7 @@ class MainWorker:
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_out: Dict[int, int], blocks_to_copy: Dict[int, List[int]],) -> SamplerOutput:
-        # print ("**************** execute in main *********************")
+        print ("**************** execute in main *********************")
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_out:
@@ -168,6 +170,7 @@ class AuxWorker:
         _init_distributed_environment(self.parallel_config, self.rank, self.distributed_init_method)
         # Initialize the model.
         set_random_seed(self.model_config.seed)
+        print ("set cuda device ={}".format(self.device))
         print ("exit init model")
 
     def load_model(self):
@@ -265,6 +268,10 @@ def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, di
     # torch.distributed.all_reduce(torch.zeros(1).cuda())
     initialize_model_parallel(parallel_config.tensor_parallel_size, parallel_config.pipeline_parallel_size, parallel_config.multi_worker)
                               
+
+# def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, distributed_init_method: Optional[str] = None,) -> None:
+#     initialize_model_parallel(parallel_config.tensor_parallel_size, parallel_config.pipeline_parallel_size, parallel_config.multi_worker)
+  
 
 def _check_if_gpu_supports_dtype(torch_dtype: torch.dtype):
     # Check if the GPU supports the dtype.

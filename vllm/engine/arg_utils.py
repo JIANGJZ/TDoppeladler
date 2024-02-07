@@ -20,12 +20,12 @@ class EngineArgs:
     seed: int = 0
     max_model_len: Optional[int] = None
     worker_use_ray: bool = False
-    multi_worker: bool = False
+    multi_worker: bool = True
     pipeline_parallel_size: int = 1
     tensor_parallel_size: int = 1
     max_parallel_loading_workers: Optional[int] = None
     block_size: int = 16
-    swap_space: int = 8  # GiB
+    swap_space: int = 12 # GiB
     gpu_memory_utilization: float = 0.9
     max_num_batched_tokens: Optional[int] = None
     max_num_seqs: int = 256

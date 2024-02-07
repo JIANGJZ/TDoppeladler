@@ -56,7 +56,9 @@ class SchedulerOutputs:
         # NOTE: We do not consider the ignored sequence groups.
         return (not self.scheduled_seq_groups and not self.blocks_to_swap_in and not self.blocks_to_swap_out and not self.blocks_to_copy)
                 
-
+    def __repr__(self) -> str:
+        return (f"scheduled_seq_groups (request_id={self.scheduled_seq_groups}, "
+                f"prompt_run={self.prompt_run}, ")
 
 class Scheduler:
     def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig, parallel_config: ParallelConfig) -> None:
@@ -407,7 +409,6 @@ class MultiScheduler:
         self.running_cpu: List[SequenceGroup] = []
 
         self.running_aux: List[SequenceGroup] = []
-
 
         self.swapped_num = 0
 

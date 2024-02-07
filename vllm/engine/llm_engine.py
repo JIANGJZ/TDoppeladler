@@ -1,7 +1,10 @@
 import copy
 import os
 import time
+import asyncio
 from functools import partial
+import threading
+from multiprocessing import Process, Pool, Manager
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
 
 from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig)        
@@ -28,34 +31,81 @@ logger = init_logger(__name__)
 
 _LOGGING_INTERVAL_SEC = 5
 
+class RayTaskManager:
+    def __init__(self):
+        self.pending_tasks_main =[]
+        self.pending_tasks_aux = []
+        self.wait_thread_main = threading.Thread(target=self.wait_for_all_tasks_main)
+        self.wait_thread_main.start()
+        self.wait_thread_aux = threading.Thread(target=self.wait_for_all_tasks_aux)
+        self.wait_thread_aux.start()
+
+    def apply(self, func, args=None, kwargs=None):
+        kwargs = kwargs or {}
+        args = args or ()
+        task_id = func(*args, **kwargs)
+        result = ray.get(task_id)
+        return result
+        
+    def apply_async_main(self, func, args=None, kwargs=None, callback=None, callback_arg=None):
+        kwargs = kwargs or {}
+        args = args or ()
+        task_id = func(*args, **kwargs)
+        print ("main pending tasks = {}".format(len(self.pending_tasks_main)))
+        self.pending_tasks_main.append((task_id, callback, callback_arg))
+
+
+    def apply_async_aux(self, func, args=None, kwargs=None, callback=None, callback_arg=None):
+        kwargs = kwargs or {}
+        args = args or ()
+        task_id = func(*args, **kwargs)
+        print ("aux pending tasks = {}".format(len(self.pending_tasks_aux)))
+        self.pending_tasks_aux.append((task_id, callback, callback_arg))
+        
+    def check_and_handle_tasks_main(self):
+        if not self.pending_tasks_main:
+            return
+        task_ids = [task_id for task_id, _, _ in self.pending_tasks_main]
+        ready_task_ids, _ = ray.wait(task_ids, num_returns=len(task_ids), timeout=0)
+        for ready_task_id in ready_task_ids:
+            for i, (task_id, callback, callback_arg) in enumerate(self.pending_tasks_main):
+                if task_id == ready_task_id:
+                    result = ray.get(task_id)
+                    if callback:
+                        callback(result, callback_arg)
+                    self.pending_tasks_main.pop(i)
+                    break
+
+    def check_and_handle_tasks_aux(self):
+        if not self.pending_tasks_aux:
+            return
+        task_ids = [task_id for task_id, _, _ in self.pending_tasks_aux]
+        ready_task_ids, _ = ray.wait(task_ids, num_returns=len(task_ids), timeout=0)
+        for ready_task_id in ready_task_ids:
+            for i, (task_id, callback, callback_arg) in enumerate(self.pending_tasks_aux):
+                if task_id == ready_task_id:
+                    result = ray.get(task_id)
+                    if callback:
+                        callback(result, callback_arg)
+                    self.pending_tasks_aux.pop(i)
+                    break
+
+    def wait_for_all_tasks_main(self):
+        while True:
+            self.check_and_handle_tasks_main()
+
+    def wait_for_all_tasks_aux(self):
+        while True:
+            self.check_and_handle_tasks_aux()
+
+    def get_main_pending_len(self):
+        return len(self.pending_tasks_main)
+
+    def get_aux_pending_len(self):
+        return len(self.pending_tasks_aux)
+
 
 class LLMEngine:
-    """An LLM engine that receives requests and generates texts.
-
-    This is the main class for the vLLM engine. It receives requests
-    from clients and generates texts from the LLM. It includes a tokenizer, a
-    language model (possibly distributed across multiple GPUs), and GPU memory
-    space allocated for intermediate states (aka KV cache). This class utilizes
-    iteration-level scheduling and efficient memory management to maximize the
-    serving throughput.
-
-    The `LLM` class wraps this class for offline batched inference and the
-    `AsyncLLMEngine` class wraps this class for online serving.
-
-    NOTE: The config arguments are derived from the `EngineArgs` class. For the
-    comprehensive list of arguments, see `EngineArgs`.
-
-    Args:
-        model_config: The configuration related to the LLM model.
-        cache_config: The configuration related to the KV cache memory management.   
-        parallel_config: The configuration related to distributed execution.
-        scheduler_config: The configuration related to the request scheduler.
-        distributed_init_method: The initialization method for distributed execution. See `torch.distributed.init_process_group` for details.
-        placement_group: Ray placement group for distributed execution. Required for distributed execution.
-            
-        log_stats: Whether to log statistics.
-    """
-
     def __init__(
         self,
         model_config: ModelConfig,
@@ -107,33 +157,24 @@ class LLMEngine:
             self._init_cache()
         elif self.parallel_config.multi_worker:
             ray_usage = os.environ.get("RAY_USAGE_STATS_ENABLED", "0")
-            print ("################### ray_usage {}".format(ray_usage))
             if ray_usage != "1":
                 os.environ["RAY_USAGE_STATS_ENABLED"] = "0"
-                # runtime_env = {
-                #     'env_vars': {
-                #         "RAY_memory_usage_threshold": "64"
-                #     }
-                # }
-                # ray.init(runtime_env=runtime_env)
+            self.task_manager = RayTaskManager()
+            self.main_processing = False
+            self.aux_processing = False
             self._init_multiworker()
             # self._init_cpu_workers()
             self._init_multiworker_cache()
         else:
             self._init_workers(distributed_init_method)
             self._init_cache()
-            
-
-        # Profile the memory usage and initialize the cache.
         
-
         # Create the scheduler.
         if self.parallel_config.multi_worker:
             self.scheduler = MultiScheduler(scheduler_config, cache_config, cpuscheduler_config, parallel_config)
         else:
             self.scheduler = Scheduler(scheduler_config, cache_config, cpuscheduler_config, parallel_config)
         
-
         # Logging.
         self.last_logging_time = time.monotonic()
         # List of (timestamp, num_tokens)
@@ -149,6 +190,9 @@ class LLMEngine:
         self.total_generation_tokens: List[Tuple[float, int]] = []
         self.total_recompute_tokens: List[Tuple[float, int]] = []
 
+        self.output = []
+
+
     def _init_workers(self, distributed_init_method: str):
         # Lazy import the Worker to avoid importing torch.cuda/xformers
         # before CUDA_VISIBLE_DEVICES is set in the Worker
@@ -159,7 +203,6 @@ class LLMEngine:
         self.workers.append(worker)
         self._run_workers("init_model", get_all_outputs=True,)
         self._run_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)            
-
 
     def _init_workers_ray(self, placement_group: "PlacementGroup", **ray_remote_kwargs):   
         # Lazy import the Worker to avoid importing torch.cuda/xformers
@@ -184,7 +227,6 @@ class LLMEngine:
         self._run_workers("init_worker", get_all_outputs=True, worker_init_fn=lambda: Worker(model_config, parallel_config, scheduler_config, None, None,))
         self._run_workers("init_model", get_all_outputs=True,)
         self._run_workers("load_model", get_all_outputs=True, max_concurrent_workers=self.parallel_config.max_parallel_loading_workers,)
-
 
     def _init_cpu_workers(self, ):
         from vllm.worker.cpu_worker import CPUWorker
@@ -217,8 +259,7 @@ class LLMEngine:
         self._run_aux_worker("init_worker", worker_init_fn=lambda: AuxWorker(model_config, parallel_config, scheduler_config, None, None,))
         self._run_aux_worker("init_model")
         self._run_aux_worker("load_model")
-            
-            
+           
     def _verify_args(self) -> None:
         self.model_config.verify_with_parallel_config(self.parallel_config)
         self.cache_config.verify_with_parallel_config(self.parallel_config)
@@ -262,15 +303,14 @@ class LLMEngine:
         # if enforce_eager is False.
         self._run_workers("warm_up_model")
 
-
     def _init_multiworker_cache(self)-> None:
+        print ("*******************************")
         num_main_blocks = self._run_main_worker(
             "profile_num_available_blocks",
             block_size=self.cache_config.block_size,
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
-        num_main_blocks = ray.get(num_main_blocks)
 
         num_aux_blocks = self._run_aux_worker(
             "profile_num_available_blocks",
@@ -278,10 +318,9 @@ class LLMEngine:
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
-        num_aux_blocks = ray.get(num_aux_blocks)
         
         num_main_gpu_blocks = 954
-        num_cpu_blocks = num_main_blocks[1]
+        num_cpu_blocks = 1024
         num_aux_gpu_blocks = 954
         logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
                     
@@ -304,6 +343,7 @@ class LLMEngine:
         print ("init main cache engine")
         self._run_main_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
         self._run_main_worker("warm_up_model")  
+
 
         self.cache_config.num_gpu_blocks = num_aux_gpu_blocks
         self.cache_config.num_cpu_blocks = num_cpu_blocks   
@@ -620,51 +660,78 @@ class LLMEngine:
 
         return request_outputs
 
+    def handle_main_result(self, result, callback_arg):
+        print ("handling main result")
+        self.main_processing = False
+        main_output = result
+        scheduler_outputs_main = callback_arg
+        main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
+        self.output.extend(main_processoutput)
+
+    def handle_aux_result(self, result, callback_arg):
+        print ("handling aux result")
+        self.aux_processing = False   
+        aux_output = result
+        scheduler_outputs_aux = callback_arg
+        aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)    
+        self.output.extend(aux_processoutput)
+        
+
     def step(self) -> List[RequestOutput]:
         # Execute the model.
         if self.parallel_config.multi_worker:
-            seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
-            seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
-            if scheduler_outputs_main.is_empty() and scheduler_outputs_aux.is_empty():
-                return ignored_main
-            processoutput = []
-            print ("main list len = {}".format(len(seq_group_metadata_list_main)))
-            main_output = self._run_main_worker(
-                "execute_model",
-                seq_group_metadata_list=seq_group_metadata_list_main,
-                blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
-                blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
-            )
-
-            print ("aux list len = {}".format(len(seq_group_metadata_list_aux)))
-            aux_output = self._run_aux_worker(
-                "execute_model",
-                seq_group_metadata_list=seq_group_metadata_list_aux,
-                blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
-                blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
-            )
-            main_output = ray.get(main_output)
-            aux_output = ray.get(aux_output)
-            main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
-            processoutput.extend(main_processoutput)
-            aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)
-            processoutput.extend(aux_processoutput)    
-
-            return processoutput        
-
+                # print ("main list len = {}".format(len(seq_group_metadata_list_main)))
+            if (self.task_manager.get_main_pending_len() < 4):
+                seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
+                if scheduler_outputs_main.is_empty() :
+                    # print ("sechduling main empty")
+                    self.output.extend(ignored_main)
+                else:
+                    self.main_processing = True
+                    self._run_main_worker(
+                        "execute_model",
+                        resulthandler=self.handle_main_result,
+                        callback_arg = scheduler_outputs_main,
+                        seq_group_metadata_list=seq_group_metadata_list_main,
+                        blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
+                        blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
+                    )
+                
+            if (self.task_manager.get_aux_pending_len() < 4):
+                seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
+                if scheduler_outputs_aux.is_empty():
+                    # print ("sechduling aux empty")
+                    self.output.extend(ignored_aux)
+                else:
+                    self.aux_processing = True
+                    self._run_aux_worker(
+                        "execute_model",
+                        resulthandler=self.handle_aux_result,
+                        callback_arg = scheduler_outputs_aux,
+                        seq_group_metadata_list=seq_group_metadata_list_aux,
+                        blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
+                        blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
+                    )
+            return self.output
         else:
             seq_group_metadata_list, scheduler_outputs, ignored = self._schedule()
             if scheduler_outputs.is_empty():
                 return ignored
-            output = self._run_workers(
+            temp_output = self._run_workers(
                 "execute_model",
                 seq_group_metadata_list=seq_group_metadata_list,
                 blocks_to_swap_in=scheduler_outputs.blocks_to_swap_in,
                 blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
                 blocks_to_copy=scheduler_outputs.blocks_to_copy,
             )
+            self.output = self._process_model_outputs(temp_output, scheduler_outputs)
 
-            return self._process_model_outputs(output, scheduler_outputs)
+            return self.output
+
+
+    def clear_step_output(self):
+        # print ("clear output")
+        self.output = []
 
     def step_cpu(self)->List[RequestOutput]:
         seq_group_metadata_list, scheduler_outputs, ignored = self._schedule_cpu()
@@ -880,18 +947,148 @@ class LLMEngine:
             assert output == other_output
         return output
 
-    def _run_main_worker(self, method: str, *args,**kwargs, ) -> Any:
+    def _run_main_worker(self, method: str, resulthandler=None, callback_arg=None, *args,**kwargs) -> Any:
         executor = partial(self.main_worker.execute_method.remote, method)
-        output = executor(*args, **kwargs)
-        return output
+        if resulthandler == None:
+            output = self.task_manager.apply(func=executor, args=args, kwargs=kwargs)
+            return output
+        else:
+            self.task_manager.apply_async_main(func=executor, args=args, kwargs=kwargs, callback=resulthandler, callback_arg=callback_arg)
 
-    def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
+    def _run_aux_worker(self, method: str, resulthandler=None, callback_arg=None, *args,**kwargs) -> Any:
         executor = partial(self.aux_worker.execute_method.remote, method)
-        output = executor(*args, **kwargs)
-        return output
-        
+        if resulthandler == None:
+            output = self.task_manager.apply(func=executor, args=args, kwargs=kwargs)
+            return output
+        else:
+            self.task_manager.apply_async_aux(func=executor, args=args, kwargs=kwargs, callback=resulthandler, callback_arg=callback_arg)
+
 
     def _run_cpu_workers(self, method: str, *args, **kwargs, ) -> Any:
         executor = getattr(self.aux_worker, method)
+        output = executor(*args, **kwargs)
+        return output
+
+            
+    # def _init_multiworker(self):
+    #     from vllm.worker.multi_worker import MainWorker, AuxWorker
+    #     self.workers: List[Worker] = []
+
+    #     self.main_worker = MainWorker(self.model_config, self.parallel_config, self.scheduler_config, 0, None,) 
+    #     self.aux_worker = AuxWorker(self.model_config, self.parallel_config, self.scheduler_config, 1, None,)
+
+    #     print ("init main worker")
+    #     self._run_main_worker("init_model")
+    #     self._run_main_worker("load_model")
+
+    #     print ("init aux worker")
+    #     self._run_aux_worker("init_model")
+    #     self._run_aux_worker("load_model")
+ 
+
+    # def _init_multiworker_cache(self)-> None:
+    #     num_main_blocks = self._run_main_worker(
+    #         "profile_num_available_blocks",
+    #         block_size=self.cache_config.block_size,
+    #         gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
+    #         cpu_swap_space=self.cache_config.swap_space_bytes,
+    #     )
+    #     num_main_blocks = ray.get(num_main_blocks)
+
+    #     num_aux_blocks = self._run_aux_worker(
+    #         "profile_num_available_blocks",
+    #         block_size=self.cache_config.block_size,
+    #         gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
+    #         cpu_swap_space=self.cache_config.swap_space_bytes,
+    #     )
+    #     num_aux_blocks = ray.get(num_aux_blocks)
+        
+    #     num_main_gpu_blocks = 954
+    #     num_cpu_blocks = num_main_blocks[1]
+    #     num_aux_gpu_blocks = 954
+    #     logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
+                    
+    #     if num_main_gpu_blocks <= 0:
+    #         raise ValueError("No available memory for the cache blocks. Try increasing `gpu_memory_utilization` when initializing the engine.")          
+    #     max_seq_len = self.cache_config.block_size * num_main_gpu_blocks
+    #     if self.model_config.max_model_len > max_seq_len:
+    #         raise ValueError(
+    #             f"The model's max seq len ({self.model_config.max_model_len}) "
+    #             "is larger than the maximum number of tokens that can be "
+    #             f"stored in KV cache ({max_seq_len}). Try increasing "
+    #             "`gpu_memory_utilization` or decreasing `max_model_len` when "
+    #             "initializing the engine.")
+
+    #     self.cache_config.num_gpu_blocks = num_main_gpu_blocks
+    #     self.cache_config.num_cpu_blocks = num_cpu_blocks
+
+    #     self.cpu_cache_engine = CPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)   
+    #     # Initialize the cache.
+    #     print ("init main cache engine")
+    #     self._run_main_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
+    #     self._run_main_worker("warm_up_model")  
+
+    #     self.cache_config.num_gpu_blocks = num_aux_gpu_blocks
+    #     self.cache_config.num_cpu_blocks = num_cpu_blocks   
+
+    #     print ("init aux cache engine")
+    #     self._run_aux_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
+    #     self._run_aux_worker("warm_up_model")
+
+
+    # def step(self) -> List[RequestOutput]:
+    #     # Execute the model.
+    #     if self.parallel_config.multi_worker:
+    #         seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
+    #         seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
+    #         if scheduler_outputs_main.is_empty() and scheduler_outputs_aux.is_empty():
+    #             return ignored_main
+    #         processoutput = []
+    #         print ("main list len = {}".format(len(seq_group_metadata_list_main)))
+    #         main_output = self._run_main_worker(
+    #             "execute_model",
+    #             seq_group_metadata_list=seq_group_metadata_list_main,
+    #             blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
+    #             blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
+    #         )
+
+    #         print ("aux list len = {}".format(len(seq_group_metadata_list_aux)))
+    #         ays_aux_output = self._run_aux_worker(
+    #             "execute_model",
+    #             seq_group_metadata_list=seq_group_metadata_list_aux,
+    #             blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
+    #             blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
+    #         )
+    #         main_output = ray.get(main_output)
+    #         main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
+    #         processoutput.extend(main_processoutput)
+    #         aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)
+    #         processoutput.extend(aux_processoutput)    
+
+    #         return processoutput        
+
+    #     else:
+    #         seq_group_metadata_list, scheduler_outputs, ignored = self._schedule()
+    #         if scheduler_outputs.is_empty():
+    #             return ignored
+    #         output = self._run_workers(
+    #             "execute_model",
+    #             seq_group_metadata_list=seq_group_metadata_list,
+    #             blocks_to_swap_in=scheduler_outputs.blocks_to_swap_in,
+    #             blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
+    #             blocks_to_copy=scheduler_outputs.blocks_to_copy,
+    #         )
+
+    #         return self._process_model_outputs(output, scheduler_outputs)
+
+
+    # def _run_main_worker(self, method: str, *args,**kwargs, ) -> Any:
+    #     executor = partial(self.main_worker.execute_method.remote, method)
+    #     output = executor(*args, **kwargs)
+    #     return output
+
+
+    # def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
+        executor = partial(self.aux_worker.execute_method.remote, method)
         output = executor(*args, **kwargs)
         return output

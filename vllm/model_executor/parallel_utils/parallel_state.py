@@ -12,32 +12,12 @@ _PIPELINE_MODEL_PARALLEL_GROUP = None
 # source rank when broadcasting from the first or last pipeline stage.
 _PIPELINE_GLOBAL_RANKS = None
 
+_MULTI_WORKER = True
+
 
 def initialize_model_parallel(tensor_model_parallel_size: int = 1, pipeline_model_parallel_size: int = 1, multi_worker: bool=False) -> None:
-    """
-    Initialize model parallel groups.
-
-    Arguments:
-        tensor_model_parallel_size: number of GPUs used for tensor model
-            parallelism.
-        pipeline_model_parallel_size: number of GPUs used for pipeline model
-            parallelism.
-
-    Let's say we have a total of 8 GPUs denoted by g0 ... g7 and we
-    use 2 GPUs to parallelize the model tensor, and 4 GPUs to parallelize
-    the model pipeline. The present function will
-    create 4 tensor model-parallel groups and 2 pipeline model-parallel groups:
-        4 tensor model-parallel groups:
-            [g0, g1], [g2, g3], [g4, g5], [g6, g7]
-        2 pipeline model-parallel groups:
-            [g0, g2, g4, g6], [g1, g3, g5, g7]
-    Note that for efficiency, the caller should make sure adjacent ranks
-    are on the same DGX box. For example if we are using 2 DGX-1 boxes
-    with a total of 16 GPUs, rank 0 to 7 belong to the first box and
-    ranks 8 to 15 belong to the second box.
-    """
     # Get world size and rank. Ensure some consistencies.
-    global _MULTI_WORKER 
+    global _MULTI_WORKER
     if multi_worker:
         _MULTI_WORKER = True
     else:
@@ -100,6 +80,7 @@ def get_pipeline_model_parallel_group():
 
 def get_tensor_model_parallel_world_size():
     """Return world size for the tensor model parallel group."""
+    global _MULTI_WORKER
     if _MULTI_WORKER:
         return 1
     else:
@@ -116,6 +97,7 @@ def get_pipeline_model_parallel_world_size():
 
 def get_tensor_model_parallel_rank():
     """Return my rank for the tensor model parallel group."""
+    global _MULTI_WORKER
     if _MULTI_WORKER:
         return 0
     else:
@@ -175,3 +157,5 @@ def destroy_model_parallel():
     _PIPELINE_MODEL_PARALLEL_GROUP = None
     global _PIPELINE_GLOBAL_RANKS
     _PIPELINE_GLOBAL_RANKS = None
+    global _MULTI_WORKER
+    _MULTI_WORKER = None
