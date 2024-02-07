@@ -442,6 +442,10 @@ class MultiScheduler:
     def has_unfinished_seqs(self) -> bool:
         return self.waiting or self.running or self.swapped or self.running_aux
 
+    def get_num_finished_seq_groups(self) -> int:
+        return (self.scheduler_config.num_prompts - self.get_num_unfinished_seq_groups())
+
+
     def get_num_unfinished_seq_groups(self) -> int:
         return len(self.waiting) + len(self.running) + len(self.swapped) + len(self.running_aux)
 
@@ -506,7 +510,9 @@ class MultiScheduler:
         # Fix the current time.
         now = time.monotonic()
         print ("waiting = {}, running = {}, swapped = {}, running_aux = {}".format(len(self.waiting), len(self.running), len(self.swapped), len(self.running_aux)))
-
+        finished_seqs = self.get_num_finished_seq_groups()
+        unfinished_seqs = self.get_num_unfinished_seq_groups()
+        print ("finished = {}, unfinished = {}".format(finished_seqs, unfinished_seqs))
         # Join waiting sequences if possible.
         if not self.swapped:
             ignored_seq_groups: List[SequenceGroup] = []

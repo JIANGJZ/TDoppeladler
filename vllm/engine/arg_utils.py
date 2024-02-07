@@ -35,7 +35,8 @@ class EngineArgs:
     tokenizer_revision: Optional[str] = None
     quantization: Optional[str] = None
     enforce_eager: bool = False
-    max_context_len_to_capture: int = 8192
+    max_context_len_to_capture: int = 8192,
+    num_prompts: int = 0,
 
     def __post_init__(self):
         if self.tokenizer is None:
@@ -97,7 +98,7 @@ class EngineArgs:
                                    
         cache_config = CacheConfig(self.block_size, self.gpu_memory_utilization, self.swap_space, model_config.get_sliding_window())             
         parallel_config = ParallelConfig(self.pipeline_parallel_size, self.tensor_parallel_size, self.worker_use_ray, self.multi_worker, self.max_parallel_loading_workers)                        
-        scheduler_config = SchedulerConfig(self.max_num_batched_tokens, self.max_num_seqs, model_config.max_model_len, self.max_paddings)                           
+        scheduler_config = SchedulerConfig(self.max_num_batched_tokens, self.max_num_seqs, model_config.max_model_len, self.max_paddings, self.num_prompts)                           
         cpu_scheduler_config = CPUSchedulerConfig(self.max_num_batched_tokens, self.max_num_seqs, model_config.max_model_len, self.max_paddings)                                                         
         return model_config, cache_config, parallel_config, scheduler_config, cpu_scheduler_config
 
