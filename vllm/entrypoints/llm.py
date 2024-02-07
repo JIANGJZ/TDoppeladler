@@ -12,43 +12,19 @@ import asyncio
 
 
 class LLM:
-    def __init__(
-        self,
-        model: str,
-        tokenizer: Optional[str] = None,
-        tokenizer_mode: str = "auto",
-        trust_remote_code: bool = False,
-        tensor_parallel_size: int = 1,
-        dtype: str = "auto",
-        quantization: Optional[str] = None,
-        revision: Optional[str] = None,
-        tokenizer_revision: Optional[str] = None,
-        seed: int = 0,
-        gpu_memory_utilization: float = 0.9,
-        swap_space: int = 12,
-        enforce_eager: bool = False,
-        max_context_len_to_capture: int = 8192,
-        **kwargs,
-    ) -> None:
+    def __init__(self, model: str, tokenizer: Optional[str] = None, tokenizer_mode: str = "auto", trust_remote_code: bool = False,
+        tensor_parallel_size: int = 1,  dtype: str = "auto", quantization: Optional[str] = None, revision: Optional[str] = None, 
+        tokenizer_revision: Optional[str] = None, seed: int = 0, gpu_memory_utilization: float = 0.9, swap_space: int = 8,
+        enforce_eager: bool = False, max_context_len_to_capture: int = 8192, multi_worker: bool=False, worker_use_ray: bool=False,**kwargs,) -> None: 
+    
         if "disable_log_stats" not in kwargs:
             kwargs["disable_log_stats"] = False
-        engine_args = EngineArgs(
-            model=model,
-            tokenizer=tokenizer,
-            tokenizer_mode=tokenizer_mode,
-            trust_remote_code=trust_remote_code,
-            tensor_parallel_size=tensor_parallel_size,
-            dtype=dtype,
-            quantization=quantization,
-            revision=revision,
-            tokenizer_revision=tokenizer_revision,
-            seed=seed,
-            gpu_memory_utilization=gpu_memory_utilization,
-            swap_space=swap_space,
-            enforce_eager=enforce_eager,
-            max_context_len_to_capture=max_context_len_to_capture,
-            **kwargs,
-        )
+
+        engine_args = EngineArgs(model=model, tokenizer=tokenizer, tokenizer_mode=tokenizer_mode, trust_remote_code=trust_remote_code,
+            tensor_parallel_size=tensor_parallel_size, dtype=dtype, quantization=quantization, revision=revision, tokenizer_revision=tokenizer_revision, 
+            seed=seed, gpu_memory_utilization=gpu_memory_utilization, swap_space=swap_space, enforce_eager=enforce_eager, 
+            max_context_len_to_capture=max_context_len_to_capture, multi_worker=multi_worker, worker_use_ray=worker_use_ray, **kwargs, )
+  
         self.llm_engine = LLMEngine.from_engine_args(engine_args)
         self.request_counter = Counter()
 
@@ -89,22 +65,22 @@ class LLM:
         if use_tqdm:
             num_requests = self.llm_engine.get_num_unfinished_requests()
             pbar = tqdm(total=num_requests, desc="Processed prompts")
-        # Run the engine.
+
         outputs: List[RequestOutput] = []
         while self.llm_engine.has_unfinished_requests():
             step_outputs =  self.llm_engine.step()
             if len(step_outputs) > 0:
                 self.llm_engine.clear_step_output()
-            # step_cpu_outputs = self.llm_engine.step_cpu()
+                # step_cpu_outputs = self.llm_engine.step_cpu()
                 for output in step_outputs:
                     if output.finished:
                         outputs.append(output)
                         if use_tqdm:
                             pbar.update(1)
+
+        if self.llm_engine.parallel_config.multi_worker:
+            self.llm_engine.exit_clear()
         if use_tqdm:
             pbar.close()
-        # Sort the outputs by request ID.
-        # This is necessary because some requests may be finished earlier than
-        # its previous requests.
         outputs = sorted(outputs, key=lambda x: int(x.request_id))
         return outputs

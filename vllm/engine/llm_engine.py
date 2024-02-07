@@ -20,12 +20,10 @@ from vllm.transformers_utils.tokenizer import (detokenize_incrementally, get_tok
 from vllm.utils import Counter
 from vllm.core.cpu_cache_engine import CPUCacheEngine
 
-if ray:
-    from ray.air.util.torch_dist import init_torch_dist_process_group
-    from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 
-if TYPE_CHECKING:
-    from ray.util.placement_group import PlacementGroup
+from ray.air.util.torch_dist import init_torch_dist_process_group
+from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
+from ray.util.placement_group import PlacementGroup
 
 logger = init_logger(__name__)
 
@@ -33,6 +31,7 @@ _LOGGING_INTERVAL_SEC = 5
 
 class RayTaskManager:
     def __init__(self):
+        self.run = True
         self.pending_tasks_main =[]
         self.pending_tasks_aux = []
         self.wait_thread_main = threading.Thread(target=self.wait_for_all_tasks_main)
@@ -91,11 +90,11 @@ class RayTaskManager:
                     break
 
     def wait_for_all_tasks_main(self):
-        while True:
+        while self.run:
             self.check_and_handle_tasks_main()
 
     def wait_for_all_tasks_aux(self):
-        while True:
+        while self.run:
             self.check_and_handle_tasks_aux()
 
     def get_main_pending_len(self):
@@ -103,6 +102,9 @@ class RayTaskManager:
 
     def get_aux_pending_len(self):
         return len(self.pending_tasks_aux)
+
+    def stop_waiting(self):
+        self.run = False
 
 
 class LLMEngine:
@@ -160,8 +162,6 @@ class LLMEngine:
             if ray_usage != "1":
                 os.environ["RAY_USAGE_STATS_ENABLED"] = "0"
             self.task_manager = RayTaskManager()
-            self.main_processing = False
-            self.aux_processing = False
             self._init_multiworker()
             # self._init_cpu_workers()
             self._init_multiworker_cache()
@@ -304,7 +304,6 @@ class LLMEngine:
         self._run_workers("warm_up_model")
 
     def _init_multiworker_cache(self)-> None:
-        print ("*******************************")
         num_main_blocks = self._run_main_worker(
             "profile_num_available_blocks",
             block_size=self.cache_config.block_size,
@@ -661,7 +660,7 @@ class LLMEngine:
         return request_outputs
 
     def handle_main_result(self, result, callback_arg):
-        print ("handling main result")
+        # print ("handling main result")
         self.main_processing = False
         main_output = result
         scheduler_outputs_main = callback_arg
@@ -669,7 +668,7 @@ class LLMEngine:
         self.output.extend(main_processoutput)
 
     def handle_aux_result(self, result, callback_arg):
-        print ("handling aux result")
+        # print ("handling aux result")
         self.aux_processing = False   
         aux_output = result
         scheduler_outputs_aux = callback_arg
@@ -732,6 +731,9 @@ class LLMEngine:
     def clear_step_output(self):
         # print ("clear output")
         self.output = []
+
+    def exit_clear(self):
+        self.task_manager.stop_waiting()    
 
     def step_cpu(self)->List[RequestOutput]:
         seq_group_metadata_list, scheduler_outputs, ignored = self._schedule_cpu()
@@ -912,7 +914,6 @@ class LLMEngine:
             seq.status = SequenceStatus.FINISHED_STOPPED
             return
 
-
     def _run_workers_in_batch(self, workers, method: str, *args, **kwargs, ):
         all_outputs = []
         for worker in workers:
@@ -963,13 +964,11 @@ class LLMEngine:
         else:
             self.task_manager.apply_async_aux(func=executor, args=args, kwargs=kwargs, callback=resulthandler, callback_arg=callback_arg)
 
-
     def _run_cpu_workers(self, method: str, *args, **kwargs, ) -> Any:
         executor = getattr(self.aux_worker, method)
         output = executor(*args, **kwargs)
-        return output
-
-            
+        return output    
+    
     # def _init_multiworker(self):
     #     from vllm.worker.multi_worker import MainWorker, AuxWorker
     #     self.workers: List[Worker] = []
@@ -1089,6 +1088,6 @@ class LLMEngine:
 
 
     # def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
-        executor = partial(self.aux_worker.execute_method.remote, method)
-        output = executor(*args, **kwargs)
-        return output
+        # executor = partial(self.aux_worker.execute_method.remote, method)
+        # output = executor(*args, **kwargs)
+        # return output

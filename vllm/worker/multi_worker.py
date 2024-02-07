@@ -105,7 +105,7 @@ class MainWorker:
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_out: Dict[int, int], blocks_to_copy: Dict[int, List[int]],) -> SamplerOutput:
-        print ("**************** execute in main *********************")
+        # print ("**************** execute in main *********************")
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_out:
@@ -219,7 +219,7 @@ class AuxWorker:
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int], blocks_to_copy=Dict[int, int],) -> SamplerOutput:
-        print ("**************** execute in aux *********************")
+        # print ("**************** execute in aux *********************")
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_in:

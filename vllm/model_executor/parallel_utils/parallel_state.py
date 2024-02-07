@@ -12,7 +12,7 @@ _PIPELINE_MODEL_PARALLEL_GROUP = None
 # source rank when broadcasting from the first or last pipeline stage.
 _PIPELINE_GLOBAL_RANKS = None
 
-_MULTI_WORKER = True
+_MULTI_WORKER = None
 
 
 def initialize_model_parallel(tensor_model_parallel_size: int = 1, pipeline_model_parallel_size: int = 1, multi_worker: bool=False) -> None:
