@@ -53,8 +53,6 @@ class BlockAllocator:
         return len(self.free_blocks)
 
 
-
-
 class MultiBlockSpaceManager:
     """Manages the mapping between logical and physical token blocks."""
 
@@ -323,3 +321,13 @@ class MultiBlockSpaceManager:
 
     def get_num_free_cpu_blocks(self) -> int:
         return self.cpu_allocator.get_num_free_blocks()
+
+    def check_in_main(self, seq_group: SequenceGroup) -> bool:
+        for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
+            seq_id = seq.seq_id
+            if seq_id not in self.block_tables:
+                if seq_id not in self.aux_block_tables:
+                    raise ValueError("Seq_id not exist.")
+                else:
+                    return False
+        return True

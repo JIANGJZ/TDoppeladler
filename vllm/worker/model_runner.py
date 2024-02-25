@@ -473,7 +473,6 @@ class CPUModelRunner:
         output = self.model.sample(hidden_states=hidden_states, sampling_metadata=sampling_metadata,)
         return output
 
-
 class CUDAGraphRunner:
 
     def __init__(self, model: nn.Module):

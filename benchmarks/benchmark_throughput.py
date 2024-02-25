@@ -113,12 +113,12 @@ if __name__ == "__main__":
         The "auto" option will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.')
     parser.add_argument("--enforce-eager", action="store_true", help="enforce eager execution")
 
-    parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
-    parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
+    parser.add_argument("--multi-worker", action="store_true", help="is use multiworker, store_false is true")
+    parser.add_argument("--worker-use-ray", action="store_false", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
     parser.add_argument("--num-prompts", type=int, default=1000, help="Number of prompts to process.")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.9, help='the fraction of GPU memory')
-    parser.add_argument('--swap-space', type=int, default=12, help='CPU swap space size (GiB) per GPU')   
+    parser.add_argument('--swap-space', type=int, default=64, help='CPU swap space size (GiB) per GPU')   
                
     args = parser.parse_args()
     if args.tokenizer is None:

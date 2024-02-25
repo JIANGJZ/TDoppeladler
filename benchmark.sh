@@ -6,14 +6,18 @@ main () {
 
   positional_args=()
 
-  model_path="/home/jiangjz/llm/TDoppeladler/model/vicuna-7b-v1.5"
-  dataset_path="/home/jiangjz/llm/TDoppeladler/dataset/ShareGPT_V3_unfiltered_cleaned_split.json"
+  path_prefix="/home/users/jiangjz/llm/TDoppeladler"
+
+  model_path=$path_prefix"/model/vicuna-7b-v1.5"
+  dataset_path=$path_prefix"/dataset/ShareGPT_V3_unfiltered_cleaned_split.json"
   dataset_path_modified=0
+
+  benchmark_path=$path_prefix"/benchmarks/benchmark_throughput.py" 
 
   while [[ $# -gt 0 ]]; do
     case $1 in
       "-h"|"--help")
-        python3 /home/jiangjz/llm/TDoppeladler/benchmarks/benchmark_throughput.py --help
+        python3 $benchmark_path --help
         return 0
         ;;
       "--dataset")
@@ -42,7 +46,7 @@ main () {
 #     fi
 #   fi
 
-  python3 /home/jiangjz/llm/TDoppeladler/benchmarks/benchmark_throughput.py --dataset "$dataset_path" --model "$model_path" "${positional_args[@]}"
+  python3 $benchmark_path --dataset "$dataset_path" --model "$model_path" "${positional_args[@]}"
   return $?
 
 }

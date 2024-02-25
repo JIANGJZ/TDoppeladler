@@ -26,7 +26,6 @@ class PreemptionMode(enum.Enum):
     SWAP = enum.auto()
     RECOMPUTE = enum.auto()
 
-
 class SchedulerOutputs:
     def __init__(
         self,
@@ -337,7 +336,7 @@ class Scheduler:
     def _preempt(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],  preemption_mode: Optional[PreemptionMode] = None,) -> None:
         if preemption_mode is None:
             if seq_group.get_max_num_running_seqs() == 1:
-                preemption_mode = PreemptionMode.SWAP
+                preemption_mode = PreemptionMode.RECOMPUTE
             else:
                 preemption_mode = PreemptionMode.SWAP
         if preemption_mode == PreemptionMode.RECOMPUTE:
@@ -375,8 +374,6 @@ class Scheduler:
         blocks_to_swap_out.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
             seq.status = SequenceStatus.SWAPPED
-
-
 
 class MultiScheduler:
     def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig, parallel_config: ParallelConfig) -> None:
@@ -469,6 +466,10 @@ class MultiScheduler:
         while self.swapped:
             seq_group = self.swapped[0]
             # If the sequence group cannot be swapped in, stop.
+            if not self.block_manager.check_in_main(seq_group):
+                self.swapped.pop(0)
+                continue
+
             if not self.block_manager.can_swap_in(seq_group):
                 print ("can not swap in")
                 break
@@ -569,7 +570,7 @@ class MultiScheduler:
                     break
 
                 num_paddings = num_batched_tokens - sum(new_seq_lens)
-                if num_paddings > self.scheduler_config.max_paddings:
+                if num_paddings > 1.5*self.scheduler_config.max_paddings:
                     print ("prompt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
                     break
                 seq_lens = new_seq_lens
@@ -601,12 +602,23 @@ class MultiScheduler:
         preempted: List[SequenceGroup] = []
         while self.running:
             seq_group = self.running.pop(0)
+            if not self.block_manager.check_in_main(seq_group):
+                continue
             while not self.block_manager.can_append_main_slot(seq_group):
                 if self.running:
                     # Preempt the lowest-priority sequence groups.
                     victim_seq_group = self.running.pop(-1)
                     self._preempt(victim_seq_group, blocks_to_swap_out)
                     preempted.append(victim_seq_group)
+                    if (len(self.running) > 0):
+                        victim_seq_group = self.running.pop(-1)
+                        self._preempt(victim_seq_group, blocks_to_swap_out)
+                        if (len(self.running) > 0):
+                            victim_seq_group = self.running.pop(-1)
+                            self._preempt(victim_seq_group, blocks_to_swap_out)
+                            if (len(self.running) > 0):
+                                victim_seq_group = self.running.pop(-1)
+                                self._preempt(victim_seq_group, blocks_to_swap_out)
                 else:
                     # No other sequence groups can be preempted.
                     # Preempt the current sequence group.
@@ -615,8 +627,13 @@ class MultiScheduler:
                     break
             else:
                 # Append new slots to the sequence group.
-                self._append_main_slot(seq_group, blocks_to_copy)
-                running.append(seq_group)
+                # self._append_main_slot(seq_group, blocks_to_copy)
+                # running.append(seq_group)
+                if (len(self.running) > 1.5*len(self.running_aux)):
+                    self._preempt(seq_group, blocks_to_swap_out)
+                else:
+                    self._append_main_slot(seq_group, blocks_to_copy)
+                    running.append(seq_group)
         self.running = running
 
         num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running)
