@@ -241,13 +241,19 @@ class SequenceGroup:
     def prompt(self) -> str:
         # All sequences in the group should have the same prompt.
         # We use the prompt of an arbitrary sequence.
-        return next(iter(self.seqs_dict.values())).prompt
+        if self.seqs_dict:  
+            return next(iter(self.seqs_dict.values())).prompt
+        else: 
+            return ""
 
     @property
     def prompt_token_ids(self) -> List[int]:
         # All sequences in the group should have the same prompt.
         # We use the prompt of an arbitrary sequence.
-        return next(iter(self.seqs_dict.values())).data.prompt_token_ids
+        if self.seqs_dict:  
+            return next(iter(self.seqs_dict.values())).data.prompt_token_ids
+        else: 
+            return []
 
     def set_recompute(self, is_recompute:bool):
         self.is_recompute = is_recompute

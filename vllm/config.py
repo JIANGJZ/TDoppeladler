@@ -198,8 +198,8 @@ class ModelConfig:
                 f"({pipeline_parallel_size}).")
 
     def print_config(self):
-        print ("ModelConfig hidden_size={}, head_size={}, swap_space_bytes={}, num_kv_heads={}\
-        num_layers={}".format(self.get_hidden_size(), self.get_head_size(), self.hf_config.num_attention_heads, self.hf_config.num_key_value_heads, self.hf_config.num_hidden_layers))
+        print ("ModelConfig hidden_size={}, head_size={}, swap_space_bytes={},\
+        num_layers={}".format(self.get_hidden_size(), self.get_head_size(), self.hf_config.num_attention_heads,self.hf_config.num_hidden_layers))
 
     def get_sliding_window(self) -> Optional[int]:
         return getattr(self.hf_config, "sliding_window", None)

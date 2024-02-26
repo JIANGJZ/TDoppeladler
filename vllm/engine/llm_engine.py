@@ -317,10 +317,26 @@ class LLMEngine:
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
-        
-        num_main_gpu_blocks = 954
-        num_cpu_blocks = 1024
-        num_aux_gpu_blocks = 954
+        # vicuna-7b
+        # num_main_gpu_blocks = 954
+        # num_cpu_blocks = 1024
+        # num_aux_gpu_blocks = 954
+
+        # baichuang-7b
+        # num_main_gpu_blocks = 750
+        # num_cpu_blocks = 1024
+        # num_aux_gpu_blocks = 750
+
+        #falcon-7b
+        # num_main_gpu_blocks = 44235
+        # num_cpu_blocks = 524288
+        # num_aux_gpu_blocks = 44235
+
+        #aquila-7b
+        num_main_gpu_blocks = 670
+        num_cpu_blocks = 10000
+        num_aux_gpu_blocks = 670
+    
         logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
                     
         if num_main_gpu_blocks <= 0:
@@ -680,7 +696,7 @@ class LLMEngine:
         # Execute the model.
         if self.parallel_config.multi_worker:
                 # print ("main list len = {}".format(len(seq_group_metadata_list_main)))
-            if (self.task_manager.get_main_pending_len() < 4):
+            if (self.task_manager.get_main_pending_len() < 5):
                 seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
                 if scheduler_outputs_main.is_empty() :
                     # print ("sechduling main empty")
@@ -696,7 +712,7 @@ class LLMEngine:
                         blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
                     )
                 
-            if (self.task_manager.get_aux_pending_len() < 4):
+            if (self.task_manager.get_aux_pending_len() < 5):
                 seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
                 if scheduler_outputs_aux.is_empty():
                     # print ("sechduling aux empty")
@@ -896,21 +912,25 @@ class LLMEngine:
                 seq.status = SequenceStatus.FINISHED_STOPPED
                 return
         if seq.get_last_token_id() in sampling_params.stop_token_ids:
+            print ("seq {} end with stop tokens".format(seq.seq_id))
             seq.status = SequenceStatus.FINISHED_STOPPED
             return
 
         # Check if the sequence has reached max_model_len.
         if seq.get_len() > self.scheduler_config.max_model_len:
+            print ("seq {} end with max_model_len".format(seq.seq_id))
             seq.status = SequenceStatus.FINISHED_LENGTH_CAPPED
             return
 
         # Check if the sequence has reached max_tokens.
         if seq.get_output_len() == sampling_params.max_tokens:
+            print ("seq {} end with max_tokens".format(seq.seq_id))
             seq.status = SequenceStatus.FINISHED_LENGTH_CAPPED
             return
 
         # Check if the sequence has generated the EOS token.
         if ((not sampling_params.ignore_eos) and seq.get_last_token_id() == self.tokenizer.eos_token_id): 
+            print ("seq {} end with generated the EOS token".format(seq.seq_id))
             seq.status = SequenceStatus.FINISHED_STOPPED
             return
 

@@ -53,12 +53,12 @@ def sample_requests(dataset_path: str, num_requests: int, tokenizer: PreTrainedT
 def run_vllm(requests: List[Tuple[str, int, int]],  model: str, tokenizer: str, quantization: Optional[str], 
             tensor_parallel_size: int, seed: int, n: int, use_beam_search: bool, trust_remote_code: bool, dtype: str,
             max_model_len: Optional[int], enforce_eager: bool, multi_worker:bool, worker_use_ray:bool,
-            gpu_memory_utilization:float, swap_space:int, num_prompts:int) -> float:
+            gpu_memory_utilization:float, swap_space:int, num_prompts:int, load_format: str,) -> float:
 
     llm = LLM(model=model, tokenizer=tokenizer, quantization=quantization, tensor_parallel_size=tensor_parallel_size, 
             seed=seed, trust_remote_code=trust_remote_code, dtype=dtype, max_model_len=max_model_len, 
             enforce_eager=enforce_eager, multi_worker=multi_worker, worker_use_ray=worker_use_ray,
-            gpu_memory_utilization=gpu_memory_utilization, swap_space=swap_space, num_prompts=num_prompts)
+            gpu_memory_utilization=gpu_memory_utilization, swap_space=swap_space, num_prompts=num_prompts, load_format=load_format)
         
     # Add the requests to the engine.
     for prompt, _, output_len in requests:
@@ -85,7 +85,7 @@ def main(args: argparse.Namespace):
     elapsed_time = run_vllm(requests, args.model, args.tokenizer, args.quantization, args.tensor_parallel_size, 
                     args.seed, args.n, args.use_beam_search, args.trust_remote_code, args.dtype, args.max_model_len, 
                     args.enforce_eager, args.multi_worker, args.worker_use_ray, args.gpu_memory_utilization,
-                    args.swap_space, args.num_prompts)
+                    args.swap_space, args.num_prompts, args.load_format)
      
                 
     total_num_tokens = sum(prompt_len + output_len for _, prompt_len, output_len in requests)                           
@@ -101,13 +101,11 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default=None, help="Path to the dataset.")     
     parser.add_argument("--input-len", type=int, default=None, help="Input prompt length for each request")              
     parser.add_argument("--output-len", type=int, default=None, help="Output length for each request. Overrides the output length from the dataset.")  
-    parser.add_argument("--model", type=str, default="facebook/opt-125m")
-    parser.add_argument("--tokenizer", type=str, default=None)
     parser.add_argument('--quantization', '-q', choices=['awq', 'gptq', 'squeezellm', None], default=None)
     parser.add_argument("--n", type=int, default=1, help="Number of generated sequences per prompt.")
     parser.add_argument("--use-beam-search", action="store_true")
     parser.add_argument("--seed", type=int, default=0) 
-    parser.add_argument('--trust-remote-code', action='store_true', help='trust remote code from huggingface')
+    parser.add_argument('--trust-remote-code', action='store_false', help='trust remote code from huggingface')
     parser.add_argument('--max-model-len', type=int, default=None, help='Maximum length of a sequence (including prompt and output). If None, will be derived from the model.')
     parser.add_argument('--dtype', type=str, default='auto', choices=['auto', 'half', 'float16', 'bfloat16', 'float', 'float32'], help='data type for model weights and activations. \
         The "auto" option will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.')
@@ -116,9 +114,12 @@ if __name__ == "__main__":
     parser.add_argument("--multi-worker", action="store_true", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_false", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
-    parser.add_argument("--num-prompts", type=int, default=1000, help="Number of prompts to process.")
+    parser.add_argument("--num-prompts", type=int, default=2000, help="Number of prompts to process.")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.9, help='the fraction of GPU memory')
     parser.add_argument('--swap-space', type=int, default=64, help='CPU swap space size (GiB) per GPU')   
+    parser.add_argument("--model", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/baichuang-7b")
+    parser.add_argument("--tokenizer", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/baichuang-7b")
+    parser.add_argument("--load-format", type=str, default="dummy")
                
     args = parser.parse_args()
     if args.tokenizer is None:

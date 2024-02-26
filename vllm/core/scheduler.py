@@ -336,7 +336,7 @@ class Scheduler:
     def _preempt(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],  preemption_mode: Optional[PreemptionMode] = None,) -> None:
         if preemption_mode is None:
             if seq_group.get_max_num_running_seqs() == 1:
-                preemption_mode = PreemptionMode.RECOMPUTE
+                preemption_mode = PreemptionMode.SWAP
             else:
                 preemption_mode = PreemptionMode.SWAP
         if preemption_mode == PreemptionMode.RECOMPUTE:
@@ -599,7 +599,6 @@ class MultiScheduler:
         self.running = self.policy.sort_by_priority(now, self.running)
         # Reserve new token slots for the running sequence groups.
         running: List[SequenceGroup] = []
-        preempted: List[SequenceGroup] = []
         while self.running:
             seq_group = self.running.pop(0)
             if not self.block_manager.check_in_main(seq_group):
@@ -609,7 +608,6 @@ class MultiScheduler:
                     # Preempt the lowest-priority sequence groups.
                     victim_seq_group = self.running.pop(-1)
                     self._preempt(victim_seq_group, blocks_to_swap_out)
-                    preempted.append(victim_seq_group)
                     if (len(self.running) > 0):
                         victim_seq_group = self.running.pop(-1)
                         self._preempt(victim_seq_group, blocks_to_swap_out)
@@ -623,12 +621,8 @@ class MultiScheduler:
                     # No other sequence groups can be preempted.
                     # Preempt the current sequence group.
                     self._preempt(seq_group, blocks_to_swap_out)
-                    preempted.append(seq_group)
                     break
             else:
-                # Append new slots to the sequence group.
-                # self._append_main_slot(seq_group, blocks_to_copy)
-                # running.append(seq_group)
                 if (len(self.running) > 1.5*len(self.running_aux)):
                     self._preempt(seq_group, blocks_to_swap_out)
                 else:

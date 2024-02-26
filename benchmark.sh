@@ -46,7 +46,8 @@ main () {
 #     fi
 #   fi
 
-  python3 $benchmark_path --dataset "$dataset_path" --model "$model_path" "${positional_args[@]}"
+  # python3 $benchmark_path --dataset "$dataset_path" --model "$model_path" "${positional_args[@]}"
+  python3 $benchmark_path --dataset "$dataset_path"  "${positional_args[@]}"
   return $?
 
 }
