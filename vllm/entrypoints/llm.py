@@ -19,7 +19,7 @@ class LLM:
         worker_use_ray: bool=False, num_prompts:int = 0, load_format:str="dummy", **kwargs,) -> None: 
     
         if "disable_log_stats" not in kwargs:
-            kwargs["disable_log_stats"] = False
+            kwargs["disable_log_stats"] = True
 
         engine_args = EngineArgs(model=model, tokenizer=tokenizer, tokenizer_mode=tokenizer_mode, trust_remote_code=trust_remote_code,
             tensor_parallel_size=tensor_parallel_size, dtype=dtype, quantization=quantization, revision=revision, tokenizer_revision=tokenizer_revision, 

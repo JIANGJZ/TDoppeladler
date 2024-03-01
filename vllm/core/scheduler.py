@@ -357,7 +357,7 @@ class Scheduler:
 
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
-        self.swapped.append(seq_group)
+        # self.swapped.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         mapping = self.block_manager.swap_in(seq_group)
@@ -570,7 +570,7 @@ class MultiScheduler:
                     break
 
                 num_paddings = num_batched_tokens - sum(new_seq_lens)
-                if num_paddings > 1.5*self.scheduler_config.max_paddings:
+                if num_paddings > 0.01*self.scheduler_config.max_paddings:
                     print ("prompt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
                     break
                 seq_lens = new_seq_lens
@@ -611,12 +611,6 @@ class MultiScheduler:
                     if (len(self.running) > 0):
                         victim_seq_group = self.running.pop(-1)
                         self._preempt(victim_seq_group, blocks_to_swap_out)
-                        if (len(self.running) > 0):
-                            victim_seq_group = self.running.pop(-1)
-                            self._preempt(victim_seq_group, blocks_to_swap_out)
-                            if (len(self.running) > 0):
-                                victim_seq_group = self.running.pop(-1)
-                                self._preempt(victim_seq_group, blocks_to_swap_out)
                 else:
                     # No other sequence groups can be preempted.
                     # Preempt the current sequence group.

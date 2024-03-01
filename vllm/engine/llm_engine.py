@@ -318,24 +318,19 @@ class LLMEngine:
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
         # vicuna-7b
-        # num_main_gpu_blocks = 954
-        # num_cpu_blocks = 1024
-        # num_aux_gpu_blocks = 954
+        num_main_gpu_blocks = 954
+        num_cpu_blocks = 1024
+        num_aux_gpu_blocks = 954
 
         # baichuang-7b
         # num_main_gpu_blocks = 750
-        # num_cpu_blocks = 1024
+        # num_cpu_blocks = 8192
         # num_aux_gpu_blocks = 750
 
-        #falcon-7b
-        # num_main_gpu_blocks = 44235
-        # num_cpu_blocks = 524288
-        # num_aux_gpu_blocks = 44235
-
         #aquila-7b
-        num_main_gpu_blocks = 670
-        num_cpu_blocks = 10000
-        num_aux_gpu_blocks = 670
+        # num_main_gpu_blocks = 670
+        # num_cpu_blocks = 10000
+        # num_aux_gpu_blocks = 670
     
         logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
                     
