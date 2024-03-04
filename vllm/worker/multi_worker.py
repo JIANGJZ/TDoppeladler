@@ -9,7 +9,7 @@ from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.multi_gpu_cache_engine import MultiGPUCacheEngine
 from vllm.worker.model_runner import ModelRunner, CPUModelRunner
-from vllm.core.cpu_cache_engine import CPUCacheEngine
+from vllm.worker.cpu_cache_engine import CPUCacheEngine
 from vllm.core.scheduler import SchedulerOutputs
 
 
@@ -233,8 +233,6 @@ class AuxWorker:
 
         cache_events = self.cache_events if issued_cache_op else None
 
-        # Wait for cache operations to finish.
-        # TODO(woosuk): Profile swapping overhead and optimize if needed.
         if cache_events is not None:
             for event in cache_events:
                 event.wait()

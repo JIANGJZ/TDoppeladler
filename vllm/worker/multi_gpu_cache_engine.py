@@ -7,7 +7,7 @@ from vllm._C import cache_ops
 from vllm.config import CacheConfig, ModelConfig, ParallelConfig
 from vllm.logger import init_logger
 from vllm.utils import in_wsl
-from vllm.core.cpu_cache_engine import CPUCacheEngine
+from vllm.worker.cpu_cache_engine import CPUCacheEngine
 
 logger = init_logger(__name__)
 
@@ -76,24 +76,6 @@ class MultiGPUCacheEngine:
             gpu_cache.append((key_blocks, value_blocks))
         return gpu_cache
 
-    # def allocate_cpu_cache(self) -> List[KVCache]:
-    #     cpu_cache: List[KVCache] = []
-    #     key_block_shape = self.get_key_block_shape()
-    #     value_block_shape = self.get_value_block_shape()
-    #     pin_memory = True            
-    #     for _ in range(self.num_layers):
-    #         key_blocks = torch.empty(
-    #             size=(self.num_cpu_blocks, *key_block_shape),
-    #             dtype=self.dtype,
-    #             pin_memory=pin_memory,
-    #         )
-    #         value_blocks = torch.empty(
-    #             size=(self.num_cpu_blocks, *value_block_shape),
-    #             dtype=self.dtype,
-    #             pin_memory=pin_memory,
-    #         )
-    #         cpu_cache.append((key_blocks, value_blocks))
-    #     return cpu_cache
 
     def _swap(self, src: List[KVCache], dst: List[KVCache],  src_to_dst: Dict[int, int], ) -> None:
         with torch.cuda.stream(self.cache_stream):

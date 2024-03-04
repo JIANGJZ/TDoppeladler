@@ -18,7 +18,7 @@ from vllm.sampling_params import SamplingParams
 from vllm.sequence import (SamplerOutput, Sequence, SequenceGroup, SequenceGroupMetadata, SequenceGroupOutput, SequenceOutput, SequenceStatus)                     
 from vllm.transformers_utils.tokenizer import (detokenize_incrementally, get_tokenizer)                           
 from vllm.utils import Counter
-from vllm.core.cpu_cache_engine import CPUCacheEngine
+from vllm.worker.cpu_cache_engine import CPUCacheEngine
 
 
 from ray.air.util.torch_dist import init_torch_dist_process_group
@@ -691,7 +691,7 @@ class LLMEngine:
         # Execute the model.
         if self.parallel_config.multi_worker:
                 # print ("main list len = {}".format(len(seq_group_metadata_list_main)))
-            if (self.task_manager.get_main_pending_len() < 5):
+            if (self.task_manager.get_main_pending_len() < 4):
                 seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
                 if scheduler_outputs_main.is_empty() :
                     # print ("sechduling main empty")
@@ -707,7 +707,7 @@ class LLMEngine:
                         blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
                     )
                 
-            if (self.task_manager.get_aux_pending_len() < 5):
+            if (self.task_manager.get_aux_pending_len() < 4):
                 seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
                 if scheduler_outputs_aux.is_empty():
                     # print ("sechduling aux empty")
@@ -984,125 +984,4 @@ class LLMEngine:
         output = executor(*args, **kwargs)
         return output    
     
-    # def _init_multiworker(self):
-    #     from vllm.worker.multi_worker import MainWorker, AuxWorker
-    #     self.workers: List[Worker] = []
-
-    #     self.main_worker = MainWorker(self.model_config, self.parallel_config, self.scheduler_config, 0, None,) 
-    #     self.aux_worker = AuxWorker(self.model_config, self.parallel_config, self.scheduler_config, 1, None,)
-
-    #     print ("init main worker")
-    #     self._run_main_worker("init_model")
-    #     self._run_main_worker("load_model")
-
-    #     print ("init aux worker")
-    #     self._run_aux_worker("init_model")
-    #     self._run_aux_worker("load_model")
  
-
-    # def _init_multiworker_cache(self)-> None:
-    #     num_main_blocks = self._run_main_worker(
-    #         "profile_num_available_blocks",
-    #         block_size=self.cache_config.block_size,
-    #         gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
-    #         cpu_swap_space=self.cache_config.swap_space_bytes,
-    #     )
-    #     num_main_blocks = ray.get(num_main_blocks)
-
-    #     num_aux_blocks = self._run_aux_worker(
-    #         "profile_num_available_blocks",
-    #         block_size=self.cache_config.block_size,
-    #         gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
-    #         cpu_swap_space=self.cache_config.swap_space_bytes,
-    #     )
-    #     num_aux_blocks = ray.get(num_aux_blocks)
-        
-    #     num_main_gpu_blocks = 954
-    #     num_cpu_blocks = num_main_blocks[1]
-    #     num_aux_gpu_blocks = 954
-    #     logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
-                    
-    #     if num_main_gpu_blocks <= 0:
-    #         raise ValueError("No available memory for the cache blocks. Try increasing `gpu_memory_utilization` when initializing the engine.")          
-    #     max_seq_len = self.cache_config.block_size * num_main_gpu_blocks
-    #     if self.model_config.max_model_len > max_seq_len:
-    #         raise ValueError(
-    #             f"The model's max seq len ({self.model_config.max_model_len}) "
-    #             "is larger than the maximum number of tokens that can be "
-    #             f"stored in KV cache ({max_seq_len}). Try increasing "
-    #             "`gpu_memory_utilization` or decreasing `max_model_len` when "
-    #             "initializing the engine.")
-
-    #     self.cache_config.num_gpu_blocks = num_main_gpu_blocks
-    #     self.cache_config.num_cpu_blocks = num_cpu_blocks
-
-    #     self.cpu_cache_engine = CPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)   
-    #     # Initialize the cache.
-    #     print ("init main cache engine")
-    #     self._run_main_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
-    #     self._run_main_worker("warm_up_model")  
-
-    #     self.cache_config.num_gpu_blocks = num_aux_gpu_blocks
-    #     self.cache_config.num_cpu_blocks = num_cpu_blocks   
-
-    #     print ("init aux cache engine")
-    #     self._run_aux_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
-    #     self._run_aux_worker("warm_up_model")
-
-
-    # def step(self) -> List[RequestOutput]:
-    #     # Execute the model.
-    #     if self.parallel_config.multi_worker:
-    #         seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
-    #         seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
-    #         if scheduler_outputs_main.is_empty() and scheduler_outputs_aux.is_empty():
-    #             return ignored_main
-    #         processoutput = []
-    #         print ("main list len = {}".format(len(seq_group_metadata_list_main)))
-    #         main_output = self._run_main_worker(
-    #             "execute_model",
-    #             seq_group_metadata_list=seq_group_metadata_list_main,
-    #             blocks_to_swap_out=scheduler_outputs_main.blocks_to_swap_out,
-    #             blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
-    #         )
-
-    #         print ("aux list len = {}".format(len(seq_group_metadata_list_aux)))
-    #         ays_aux_output = self._run_aux_worker(
-    #             "execute_model",
-    #             seq_group_metadata_list=seq_group_metadata_list_aux,
-    #             blocks_to_swap_in=scheduler_outputs_aux.blocks_to_swap_in,
-    #             blocks_to_copy=scheduler_outputs_aux.blocks_to_copy,
-    #         )
-    #         main_output = ray.get(main_output)
-    #         main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
-    #         processoutput.extend(main_processoutput)
-    #         aux_processoutput = self._process_model_outputs(aux_output, scheduler_outputs_aux)
-    #         processoutput.extend(aux_processoutput)    
-
-    #         return processoutput        
-
-    #     else:
-    #         seq_group_metadata_list, scheduler_outputs, ignored = self._schedule()
-    #         if scheduler_outputs.is_empty():
-    #             return ignored
-    #         output = self._run_workers(
-    #             "execute_model",
-    #             seq_group_metadata_list=seq_group_metadata_list,
-    #             blocks_to_swap_in=scheduler_outputs.blocks_to_swap_in,
-    #             blocks_to_swap_out=scheduler_outputs.blocks_to_swap_out,
-    #             blocks_to_copy=scheduler_outputs.blocks_to_copy,
-    #         )
-
-    #         return self._process_model_outputs(output, scheduler_outputs)
-
-
-    # def _run_main_worker(self, method: str, *args,**kwargs, ) -> Any:
-    #     executor = partial(self.main_worker.execute_method.remote, method)
-    #     output = executor(*args, **kwargs)
-    #     return output
-
-
-    # def _run_aux_worker(self, method: str, *args, **kwargs, ) -> Any:
-        # executor = partial(self.aux_worker.execute_method.remote, method)
-        # output = executor(*args, **kwargs)
-        # return output

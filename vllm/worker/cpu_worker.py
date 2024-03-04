@@ -9,7 +9,7 @@ from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.gpu_cache_engine import GPUCacheEngine
 from vllm.worker.model_runner import ModelRunner, CPUModelRunner
-from vllm.core.cpu_cache_engine import CPUCacheEngine
+from vllm.worker.cpu_cache_engine import CPUCacheEngine
 
 
 class CPUWorker:

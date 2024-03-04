@@ -7,7 +7,7 @@ from vllm._C import cache_ops
 from vllm.config import CacheConfig, ModelConfig, ParallelConfig
 from vllm.logger import init_logger
 from vllm.utils import in_wsl
-from vllm.core.cpu_cache_engine import CPUCacheEngine
+from vllm.worker.cpu_cache_engine import CPUCacheEngine
 
 logger = init_logger(__name__)
 

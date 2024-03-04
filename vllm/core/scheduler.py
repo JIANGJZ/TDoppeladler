@@ -617,7 +617,7 @@ class MultiScheduler:
                     self._preempt(seq_group, blocks_to_swap_out)
                     break
             else:
-                if (len(self.running) > 1.2*len(self.running_aux)):
+                if (len(self.running) > 1.5*len(self.running_aux)):
                     self._preempt(seq_group, blocks_to_swap_out)
                 else:
                     self._append_main_slot(seq_group, blocks_to_copy)
