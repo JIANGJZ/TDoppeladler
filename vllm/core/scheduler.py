@@ -336,7 +336,7 @@ class Scheduler:
     def _preempt(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],  preemption_mode: Optional[PreemptionMode] = None,) -> None:
         if preemption_mode is None:
             if seq_group.get_max_num_running_seqs() == 1:
-                preemption_mode = PreemptionMode.SWAP
+                preemption_mode = PreemptionMode.RECOMPUTE
             else:
                 preemption_mode = PreemptionMode.SWAP
         if preemption_mode == PreemptionMode.RECOMPUTE:
@@ -357,7 +357,7 @@ class Scheduler:
 
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
-        # self.swapped.append(seq_group)
+        self.swapped.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         mapping = self.block_manager.swap_in(seq_group)
@@ -617,7 +617,7 @@ class MultiScheduler:
                     self._preempt(seq_group, blocks_to_swap_out)
                     break
             else:
-                if (len(self.running) > 1.5*len(self.running_aux)):
+                if (len(self.running) > 1.2*len(self.running_aux)):
                     self._preempt(seq_group, blocks_to_swap_out)
                 else:
                     self._append_main_slot(seq_group, blocks_to_copy)

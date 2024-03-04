@@ -8,7 +8,6 @@ main () {
 
   path_prefix="/home/users/jiangjz/llm/TDoppeladler"
 
-  model_path=$path_prefix"/model/vicuna-7b-v1.5"
   dataset_path=$path_prefix"/dataset/ShareGPT_V3_unfiltered_cleaned_split.json"
   dataset_path_modified=0
 
@@ -38,15 +37,6 @@ main () {
     esac
   done
 
-#   if [ ! -f "$dataset_path" ]; then
-#     if [[ $dataset_path_modified -lt 1 ]]; then
-#       cd /home/jiangjz/vllm-rocm/dataset
-#       wget https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json
-#       cd /home/jiangjz/vllm-rocm
-#     fi
-#   fi
-
-  # python3 $benchmark_path --dataset "$dataset_path" --model "$model_path" "${positional_args[@]}"
   python3 $benchmark_path --dataset "$dataset_path"  "${positional_args[@]}"
   return $?
 
