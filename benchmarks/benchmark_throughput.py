@@ -111,7 +111,7 @@ if __name__ == "__main__":
         The "auto" option will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.')
     parser.add_argument("--enforce-eager", action="store_true", help="enforce eager execution")
 
-    parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
+    parser.add_argument("--multi-worker", action="store_true", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
     parser.add_argument("--num-prompts", type=int, default=2000, help="Number of prompts to process.")
