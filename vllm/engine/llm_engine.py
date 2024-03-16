@@ -7,7 +7,7 @@ import threading
 from multiprocessing import Process, Pool, Manager
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
 
-from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig)        
+from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig)        
 from vllm.core.scheduler import Scheduler, MultiScheduler, SchedulerOutputs
 from vllm.engine.arg_utils import EngineArgs
 from vllm.engine.metrics import record_metrics
@@ -114,7 +114,6 @@ class LLMEngine:
         cache_config: CacheConfig,
         parallel_config: ParallelConfig,
         scheduler_config: SchedulerConfig,
-        cpuscheduler_config: CPUSchedulerConfig,
         distributed_init_method: str,
         placement_group: Optional["PlacementGroup"],
         log_stats: bool,
@@ -141,7 +140,6 @@ class LLMEngine:
         self.cache_config = cache_config
         self.parallel_config = parallel_config
         self.scheduler_config = scheduler_config
-        self.cpuscheduler_config = cpuscheduler_config
         self.log_stats = log_stats
         self._verify_args()
 
@@ -171,9 +169,9 @@ class LLMEngine:
         
         # Create the scheduler.
         if self.parallel_config.multi_worker:
-            self.scheduler = MultiScheduler(scheduler_config, cache_config, cpuscheduler_config, parallel_config)
+            self.scheduler = MultiScheduler(scheduler_config, cache_config,parallel_config)
         else:
-            self.scheduler = Scheduler(scheduler_config, cache_config, cpuscheduler_config, parallel_config)
+            self.scheduler = Scheduler(scheduler_config, cache_config, parallel_config)
         
         # Logging.
         self.last_logging_time = time.monotonic()
@@ -406,7 +404,10 @@ class LLMEngine:
         # Create the sequence group.
         seq_group = SequenceGroup(request_id, [seq], sampling_params, arrival_time)
         # Add the sequence group to the scheduler.
-        self.scheduler.add_seq_group(seq_group)
+        if self.scheduler_config.sorted_request:
+            self.scheduler.add_sorted_seq_group(seq_group)
+        else:
+            self.scheduler.add_seq_group(seq_group)
 
     def abort_request(self, request_id: Union[str, Iterable[str]]) -> None:
         """Aborts a request(s) with the given ID.
@@ -438,10 +439,6 @@ class LLMEngine:
     def _schedule_aux(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]: 
         seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule_aux()
         return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]
-
-    def _schedule_cpu(self) -> Tuple[List[SequenceGroupMetadata], SchedulerOutputs, List[RequestOutput]]:
-        seq_group_metadata_list, scheduler_outputs = self.scheduler.schedule_cpu()
-        return seq_group_metadata_list, scheduler_outputs, [RequestOutput.from_seq_group(seq_group) for seq_group in scheduler_outputs.ignored_seq_groups]  
 
     def _check_beam_search_early_stopping(self, early_stopping: Union[bool, str], sampling_params: SamplingParams, best_running_seq: Sequence, current_worst_seq: Sequence,) -> bool:
         assert sampling_params.use_beam_search
@@ -626,9 +623,6 @@ class LLMEngine:
                 seq_group.remove(seq.seq_id)
                 self.scheduler.free_seq(seq)
 
-    def _process_sequence_group_outputs_cpu(self, seq_group: SequenceGroup, outputs: SequenceGroupOutput) -> None:
-        pass
-
     def _process_model_outputs(self, output: SamplerOutput, scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
         # Update the scheduled sequence groups with the model outputs.
         scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
@@ -652,22 +646,6 @@ class LLMEngine:
             # Log the system stats.
             self._log_system_stats(scheduler_outputs.prompt_run, scheduler_outputs.num_batched_tokens, 
             scheduler_outputs.num_real_prompt_tokens, scheduler_outputs.num_recompute_tokens)      
-        return request_outputs
-
-    def _process_model_outputs_cpu(self, output: SamplerOutput, scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
-        scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
-        for seq_group, outputs in zip(scheduled_seq_groups, output):
-            self._process_sequence_group_outputs_cpu(seq_group, outputs)
-
-        # Free the finished sequence groups.
-        self.scheduler.free_finished_seq_groups_cpu()
-
-        # Create the outputs.
-        request_outputs: List[RequestOutput] = []
-        for seq_group in (scheduled_seq_groups + scheduler_outputs.ignored_seq_groups):  
-            request_output = RequestOutput.from_seq_group(seq_group)
-            request_outputs.append(request_output)  
-
         return request_outputs
 
     def handle_main_result(self, result, callback_arg):
@@ -745,19 +723,6 @@ class LLMEngine:
 
     def exit_clear(self):
         self.task_manager.stop_waiting()    
-
-    def step_cpu(self)->List[RequestOutput]:
-        seq_group_metadata_list, scheduler_outputs, ignored = self._schedule_cpu()
-        if scheduler_outputs.is_empty():
-            return ignored
-
-        # Execute the model.
-        output = self._run_cpu_workers(
-            "execute_model",
-            seq_group_metadata_list=seq_group_metadata_list,
-        )
-
-        return self._process_model_outputs_cpu(output, scheduler_outputs)
 
     def _log_system_stats(self, prompt_run: bool, num_batched_tokens: int, num_real_prompt_tokens: int, num_recompute_tokens:int,) -> None:
         now = time.monotonic()
@@ -873,9 +838,6 @@ class LLMEngine:
                     f"GPU KV cache usage: {gpu_cache_usage * 100:.1f}%, "
                     f"CPU KV cache usage: {cpu_cache_usage * 100:.1f}%")
         self.last_logging_time = now
-
-    def _log_cpu_system_stats(self, num_batched_tokens: int, num_real_prompt_tokens: int) -> None:
-        pass
 
     def _decode_sequence(self, seq: Sequence, prms: SamplingParams) -> None:
         """Decodes the new token for a sequence."""

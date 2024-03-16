@@ -3,7 +3,7 @@ import time
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 import bisect
 
-from vllm.config import CacheConfig, SchedulerConfig, CPUSchedulerConfig, ParallelConfig
+from vllm.config import CacheConfig, SchedulerConfig, ParallelConfig
 from vllm.core.block_manager import BlockSpaceManager
 from vllm.core.alloc_status import AllocStatus
 from vllm.core.multi_block_manager import MultiBlockSpaceManager
@@ -60,7 +60,7 @@ class SchedulerOutputs:
                 f"prompt_run={self.prompt_run}, ")
 
 class Scheduler:
-    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig, parallel_config: ParallelConfig) -> None:
+    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, parallel_config: ParallelConfig) -> None:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
         self.parallel_config = parallel_config
@@ -83,20 +83,14 @@ class Scheduler:
         # Sequence groups in the SWAPPED state.
         self.swapped: List[SequenceGroup] = []
 
-
         self.swapped_num = 0
 
-    def print_all_waiting(self):
-        temp = []
-        for group in self.waiting:
-            temp.append(group.get_prompt_length())
-        print (temp)
-
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
-        # Add sequence groups to the waiting queue.
-        # index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
-        # self.waiting.insert(index, seq_group)    
         self.waiting.append(seq_group)
+
+    def add_sorted_seq_group(self, seq_group: SequenceGroup)-> None:
+        index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
+        self.waiting.insert(index, seq_group)    
 
     def abort_seq_group(self, request_id: Union[str, Iterable[str]]) -> None:
         if isinstance(request_id, str):
@@ -315,9 +309,6 @@ class Scheduler:
     def free_finished_seq_groups(self) -> None:
         self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
 
-    def free_finished_seq_groups_cpu(self) -> None:
-        self.running_cpu = [seq_group for seq_group in self.running_cpu if not seq_group.is_finished()]
-
     def _allocate(self, seq_group: SequenceGroup) -> None:
         self.block_manager.allocate(seq_group)
         for seq in seq_group.get_seqs(status=SequenceStatus.WAITING):
@@ -376,7 +367,7 @@ class Scheduler:
             seq.status = SequenceStatus.SWAPPED
 
 class MultiScheduler:
-    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, cpuscheduler_config: CPUSchedulerConfig, parallel_config: ParallelConfig) -> None:
+    def __init__(self, scheduler_config: SchedulerConfig, cache_config: CacheConfig, parallel_config: ParallelConfig) -> None:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
         self.parallel_config = parallel_config
@@ -411,9 +402,11 @@ class MultiScheduler:
 
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
         # Add sequence groups to the waiting queue.
-        # index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
-        # self.waiting.insert(index, seq_group)    
         self.waiting.append(seq_group)
+
+    def add_sorted_seq_group(self, seq_group: SequenceGroup)-> None:
+        index = bisect.bisect_left([group.get_prompt_length() for group in self.waiting], seq_group.get_prompt_length())
+        self.waiting.insert(index, seq_group)    
 
     def abort_seq_group(self, request_id: Union[str, Iterable[str]]) -> None:
         if isinstance(request_id, str):
@@ -446,13 +439,6 @@ class MultiScheduler:
     def get_num_unfinished_seq_groups(self) -> int:
         return len(self.waiting) + len(self.running) + len(self.swapped) + len(self.running_aux)
 
-    def _schedule_cpu(self)-> SchedulerOutputs:
-        now = time.monotonic()
-
-        num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running_cpu)
-        while self.waiting_cpu:
-            seq_group = self.waiting_cpu[0]
-            waiting_seqs = seq_group.get_seqs(status=SequenceStatus.WAITING_CPU)
 
     def _schedule_aux(self)->SchedulerOutputs:
         blocks_to_swap_in: Dict[int, int] = {}
@@ -638,8 +624,6 @@ class MultiScheduler:
         )
         return scheduler_outputs
 
-    def schedule_cpu(self)-> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
-        scheduler_outputs = self._schedule_cpu()
 
     def schedule_aux(self)-> Tuple[List[SequenceGroupMetadata], SchedulerOutputs]:
         scheduler_outputs = self._schedule_aux()
@@ -697,9 +681,6 @@ class MultiScheduler:
 
     def free_finished_aux_seq_groups(self) -> None:
         self.running_aux = [seq_group for seq_group in self.running_aux if not seq_group.is_finished()]
-
-    def free_finished_seq_groups_cpu(self) -> None:
-        self.running_cpu = [seq_group for seq_group in self.running_cpu if not seq_group.is_finished()]
 
     def _allocate(self, seq_group: SequenceGroup) -> None:
         self.block_manager.allocate(seq_group)

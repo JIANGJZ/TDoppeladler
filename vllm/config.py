@@ -367,17 +367,16 @@ class SchedulerConfig:
         max_paddings: Maximum number of paddings to be added to a batch.
     """
 
-    def __init__(self,  max_num_batched_tokens: Optional[int], max_num_seqs: int,  max_model_len: int, max_paddings: int, num_prompts:int) -> None:
+    def __init__(self,  max_num_batched_tokens: Optional[int], max_num_seqs: int,  max_model_len: int, max_paddings: int, num_prompts:int, sorted_request:bool) -> None:
         if max_num_batched_tokens is not None:
             self.max_num_batched_tokens = max_num_batched_tokens
         else:
-            # If max_model_len is too short, use 2048 as the default value for
-            # higher throughput.
             self.max_num_batched_tokens = max(max_model_len, 2048)
         self.max_num_seqs = max_num_seqs
         self.max_model_len = max_model_len
         self.max_paddings = max_paddings
         self.num_prompts = num_prompts
+        self.sorted_request = sorted_request
         self.print_config()
         self._verify_args()
 

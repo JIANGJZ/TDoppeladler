@@ -3,7 +3,7 @@ import dataclasses
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig)
+from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig)
                          
 
 
@@ -15,12 +15,9 @@ class EngineArgs:
     tokenizer_mode: str = 'auto'
     trust_remote_code: bool = False
     download_dir: Optional[str] = None
-    load_format: str = 'auto'
     dtype: str = 'auto'
     seed: int = 0
     max_model_len: Optional[int] = None
-    worker_use_ray: bool = False
-    multi_worker: bool = False
     pipeline_parallel_size: int = 1
     tensor_parallel_size: int = 1
     max_parallel_loading_workers: Optional[int] = None
@@ -37,6 +34,10 @@ class EngineArgs:
     enforce_eager: bool = False
     max_context_len_to_capture: int = 8192,
     num_prompts: int = 0,
+    load_format: str = 'auto'
+    worker_use_ray: bool = False
+    multi_worker: bool = False
+    sorted_request:bool = False
 
     def __post_init__(self):
         if self.tokenizer is None:
@@ -90,7 +91,7 @@ class EngineArgs:
         engine_args = cls(**{attr: getattr(args, attr) for attr in attrs})
         return engine_args
 
-    def create_engine_configs(self,) -> Tuple[ModelConfig, CacheConfig, ParallelConfig, SchedulerConfig, CPUSchedulerConfig]:
+    def create_engine_configs(self,) -> Tuple[ModelConfig, CacheConfig, ParallelConfig, SchedulerConfig]:
         model_config = ModelConfig(self.model, self.tokenizer, self.tokenizer_mode, self.trust_remote_code,self.download_dir, self.load_format,
                                    self.dtype, self.seed, self.revision, self.tokenizer_revision, self.max_model_len, self.quantization,
                                    self.enforce_eager, self.max_context_len_to_capture)
@@ -98,9 +99,8 @@ class EngineArgs:
                                    
         cache_config = CacheConfig(self.block_size, self.gpu_memory_utilization, self.swap_space, model_config.get_sliding_window())             
         parallel_config = ParallelConfig(self.pipeline_parallel_size, self.tensor_parallel_size, self.worker_use_ray, self.multi_worker, self.max_parallel_loading_workers)                        
-        scheduler_config = SchedulerConfig(self.max_num_batched_tokens, self.max_num_seqs, model_config.max_model_len, self.max_paddings, self.num_prompts)                           
-        cpu_scheduler_config = CPUSchedulerConfig(self.max_num_batched_tokens, self.max_num_seqs, model_config.max_model_len, self.max_paddings)                                                         
-        return model_config, cache_config, parallel_config, scheduler_config, cpu_scheduler_config
+        scheduler_config = SchedulerConfig(self.max_num_batched_tokens, self.max_num_seqs, model_config.max_model_len, self.max_paddings, self.num_prompts, self.sorted_request)                                                                               
+        return model_config, cache_config, parallel_config, scheduler_config
 
 
 @dataclass
