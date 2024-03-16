@@ -112,15 +112,20 @@ if __name__ == "__main__":
         The "auto" option will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.')
     parser.add_argument("--enforce-eager", action="store_true", help="enforce eager execution")
 
-    parser.add_argument("--multi-worker", action="store_true", help="is use multiworker, store_false is true")
+    #如果要用sepration去处理则把multi-worker 的action="store_false"， worker-use-ray为true
+    #把worker-use-ray设置为store_false， 然后multi-worker设置为store true， tensor-parallel-size可测试单卡用ray的性能
+    #用ray做request并行在experiment文件夹
+    #用ray的时候profile出来的可用内存空间比不用ray大概少了10%，做对比实验需要把profile出来的可用的内存空间对齐
+    #--swap-space 不能设置太大，超过可使用用内存的70%
+    parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
-    parser.add_argument("--num-prompts", type=int, default=1000, help="Number of prompts to process.")
-    parser.add_argument("--gpu-memory-utilization", type=float, default=0.9, help='the fraction of GPU memory')
-    parser.add_argument('--swap-space', type=int, default=128, help='CPU swap space size (GiB) per GPU')   
+    parser.add_argument("--num-prompts", type=int, default=2000, help="Number of prompts to process.")
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.95, help='the fraction of GPU memory')
+    parser.add_argument('--swap-space', type=int, default=32, help='CPU swap space size (GiB) per GPU')   
     parser.add_argument("--model", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
     parser.add_argument("--tokenizer", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
-    parser.add_argument("--load-format", type=str, default="auto")
+    parser.add_argument("--load-format", type=str, default="dummy")
     parser.add_argument("--sorted_request", action="store_true", help="is sort request, store_false is true")
                
     args = parser.parse_args()

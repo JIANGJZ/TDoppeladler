@@ -302,23 +302,23 @@ class LLMEngine:
         self._run_workers("warm_up_model")
 
     def _init_multiworker_cache(self)-> None:
-        num_main_blocks = self._run_main_worker(
+        num_main_gpu_blocks, num_cpu_blocks = self._run_main_worker(
             "profile_num_available_blocks",
             block_size=self.cache_config.block_size,
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
 
-        num_aux_blocks = self._run_aux_worker(
+        num_aux_gpu_blocks, num_cpu_blocks = self._run_aux_worker(
             "profile_num_available_blocks",
             block_size=self.cache_config.block_size,
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
         # vicuna-7b
-        num_main_gpu_blocks = 954
-        num_cpu_blocks = 1024
-        num_aux_gpu_blocks = 954
+        # num_main_gpu_blocks = 954
+        # num_cpu_blocks = 1024
+        # num_aux_gpu_blocks = 954
 
         # baichuang-7b
         # num_main_gpu_blocks = 750
