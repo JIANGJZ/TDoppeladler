@@ -13,8 +13,6 @@ from vllm.worker.cpu_cache_engine import CPUCacheEngine
 from vllm.core.scheduler import SchedulerOutputs
 
 
-
-
 class MainWorker:
     """A worker class that executes (a partition of) the model on a GPU.
 

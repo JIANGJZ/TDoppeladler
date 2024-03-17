@@ -1,3 +1,10 @@
+class AsySubmission:
+    def __init__(self):
+        self.pending_length = 4
+
+    def get_pending_length(self):
+        return self.pending_length
+
 class CostModel:
     def __init__(self):
         self.spillover_portion = 0.2
