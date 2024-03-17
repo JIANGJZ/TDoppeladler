@@ -12,10 +12,7 @@ from vllm.core.spillover_costmodel import CostModel
 from vllm.logger import init_logger
 from vllm.sequence import (Sequence, SequenceData, SequenceGroup, SequenceGroupMetadata, SequenceStatus)
 
-                           
-
 logger = init_logger(__name__)
-
 
 class PreemptionMode(enum.Enum):
     """Preemption modes.
@@ -376,7 +373,8 @@ class MultiScheduler:
 
         self.prompt_limit = min(self.scheduler_config.max_model_len, self.scheduler_config.max_num_batched_tokens)
         # Instantiate the scheduling policy.
-        self.policy = PolicyFactory.get_policy(policy_name="fcfs")
+        # self.policy = PolicyFactory.get_policy(policy_name="fcfs")
+        self.policy = PolicyFactory.get_policy(policy_name="prediction")
         # Create the block space manager.
         self.block_manager = MultiBlockSpaceManager(
             block_size=self.cache_config.block_size,
@@ -444,7 +442,7 @@ class MultiScheduler:
 
         now = time.monotonic()
 
-        self.swapped = self.policy.sort_by_priority(now, self.swapped)
+        self.swapped = self.policy.sort_by_generation_length(self.swapped)
         num_curr_seqs = sum(seq_group.get_max_num_running_seqs() for seq_group in self.running_aux)
         while self.swapped:
             seq_group = self.swapped[0]
@@ -579,7 +577,7 @@ class MultiScheduler:
                 )
                 return scheduler_outputs
 
-        self.running = self.policy.sort_by_priority(now, self.running)
+        self.running = self.policy.sort_by_generation_length(self.running)
         # Reserve new token slots for the running sequence groups.
         running: List[SequenceGroup] = []
         while self.running:

@@ -242,7 +242,7 @@ class MultiBlockSpaceManager:
         # the sequences in the same group.
         blocks: Set[PhysicalTokenBlock] = set()
         for seq in seq_group.get_seqs():
-            if seq.is_finished():
+            if seq.is_finished() or seq.seq_id not in self.block_tables:
                 continue
             blocks.update(self.block_tables[seq.seq_id])
         return list(blocks)

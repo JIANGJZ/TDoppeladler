@@ -31,8 +31,6 @@ logger = init_logger(__name__)
 _LOGGING_INTERVAL_SEC = 5
 
 
-
-
 class LLMEngine:
     def __init__(
         self,

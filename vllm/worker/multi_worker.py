@@ -241,7 +241,6 @@ class AuxWorker:
         return output
 
 
-
 def _init_distributed_environment(parallel_config: ParallelConfig, rank: int, distributed_init_method: Optional[str] = None,) -> None:
     """Initialize the distributed environment."""
     print ("init distributed")
