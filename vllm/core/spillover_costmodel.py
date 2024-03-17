@@ -1,6 +1,13 @@
 class CostModel:
     def __init__(self):
-        self.alpha = 0.6
+        self.spillover_portion = 0.2
+        self.offload_portion = 0.5
+        self.auxilary_portion = self.spillover_portion + self.offload_portion
+        self.primary_portion = 1 - self.auxilary_portion
 
-    def get_offload_proportion(self):
+    def compute_offload_proportion(self):
         pass
+
+
+    def get_auxilary_queue_length(self):
+        return (self.offload_portion/self.primary_portion)

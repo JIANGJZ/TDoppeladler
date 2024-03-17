@@ -8,8 +8,10 @@ from vllm.core.block_manager import BlockSpaceManager
 from vllm.core.alloc_status import AllocStatus
 from vllm.core.multi_block_manager import MultiBlockSpaceManager
 from vllm.core.policy import PolicyFactory
+from vllm.core.spillover_costmodel import CostModel
 from vllm.logger import init_logger
 from vllm.sequence import (Sequence, SequenceData, SequenceGroup, SequenceGroupMetadata, SequenceStatus)
+
                            
 
 logger = init_logger(__name__)
@@ -391,14 +393,9 @@ class MultiScheduler:
         self.running: List[SequenceGroup] = []
         # Sequence groups in the SWAPPED state.
         self.swapped: List[SequenceGroup] = []
-
-        # Seqence groups swapped to CPU for computing
-        self.waiting_cpu: List[SequenceGroup] = []
-        self.running_cpu: List[SequenceGroup] = []
-
         self.running_aux: List[SequenceGroup] = []
-
-        self.swapped_num = 0
+        
+        self.cost_model = CostModel()
 
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
         # Add sequence groups to the waiting queue.
@@ -556,7 +553,7 @@ class MultiScheduler:
                     break
 
                 num_paddings = num_batched_tokens - sum(new_seq_lens)
-                if num_paddings > 0.01*self.scheduler_config.max_paddings:
+                if num_paddings > self.scheduler_config.max_paddings:
                     print ("prompt select exit padding exceed_paddings={}, cur_paddings={}, exceeed_seq={}".format(num_paddings, len(seq_lens) * max(seq_lens) - sum(seq_lens), num_prompt_tokens))
                     break
                 seq_lens = new_seq_lens
@@ -603,7 +600,8 @@ class MultiScheduler:
                     self._preempt(seq_group, blocks_to_swap_out)
                     break
             else:
-                if (len(self.running) > 1.5*len(self.running_aux)):
+                aux_queue_length = self.cost_model.get_auxilary_queue_length()
+                if (len(self.running) > aux_queue_length*len(self.running_aux)):
                     self._preempt(seq_group, blocks_to_swap_out)
                 else:
                     self._append_main_slot(seq_group, blocks_to_copy)
@@ -712,11 +710,7 @@ class MultiScheduler:
 
     def _preempt_by_swap(self, seq_group: SequenceGroup, blocks_to_swap_out: Dict[int, int],) -> None:
         self._swap_out(seq_group, blocks_to_swap_out)
-        self.swapped_num += 1
-        if self.swapped_num % 100000 == 0:
-            self.waiting_cpu.append(seq_group)
-        else:
-            self.swapped.append(seq_group)
+        self.swapped.append(seq_group)
 
     def _swap_in(self, seq_group: SequenceGroup, blocks_to_swap_in: Dict[int, int],) -> None:
         mapping = self.block_manager.swap_in(seq_group)
