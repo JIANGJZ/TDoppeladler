@@ -54,3 +54,21 @@ def record_metrics(
     gauge_scheduler_waiting.set(labels, scheduler_waiting)
     gauge_gpu_cache_usage.set(labels, gpu_cache_usage)
     gauge_cpu_cache_usage.set(labels, cpu_cache_usage)
+
+
+def multi_worker_record_metrics(
+    avg_prompt_throughput: float,
+    avg_generation_throughput: float,
+    scheduler_running: int,
+    scheduler_swapped: int,
+    scheduler_waiting: int,
+    gpu_cache_usage: float,
+    cpu_cache_usage: float,
+):
+    gauge_avg_prompt_throughput.set(labels, avg_prompt_throughput)
+    gauge_avg_generation_throughput.set(labels, avg_generation_throughput)
+    gauge_scheduler_running.set(labels, scheduler_running)
+    gauge_scheduler_swapped.set(labels, scheduler_swapped)
+    gauge_scheduler_waiting.set(labels, scheduler_waiting)
+    gauge_gpu_cache_usage.set(labels, gpu_cache_usage)
+    gauge_cpu_cache_usage.set(labels, cpu_cache_usage)

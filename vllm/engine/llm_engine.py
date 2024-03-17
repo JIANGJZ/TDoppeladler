@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
 from vllm.config import (CacheConfig, ModelConfig, ParallelConfig, SchedulerConfig)        
 from vllm.core.scheduler import Scheduler, MultiScheduler, SchedulerOutputs
 from vllm.engine.arg_utils import EngineArgs
-from vllm.engine.metrics import record_metrics
+from vllm.engine.metrics import record_metrics, multi_worker_record_metrics
 from vllm.engine.ray_utils import RayWorkerVllm, initialize_cluster, ray
 from vllm.logger import init_logger
 from vllm.outputs import RequestOutput
@@ -315,20 +315,6 @@ class LLMEngine:
             gpu_memory_utilization=self.cache_config.gpu_memory_utilization,
             cpu_swap_space=self.cache_config.swap_space_bytes,
         )
-        # vicuna-7b
-        # num_main_gpu_blocks = 954
-        # num_cpu_blocks = 1024
-        # num_aux_gpu_blocks = 954
-
-        # baichuang-7b
-        # num_main_gpu_blocks = 750
-        # num_cpu_blocks = 8192
-        # num_aux_gpu_blocks = 750
-
-        #aquila-7b
-        # num_main_gpu_blocks = 670
-        # num_cpu_blocks = 10000
-        # num_aux_gpu_blocks = 670
     
         logger.info(f"# Main GPU blocks: {num_main_gpu_blocks}, # CPU blocks: {num_cpu_blocks} # Aux GPU blocks: {num_aux_gpu_blocks}")
                     
@@ -643,9 +629,10 @@ class LLMEngine:
             request_outputs.append(request_output)
 
         if self.log_stats:
-            # Log the system stats.
-            self._log_system_stats(scheduler_outputs.prompt_run, scheduler_outputs.num_batched_tokens, 
-            scheduler_outputs.num_real_prompt_tokens, scheduler_outputs.num_recompute_tokens)      
+            if self.parallel_config.multi_worker:
+                self._log_multi_worker_system_stats(scheduler_outputs.prompt_run, scheduler_outputs.num_batched_tokens)
+            else:
+                self._log_system_stats(scheduler_outputs.prompt_run, scheduler_outputs.num_batched_tokens, scheduler_outputs.num_real_prompt_tokens, scheduler_outputs.num_recompute_tokens)    
         return request_outputs
 
     def handle_main_result(self, result, callback_arg):
@@ -748,16 +735,11 @@ class LLMEngine:
         total_recompute_tokens =  sum(n for _, n in self.total_recompute_tokens[:-1]) 
         total_final_prompt_tokens =  total_real_prompt_tokens - total_recompute_tokens
 
-        # print ((now, self.last_logging_time, self.total_prompt_tokens[0][0]))
-        # avg_total_prompt_throughput = total_prompt_tokens / (now - self.total_prompt_tokens[0][0])
-        # avg_total_real_prompt_throughput = total_real_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
-        # avg_total_final_prompt_throughput = total_final_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
-        # avg_total_generation_throughput = total_generation_tokens / (now - self.total_generation_tokens[0][0])
-
-        avg_total_prompt_throughput = 0
-        avg_total_real_prompt_throughput = 0
-        avg_total_final_prompt_throughput = 0
-        avg_total_generation_throughput = 0
+        print ((now, self.last_logging_time, self.total_prompt_tokens[0][0]))
+        avg_total_prompt_throughput = total_prompt_tokens / (now - self.total_prompt_tokens[0][0])
+        avg_total_real_prompt_throughput = total_real_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
+        avg_total_final_prompt_throughput = total_final_prompt_tokens / (now - self.total_real_prompt_tokens[0][0])
+        avg_total_generation_throughput = total_generation_tokens / (now - self.total_generation_tokens[0][0])
 
         # Discard the old stats.
         self.num_prompt_tokens = [(t, n) for t, n in self.num_prompt_tokens if now - t < _LOGGING_INTERVAL_SEC]         
@@ -838,6 +820,71 @@ class LLMEngine:
                     f"GPU KV cache usage: {gpu_cache_usage * 100:.1f}%, "
                     f"CPU KV cache usage: {cpu_cache_usage * 100:.1f}%")
         self.last_logging_time = now
+
+
+    def _log_multi_worker_system_stats(self, prompt_run: bool, num_batched_tokens: int) -> None:
+        now = time.monotonic()
+        # Log the number of batched input tokens.
+        if prompt_run:
+            self.num_prompt_tokens.append((now, num_batched_tokens))
+        else:
+            self.num_generation_tokens.append((now, num_batched_tokens))
+
+        should_log = now - self.last_logging_time >= _LOGGING_INTERVAL_SEC
+        if not should_log:
+            return
+
+        # Discard the old stats.
+        self.num_prompt_tokens = [(t, n) for t, n in self.num_prompt_tokens if now - t < _LOGGING_INTERVAL_SEC]           
+        self.num_generation_tokens = [(t, n) for t, n in self.num_generation_tokens if now - t < _LOGGING_INTERVAL_SEC]
+
+        if len(self.num_prompt_tokens) > 1:
+            total_num_tokens = sum(n for _, n in self.num_prompt_tokens[:-1])
+            window = now - self.num_prompt_tokens[0][0]
+            avg_prompt_throughput = total_num_tokens / window
+        else:
+            avg_prompt_throughput = 0.0
+        if len(self.num_generation_tokens) > 1:
+            total_num_tokens = sum(n for _, n in self.num_generation_tokens[:-1])
+            window = now - self.num_generation_tokens[0][0]
+            avg_generation_throughput = total_num_tokens / window
+        else:
+            avg_generation_throughput = 0.0
+
+        total_num_gpu_blocks = self.cache_config.num_gpu_blocks
+        num_free_gpu_blocks = (self.scheduler.block_manager.get_num_free_gpu_blocks())
+        num_used_gpu_blocks = total_num_gpu_blocks - num_free_gpu_blocks
+        gpu_cache_usage = num_used_gpu_blocks / total_num_gpu_blocks
+
+        total_num_cpu_blocks = self.cache_config.num_cpu_blocks
+        if total_num_cpu_blocks > 0:
+            num_free_cpu_blocks = (self.scheduler.block_manager.get_num_free_cpu_blocks())
+            num_used_cpu_blocks = total_num_cpu_blocks - num_free_cpu_blocks
+            cpu_cache_usage = num_used_cpu_blocks / total_num_cpu_blocks
+        else:
+            cpu_cache_usage = 0.0
+
+        multi_worker_record_metrics(
+            avg_prompt_throughput=avg_prompt_throughput,
+            avg_generation_throughput=avg_generation_throughput,
+            scheduler_running=len(self.scheduler.running),
+            scheduler_swapped=len(self.scheduler.swapped),
+            scheduler_waiting=len(self.scheduler.waiting),
+            gpu_cache_usage=gpu_cache_usage,
+            cpu_cache_usage=cpu_cache_usage,
+        )
+
+        logger.info("Avg prompt throughput: "
+                    f"{avg_prompt_throughput:.1f} tokens/s, "
+                    "Avg generation throughput: "
+                    f"{avg_generation_throughput:.1f} tokens/s, "
+                    f"Running: {len(self.scheduler.running)} reqs, "
+                    f"Swapped: {len(self.scheduler.swapped)} reqs, "
+                    f"Pending: {len(self.scheduler.waiting)} reqs, "
+                    f"GPU KV cache usage: {gpu_cache_usage * 100:.1f}%, "
+                    f"CPU KV cache usage: {cpu_cache_usage * 100:.1f}%")
+        self.last_logging_time = now
+
 
     def _decode_sequence(self, seq: Sequence, prms: SamplingParams) -> None:
         """Decodes the new token for a sequence."""
@@ -946,4 +993,17 @@ class LLMEngine:
         output = executor(*args, **kwargs)
         return output    
     
- 
+# vicuna-7b
+# num_main_gpu_blocks = 954
+# num_cpu_blocks = 1024
+# num_aux_gpu_blocks = 954
+
+# baichuang-7b
+# num_main_gpu_blocks = 750
+# num_cpu_blocks = 8192
+# num_aux_gpu_blocks = 750
+
+#aquila-7b
+# num_main_gpu_blocks = 670
+# num_cpu_blocks = 10000
+# num_aux_gpu_blocks = 670

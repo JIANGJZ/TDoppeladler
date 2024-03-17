@@ -16,16 +16,15 @@ class LLM:
         tensor_parallel_size: int = 1,  dtype: str = "auto", quantization: Optional[str] = None, revision: Optional[str] = None, 
         tokenizer_revision: Optional[str] = None, seed: int = 0, gpu_memory_utilization: float = 0.9, swap_space: int = 8,
         enforce_eager: bool = False, max_context_len_to_capture: int = 8192, multi_worker: bool=False, 
-        worker_use_ray: bool=False, num_prompts:int = 0, load_format:str="dummy", sorted_request:bool=False, **kwargs,) -> None: 
+        worker_use_ray: bool=False, num_prompts:int = 0, load_format:str="dummy", sorted_request:bool=False, 
+        disable_log_stats: bool=True, **kwargs,) -> None: 
     
-        if "disable_log_stats" not in kwargs:
-            kwargs["disable_log_stats"] = True
-
         engine_args = EngineArgs(model=model, tokenizer=tokenizer, tokenizer_mode=tokenizer_mode, trust_remote_code=trust_remote_code,
             tensor_parallel_size=tensor_parallel_size, dtype=dtype, quantization=quantization, revision=revision, tokenizer_revision=tokenizer_revision, 
             seed=seed, gpu_memory_utilization=gpu_memory_utilization, swap_space=swap_space, enforce_eager=enforce_eager, 
             max_context_len_to_capture=max_context_len_to_capture, multi_worker=multi_worker, worker_use_ray=worker_use_ray, 
-            num_prompts=num_prompts, load_format=load_format, sorted_request=sorted_request, **kwargs, )
+            num_prompts=num_prompts, load_format=load_format, sorted_request=sorted_request, disable_log_stats=disable_log_stats, 
+            **kwargs, )
   
         self.llm_engine = LLMEngine.from_engine_args(engine_args)
         self.request_counter = Counter()

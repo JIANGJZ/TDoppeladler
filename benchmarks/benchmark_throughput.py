@@ -53,13 +53,14 @@ def sample_requests(dataset_path: str, num_requests: int, tokenizer: PreTrainedT
 def run_vllm(requests: List[Tuple[str, int, int]],  model: str, tokenizer: str, quantization: Optional[str], 
             tensor_parallel_size: int, seed: int, n: int, use_beam_search: bool, trust_remote_code: bool, dtype: str,
             max_model_len: Optional[int], enforce_eager: bool, multi_worker:bool, worker_use_ray:bool,
-            gpu_memory_utilization:float, swap_space:int, num_prompts:int, load_format: str, sorted_request:bool) -> float:
+            gpu_memory_utilization:float, swap_space:int, num_prompts:int, load_format: str, sorted_request:bool, 
+            disable_log_stats:bool) -> float:
 
     llm = LLM(model=model, tokenizer=tokenizer, quantization=quantization, tensor_parallel_size=tensor_parallel_size, 
             seed=seed, trust_remote_code=trust_remote_code, dtype=dtype, max_model_len=max_model_len, 
             enforce_eager=enforce_eager, multi_worker=multi_worker, worker_use_ray=worker_use_ray,
             gpu_memory_utilization=gpu_memory_utilization, swap_space=swap_space, num_prompts=num_prompts, 
-            load_format=load_format, sorted_request=sorted_request)
+            load_format=load_format, sorted_request=sorted_request, disable_log_stats=disable_log_stats)
         
     # Add the requests to the engine.
     for prompt, _, output_len in requests:
@@ -86,7 +87,7 @@ def main(args: argparse.Namespace):
     elapsed_time = run_vllm(requests, args.model, args.tokenizer, args.quantization, args.tensor_parallel_size, 
                     args.seed, args.n, args.use_beam_search, args.trust_remote_code, args.dtype, args.max_model_len, 
                     args.enforce_eager, args.multi_worker, args.worker_use_ray, args.gpu_memory_utilization,
-                    args.swap_space, args.num_prompts, args.load_format, args.sorted_request)
+                    args.swap_space, args.num_prompts, args.load_format, args.sorted_request, args.disable_log_stats)
      
                 
     total_num_tokens = sum(prompt_len + output_len for _, prompt_len, output_len in requests)                           
@@ -120,13 +121,14 @@ if __name__ == "__main__":
     parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
-    parser.add_argument("--num-prompts", type=int, default=2000, help="Number of prompts to process.")
+    parser.add_argument("--num-prompts", type=int, default=1000, help="Number of prompts to process.")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.95, help='the fraction of GPU memory')
     parser.add_argument('--swap-space', type=int, default=32, help='CPU swap space size (GiB) per GPU')   
     parser.add_argument("--model", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
     parser.add_argument("--tokenizer", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
     parser.add_argument("--load-format", type=str, default="dummy")
     parser.add_argument("--sorted_request", action="store_true", help="is sort request, store_false is true")
+    parser.add_argument("--disable_log_stats", action="store_true", help="is disable stats, store_false is true")
                
     args = parser.parse_args()
     if args.tokenizer is None:
