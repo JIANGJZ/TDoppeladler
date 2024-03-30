@@ -568,6 +568,10 @@ class LLMEngine:
         main_processoutput = self._process_model_outputs(main_output, scheduler_outputs_main)
         self.output.extend(main_processoutput)
 
+        # for output in main_processoutput:
+        #     if output.finished:
+        #         print ("main device: {}".format(output.outputs[0].text))
+
     def handle_aux_result(self, result, callback_arg):
         # print ("handling aux result")
         aux_output = result
