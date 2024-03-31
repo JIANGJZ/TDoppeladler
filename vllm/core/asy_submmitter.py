@@ -35,7 +35,7 @@ class RayTaskManager:
         kwargs = kwargs or {}
         args = args or ()
         task_id = func(*args, **kwargs)
-        print ("main pending tasks = {}".format(len(self.pending_tasks_main)))
+        # print ("main pending tasks = {}".format(len(self.pending_tasks_main)))
         self.pending_tasks_main.append((task_id, callback, callback_arg))
 
 
@@ -43,7 +43,7 @@ class RayTaskManager:
         kwargs = kwargs or {}
         args = args or ()
         task_id = func(*args, **kwargs)
-        print ("aux pending tasks = {}".format(len(self.pending_tasks_aux)))
+        # print ("aux pending tasks = {}".format(len(self.pending_tasks_aux)))
         self.pending_tasks_aux.append((task_id, callback, callback_arg))
         
     def check_and_handle_tasks_main(self):
