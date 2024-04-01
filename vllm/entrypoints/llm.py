@@ -75,7 +75,7 @@ class LLM:
                 self.llm_engine.clear_step_output()
                 for output in step_outputs:
                     if output.finished and (output.request_id not in outputs_requestid):
-                        print (output.outputs[0].text)
+                        # print (output.outputs[0].text)
                         outputs.append(output)
                         outputs_requestid.append(output.request_id)
                         if use_tqdm:

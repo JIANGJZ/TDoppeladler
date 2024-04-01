@@ -253,11 +253,11 @@ class ModelRunner:
         if is_prompt:
             inputs = self._prepare_prompt(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
-            print ("prefilling {}".format(input_metadata))
+            # print ("prefilling {}".format(input_metadata))
         else:
             inputs = self._prepare_decode(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
-            print ("decoding {}".format(input_metadata))
+            # print ("decoding {}".format(input_metadata))
         # Execute the model.
         if input_metadata.use_cuda_graph:
             graph_batch_size = input_tokens.shape[0]

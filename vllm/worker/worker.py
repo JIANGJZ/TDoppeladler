@@ -121,7 +121,7 @@ class Worker:
         # If there is no input, we don't need to execute the model.
         if not seq_group_metadata_list:
             return {}
-        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache)                           
+        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache)                             
         return output
 
 
