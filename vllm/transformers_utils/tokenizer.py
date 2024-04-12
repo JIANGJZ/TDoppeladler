@@ -71,11 +71,6 @@ def _convert_tokens_to_string_with_added_encoders(
     skip_special_tokens: bool,
     spaces_between_special_tokens: bool,
 ) -> str:
-    # Adapted from
-    # https://github.com/huggingface/transformers/blob/v4.28.0/src/transformers/tokenization_utils.py#L921
-    # NOTE(woosuk): The following code is slow because it runs a for loop over
-    # the output_tokens. In Python, running a for loop over a list can be slow
-    # even when the loop body is very simple.
     sub_texts = []
     current_sub_text = []
     all_special_tokens = set(tokenizer.all_special_tokens)
@@ -99,9 +94,6 @@ def _convert_tokens_to_string_with_added_encoders(
         return "".join(sub_texts)
 
 
-# Based on
-# https://github.com/huggingface/text-generation-inference/blob/v0.9.4/server/text_generation_server/models/model.py#L62C9-L62C15
-# under Apache 2.0 license
 def detokenize_incrementally(
     tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerFast],
     all_input_ids: List[int],
@@ -114,8 +106,7 @@ def detokenize_incrementally(
     new_token_id = all_input_ids[-1]
     # This is the first iteration for this sequence
     if prev_tokens is None:
-        new_tokens = tokenizer.convert_ids_to_tokens(
-            all_input_ids, skip_special_tokens=skip_special_tokens)
+        new_tokens = tokenizer.convert_ids_to_tokens(all_input_ids, skip_special_tokens=skip_special_tokens)
         output_tokens = new_tokens
         # 5 is an arbitrary value that should work for all
         # tokenizers (bigger = more conservative).
@@ -128,18 +119,15 @@ def detokenize_incrementally(
             read_offset = max(len(output_tokens) - 1, 0)
     else:
         # Put new_token_id in a list so skip_special_tokens is respected
-        new_tokens = tokenizer.convert_ids_to_tokens(
-            [new_token_id], skip_special_tokens=skip_special_tokens)
+        new_tokens = tokenizer.convert_ids_to_tokens([new_token_id], skip_special_tokens=skip_special_tokens)
         output_tokens = prev_tokens + new_tokens
 
     # The prefix text is necessary only to defeat cleanup algorithms in
     # the decode which decide to add a space or not depending on the
     # surrounding ids.
     if tokenizer.is_fast or not tokenizer.get_added_vocab():
-        prefix_text = tokenizer.convert_tokens_to_string(
-            output_tokens[prefix_offset:read_offset])
-        new_text = tokenizer.convert_tokens_to_string(
-            output_tokens[prefix_offset:])
+        prefix_text = tokenizer.convert_tokens_to_string(output_tokens[prefix_offset:read_offset])
+        new_text = tokenizer.convert_tokens_to_string(output_tokens[prefix_offset:])   
     else:
         prefix_text = _convert_tokens_to_string_with_added_encoders(
             tokenizer,

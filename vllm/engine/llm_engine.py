@@ -70,6 +70,7 @@ class LLMEngine:
         self.tokenizer = get_tokenizer(model_config.tokenizer, tokenizer_mode=model_config.tokenizer_mode, trust_remote_code=model_config.trust_remote_code, tokenizer_revision=model_config.tokenizer_revision, revision=model_config.revision)
             
         self.seq_counter = Counter()
+        self.submit_counter = Counter()
 
         # Create the parallel GPU workers.
         if self.parallel_config.worker_use_ray:
@@ -367,7 +368,7 @@ class LLMEngine:
             seq.tokens = new_tokens
         else:
             seq.tokens.extend(new_tokens)
-        # print (new_tokens, new_output_text, prefix_offset, read_offset)
+        # print (new_tokens, prefix_offset, read_offset)
         seq.prefix_offset = prefix_offset
         seq.read_offset = read_offset
         seq.output_text += new_output_text
@@ -403,7 +404,7 @@ class LLMEngine:
         self.scheduler.free_finished_main_seq_groups()
 
         request_outputs: List[RequestOutput] = []
-        for seq_group in (scheduled_seq_groups+ scheduler_outputs.ignored_seq_groups):  
+        for seq_group in (scheduled_seq_groups + scheduler_outputs.ignored_seq_groups):  
             request_output = RequestOutput.from_seq_group(seq_group)
             request_outputs.append(request_output)
 
@@ -438,7 +439,7 @@ class LLMEngine:
         self.scheduler.free_finished_seq_groups()
         # Create the outputs.
         request_outputs: List[RequestOutput] = []
-        for seq_group in  (scheduled_seq_groups+ scheduler_outputs.ignored_seq_groups):  
+        for seq_group in  (scheduled_seq_groups + scheduler_outputs.ignored_seq_groups):  
             request_output = RequestOutput.from_seq_group(seq_group)
             request_outputs.append(request_output)
 
@@ -448,15 +449,14 @@ class LLMEngine:
 
     def handle_main_result(self, result, callback_arg):
         # print ("handling main result")
-        self.main_processing = False
         main_output = result
         scheduler_outputs_main = callback_arg
         main_processoutput = self._process_model_outputs_multi(main_output, scheduler_outputs_main)
         self.output.extend(main_processoutput)
 
-        # for output in main_processoutput:
-        #     if output.finished:
-        #         print ("main device: {}".format(output.outputs[0].text))
+        for output in main_processoutput:
+            if output.finished:
+                print ("main device: {}".format(output.outputs[0].text))
 
     def handle_aux_result(self, result, callback_arg):
         # print ("handling aux result")
@@ -471,12 +471,14 @@ class LLMEngine:
         if self.parallel_config.multi_worker:
                 # print ("main list len = {}".format(len(seq_group_metadata_list_main)))
             if (self.task_manager.get_main_pending_len() < self.asy_submmitter.get_pending_length()):
+                submit_id = next(self.submit_counter) 
                 seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
+                if (len(seq_group_metadata_list_main) > 0):
+                    seq_group_metadata_list_main[0].submit_id = submit_id
                 if scheduler_outputs_main.is_empty() :
                     # print ("sechduling main empty")
                     self.output.extend(ignored_main)
                 else:
-                    self.main_processing = True
                     self._run_main_worker(
                         "execute_model",
                         resulthandler=self.handle_main_result,

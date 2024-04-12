@@ -118,10 +118,10 @@ if __name__ == "__main__":
     #用ray做request并行在experiment文件夹
     #用ray的时候profile出来的可用内存空间比不用ray大概少了10%，做对比实验需要把profile出来的可用的内存空间对齐
     #--swap-space 不能设置太大，超过可使用用内存的70%
-    parser.add_argument("--multi-worker", action="store_true", help="is use multiworker, store_false is true")
-    parser.add_argument("--worker-use-ray", action="store_false", help="is use ray, store_true is False")
+    parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
+    parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
-    parser.add_argument("--num-prompts", type=int, default=1000, help="Number of prompts to process.")
+    parser.add_argument("--num-prompts", type=int, default=100, help="Number of prompts to process.")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.95, help='the fraction of GPU memory')
     parser.add_argument('--swap-space', type=int, default=32, help='CPU swap space size (GiB) per GPU')   
     parser.add_argument("--model", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")

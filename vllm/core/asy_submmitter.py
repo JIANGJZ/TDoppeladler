@@ -55,7 +55,7 @@ class RayTaskManager:
             for i, (task_id, callback, callback_arg) in enumerate(self.pending_tasks_main):
                 if task_id == ready_task_id:
                     result = ray.get(task_id)
-                    if callback:
+                    if callback and result:
                         callback(result, callback_arg)
                     self.pending_tasks_main.pop(i)
                     break
@@ -69,7 +69,7 @@ class RayTaskManager:
             for i, (task_id, callback, callback_arg) in enumerate(self.pending_tasks_aux):
                 if task_id == ready_task_id:
                     result = ray.get(task_id)
-                    if callback:
+                    if callback and result:
                         callback(result, callback_arg)
                     self.pending_tasks_aux.pop(i)
                     break
