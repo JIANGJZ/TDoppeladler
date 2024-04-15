@@ -107,7 +107,7 @@ class MainWorker:
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_out:
-            print ("block to swap out {}".format(blocks_to_swap_out))
+            # print ("block to swap out {}".format(blocks_to_swap_out))
             self.cache_engine.multi_swap_out(blocks_to_swap_out)
             issued_cache_op = True
         if blocks_to_copy:

@@ -9,7 +9,7 @@ import ray
 class AsySubmmitterConfig:
     def __init__(self):
         self.pending_length = 1
-        #vicuna pending_length=4, baichuang pending_length=4, aquiq pending_length=5
+        #A10 vicuna pending_length=4, baichuang pending_length=4, aquiq pending_length=5
 
     def get_pending_length(self):
         return self.pending_length

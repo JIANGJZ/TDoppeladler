@@ -398,6 +398,7 @@ class LLMEngine:
 
     def _process_model_outputs_multi(self, output: SamplerOutput, scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
         scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
+        print ("process submit_id = {}".format(scheduler_outputs.submit_id))
         for seq_group, outputs in zip(scheduled_seq_groups, output):
             self._process_sequence_group_outputs_multi(seq_group, outputs)
         
@@ -481,6 +482,7 @@ class LLMEngine:
                 seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
                 if (len(seq_group_metadata_list_main) > 0):
                     seq_group_metadata_list_main[0].submit_id = submit_id
+                    scheduler_outputs_main.submit_id = submit_id
                 if scheduler_outputs_main.is_empty() :
                     # print ("sechduling main empty")
                     self.output.extend(ignored_main)
@@ -499,6 +501,7 @@ class LLMEngine:
                 seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
                 if (len(seq_group_metadata_list_aux) > 0):
                     seq_group_metadata_list_aux[0].submit_id = submit_id
+                    scheduler_outputs_aux.submit_id = submit_id
                 if scheduler_outputs_aux.is_empty():
                     # print ("sechduling aux empty")
                     self.output.extend(ignored_aux)

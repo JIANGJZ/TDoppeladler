@@ -51,6 +51,7 @@ class SchedulerOutputs:
         assert not (blocks_to_swap_in and blocks_to_swap_out)
         self.ignored_seq_groups = ignored_seq_groups
         self.current_swap = current_swap
+        self.submit_id = 0
 
     def is_empty(self) -> bool:
         # NOTE: We do not consider the ignored sequence groups.
@@ -613,11 +614,11 @@ class MultiScheduler:
                     current_swap.append(seq_group)
                     break
             else:
-                # self._preempt(seq_group, blocks_to_swap_out)
-                # current_swap.append(seq_group)
+                self._preempt(seq_group, blocks_to_swap_out)
+                current_swap.append(seq_group)
 
-                self._append_main_slot(seq_group, blocks_to_copy)
-                running.append(seq_group)
+                # self._append_main_slot(seq_group, blocks_to_copy)
+                # running.append(seq_group)
 
                 # aux_queue_length = self.cost_model.get_auxilary_queue_length()
                 # if (len(self.running) > aux_queue_length*len(self.running_aux)):
@@ -708,7 +709,7 @@ class MultiScheduler:
         current_swap_ids = {seq.request_id for seq in current_swap}
         for swap_sequence in self.swapping:
             if swap_sequence.request_id in current_swap_ids:
-                print(f"swap_sequence {swap_sequence}")
+                # print(f"swap_sequence {swap_sequence}")
                 # Update status for all matching sequences
                 for seq in swap_sequence.get_seqs(status=SequenceStatus.SWAPPING):
                     seq.status = SequenceStatus.SWAPPED
