@@ -8,7 +8,7 @@ from vllm.model_executor import set_random_seed
 from vllm.model_executor.parallel_utils.parallel_state import (initialize_model_parallel)
 from vllm.sequence import SamplerOutput, SequenceGroupMetadata
 from vllm.worker.multi_gpu_cache_engine import MultiGPUCacheEngine
-from vllm.worker.model_runner import ModelRunner, CPUModelRunner
+from vllm.worker.multi_model_runner import ModelRunner
 from vllm.worker.cpu_cache_engine import CPUCacheEngine
 from vllm.core.scheduler import SchedulerOutputs
 
@@ -86,10 +86,10 @@ class MainWorker:
         return num_gpu_blocks, num_cpu_blocks
 
 
-    def init_cache_engine(self, cache_config: CacheConfig, cpu_cache_engine:CPUCacheEngine) -> None:
+    def init_cache_engine(self, cache_config: CacheConfig) -> None:
         print ("enter init cache engine")
         self.cache_config = cache_config
-        self.cache_engine = MultiGPUCacheEngine(self.cache_config, self.model_config, self.parallel_config, cpu_cache_engine)            
+        self.cache_engine = MultiGPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)            
         self.cache_events = self.cache_engine.events
         self.gpu_cache = self.cache_engine.gpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
@@ -107,7 +107,8 @@ class MainWorker:
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_out:
-            self.cache_engine.swap_out(blocks_to_swap_out)
+            print ("block to swap out {}".format(blocks_to_swap_out))
+            self.cache_engine.multi_swap_out(blocks_to_swap_out)
             issued_cache_op = True
         if blocks_to_copy:
             self.cache_engine.copy(blocks_to_copy)
@@ -122,7 +123,7 @@ class MainWorker:
         # If there is no input, we don't need to execute the model.
         if not seq_group_metadata_list:
             return {}
-        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache)                         
+        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache, False)                         
         return output
 
 
@@ -201,9 +202,9 @@ class AuxWorker:
         torch.cuda.empty_cache()
         return num_gpu_blocks, num_cpu_blocks
 
-    def init_cache_engine(self, cache_config: CacheConfig, cpu_cache_engine:CPUCacheEngine) -> None:
+    def init_cache_engine(self, cache_config: CacheConfig) -> None:
         self.cache_config = cache_config
-        self.cache_engine = MultiGPUCacheEngine(self.cache_config, self.model_config, self.parallel_config, cpu_cache_engine)            
+        self.cache_engine = MultiGPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)            
         self.cache_events = self.cache_engine.events
         self.gpu_cache = self.cache_engine.gpu_cache
         self.model_runner.set_block_size(self.cache_engine.block_size)
@@ -221,8 +222,8 @@ class AuxWorker:
         # Issue cache operations.
         issued_cache_op = False
         if blocks_to_swap_in:
-            print ("swap in in aux worker")
-            self.cache_engine.swap_in(blocks_to_swap_in)
+            # print ("block to swap in {}".format(blocks_to_swap_in))
+            self.cache_engine.multi_swap_in(blocks_to_swap_in)
             issued_cache_op = True
             
         if blocks_to_copy:
@@ -237,7 +238,7 @@ class AuxWorker:
         # If there is no input, we don't need to execute the model.
         if not seq_group_metadata_list:
             return {}
-        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache)                           
+        output = self.model_runner.execute_model(seq_group_metadata_list, self.gpu_cache, True)                           
         return output
 
 

@@ -249,21 +249,40 @@ class ModelRunner:
         return sampling_metadata
 
     @torch.inference_mode()
-    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], kv_caches: List[Tuple[torch.Tensor, torch.Tensor]], ) -> SamplerOutput:
+    def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], kv_caches: List[Tuple[torch.Tensor, torch.Tensor]], is_aux:bool) -> SamplerOutput:
         # NOTE: We assume that all sequences in the group are all prompts or
         # all decodes.
         is_prompt = seq_group_metadata_list[0].is_prompt
+        if self.current_submitid == -1:
+            self.current_submitid = seq_group_metadata_list[0].submit_id
+            if is_prompt:
+                for sequence in seq_group_metadata_list:
+                    if (len(sequence.seq_data) > 0):
+                        self.current_seqdata[sequence.request_id] = []
+                        self.current_logprob[sequence.request_id] = 0
+            else:
+                for sequence in seq_group_metadata_list:
+                    if (len(sequence.seq_data) > 0):
+                        if sequence.request_id not in self.current_seqdata:
+                            key = next(iter(sequence.seq_data.keys()))
+                            self.current_seqdata[sequence.request_id] = sequence.seq_data[key].output_token_ids
+                            self.current_logprob[sequence.request_id] = sequence.seq_data[key].cumulative_logprob
+                        else:
+                            key = next(iter(sequence.seq_data.keys()))
+                            sequence.seq_data[key].output_token_ids = self.current_seqdata[sequence.request_id]
+                            sequence.seq_data[key].cumulative_logprob = self.current_logprob[sequence.request_id]
+        else:
+            print ("current process not end")
+            return None
         # Prepare input tensors.
         if is_prompt:
             inputs = self._prepare_prompt(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
-            print ("prefilling {}".format(input_metadata))
-            # print ("prefilling {}".format(input_metadata))
+            # print ("submit_id={}, prefilling {}".format(seq_group_metadata_list[0].submit_id, input_metadata))
         else:
             inputs = self._prepare_decode(seq_group_metadata_list)
             input_tokens, input_positions, input_metadata = inputs
-            print ("decoding {}".format(input_metadata))
-            # print ("decoding {}".format(input_metadata))
+            # print ("submit_id={}, decoding {}".format(seq_group_metadata_list[0].submit_id, input_metadata))
         # Execute the model.
         if input_metadata.use_cuda_graph:
             graph_batch_size = input_tokens.shape[0]
@@ -274,6 +293,27 @@ class ModelRunner:
         sampling_metadata = self._prepare_sample(seq_group_metadata_list, input_metadata.prompt_lens)
         # Sample the next token.
         output = self.model.sample(hidden_states=hidden_states, sampling_metadata=sampling_metadata,)
+
+        # if is_aux:
+        #     key = next(iter(seq_group_metadata_list[0].seq_data.keys()))
+        #     print ("aux submit_id={}, end sampling".format(seq_group_metadata_list[0].submit_id))
+        #     print ("aux end:{}".format(seq_group_metadata_list[0].seq_data[key]))
+        # else:
+        #     key = next(iter(seq_group_metadata_list[0].seq_data.keys()))
+        #     print ("main submit_id={}, end sampling".format(seq_group_metadata_list[0].submit_id))
+        #     print ("main end:{}".format(seq_group_metadata_list[0].seq_data[key]))
+        
+
+        for sequence, result in zip(seq_group_metadata_list, output):
+            if (len(sequence.seq_data) > 0):
+                token_id = result.samples[0].output_token
+                self.current_seqdata[sequence.request_id].append(token_id)
+                self.current_logprob[sequence.request_id] += result.samples[0].logprobs[token_id]
+                if (len(self.current_seqdata[sequence.request_id]) >= sequence.sampling_params.max_tokens):
+                    print ("del current seqdata len={}".format(len(self.current_seqdata[sequence.request_id])))
+                    del self.current_seqdata[sequence.request_id]
+                    del self.current_logprob[sequence.request_id]
+        self.current_submitid = -1
         return output
 
     @torch.inference_mode()
@@ -302,7 +342,7 @@ class ModelRunner:
         # Run the model with the dummy inputs.
         num_layers = self.model_config.get_num_layers(self.parallel_config)
         kv_caches = [(None, None)] * num_layers
-        self.execute_model(seqs, kv_caches)
+        self.execute_model(seqs, kv_caches, False)
         torch.cuda.synchronize()
         return
 

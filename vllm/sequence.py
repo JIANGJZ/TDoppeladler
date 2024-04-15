@@ -15,6 +15,7 @@ class SequenceStatus(enum.Enum):
     WAITING = enum.auto()
     RUNNING = enum.auto()
     SWAPPED = enum.auto()
+    SWAPPING = enum.auto()
     FINISHED_STOPPED = enum.auto()
     FINISHED_LENGTH_CAPPED = enum.auto()
     FINISHED_ABORTED = enum.auto()
@@ -235,7 +236,6 @@ class SequenceGroup:
         self.arrival_time = arrival_time
         self.prompt_logprobs: Optional[PromptLogprobs] = None
         self.is_recompute = False
-        self.is_cpu_compute = False
 
     @property
     def prompt(self) -> str:
@@ -257,9 +257,6 @@ class SequenceGroup:
 
     def set_recompute(self, is_recompute:bool):
         self.is_recompute = is_recompute
-
-    def set_cpu_compute(self, is_cpu_compute:bool):
-        self.is_cpu_compute = is_cpu_compute
 
     def get_prompt_length(self) -> int: 
         return len(self.prompt_token_ids)

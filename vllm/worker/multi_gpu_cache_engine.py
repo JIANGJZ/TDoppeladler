@@ -8,6 +8,7 @@ from vllm.config import CacheConfig, ModelConfig, ParallelConfig
 from vllm.logger import init_logger
 from vllm.utils import in_wsl
 from vllm.worker.cpu_cache_engine import CPUCacheEngine
+import ray
 
 logger = init_logger(__name__)
 
@@ -21,7 +22,7 @@ class MultiGPUCacheEngine:
     caches. It also provides methods for performing KV cache operations, such
     as swapping and copying.
     """
-    def __init__(self, cache_config: CacheConfig, model_config: ModelConfig, parallel_config: ParallelConfig, cpu_cache_engine: CPUCacheEngine) -> None:
+    def __init__(self, cache_config: CacheConfig, model_config: ModelConfig, parallel_config: ParallelConfig) -> None:
         self.cache_config = cache_config
         self.model_config = model_config
         self.parallel_config = parallel_config
@@ -38,9 +39,11 @@ class MultiGPUCacheEngine:
         # Initialize the cache.
         self.num_cpu_blocks = cache_config.num_cpu_blocks
         # self.cpu_cache = self.allocate_cpu_cache()
-        self.cpu_cache_engine = cpu_cache_engine
-        self.cpu_cache = self.cpu_cache_engine.cpu_cache
+        self.cpu_cache_engine = CPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)  
+        # self.cpu_cache = self.cpu_cache_engine.cpu_cache
 
+        self.cpu_key_cache = self.cpu_cache_engine.key_shared_tensor
+        self.cpu_value_cache = self.cpu_cache_engine.value_shared_tensor
 
         # Initialize the stream for caching operations.
         self.cache_stream = torch.cuda.Stream()
@@ -77,7 +80,7 @@ class MultiGPUCacheEngine:
         return gpu_cache
 
 
-    def _swap(self, src: List[KVCache], dst: List[KVCache],  src_to_dst: Dict[int, int], ) -> None:
+    def _swap(self, src: List[KVCache], dst: List[KVCache],  src_to_dst: Dict[int, int], is_swap_in:bool) -> None:
         with torch.cuda.stream(self.cache_stream):
             for i in range(self.num_layers):
                 src_key_cache, src_value_cache = src[i]
@@ -88,12 +91,50 @@ class MultiGPUCacheEngine:
                 cache_ops.swap_blocks(src_value_cache, dst_value_cache, src_to_dst)     
                 event = self.events[i]
                 event.record(stream=self.cache_stream)
+                # if is_swap_in:
+                #     print ("swap in src_key_cache mean {}, dst_key_cache mean {}".format(src_key_cache.mean(), dst_key_cache.mean()))
+                # else:
+                #     print ("swap out src_key_cache mean {}, dst_key_cache mean {}".format(src_key_cache.mean(), dst_key_cache.mean()))
 
     def swap_in(self, src_to_dst: Dict[int, int]) -> None:
-        self._swap(self.cpu_cache, self.gpu_cache, src_to_dst)
+        key_tensor, value_tensor = self.cpu_cache_engine.get_shared_tensor()
+        print ("swap in key tensor {}, value tensor {}".format(key_tensor[0,0,0,0,0,0], value_tensor[0,0,0,0,0]))
+        self._swap(self.cpu_cache, self.gpu_cache, src_to_dst, True)
+
 
     def swap_out(self, src_to_dst: Dict[int, int]) -> None:
-        self._swap(self.gpu_cache, self.cpu_cache, src_to_dst)
+        self.cpu_cache_engine.set_shared_tensor()
+        self._swap(self.gpu_cache, self.cpu_cache, src_to_dst, False)
+
+
+    def multi_swap_in(self, src_to_dst: Dict[int, int]) -> None:
+        with torch.cuda.stream(self.cache_stream):
+            for i in range(self.num_layers):
+                src_key_cache = self.cpu_key_cache[i]
+                src_value_cache = self.cpu_value_cache[i]
+                dst_key_cache, dst_value_cache = self.gpu_cache[i]
+                # Copy the key blocks.
+                cache_ops.swap_blocks(src_key_cache, dst_key_cache, src_to_dst)
+                # Copy the value blocks.
+                cache_ops.swap_blocks(src_value_cache, dst_value_cache, src_to_dst)     
+                event = self.events[i]
+                event.record(stream=self.cache_stream)
+                print ("swap in src_key_cache mean {}, dst_key_cache mean {}".format(src_key_cache.mean(), dst_key_cache.mean()))
+
+    def multi_swap_out(self, src_to_dst: Dict[int, int])-> None:
+        with torch.cuda.stream(self.cache_stream):
+            for i in range(self.num_layers):
+                src_key_cache, src_value_cache = self.gpu_cache[i]
+                dst_key_cache = self.cpu_key_cache[i]
+                dst_value_cache = self.cpu_value_cache[i]
+                # Copy the key blocks.
+                cache_ops.swap_blocks(src_key_cache, dst_key_cache, src_to_dst)
+                # Copy the value blocks.
+                cache_ops.swap_blocks(src_value_cache, dst_value_cache, src_to_dst)     
+                event = self.events[i]
+                event.record(stream=self.cache_stream)
+                print ("swap out src_key_cache mean {}, dst_key_cache mean {}".format(src_key_cache.mean(), dst_key_cache.mean()))
+        
 
     def copy(self, src_to_dsts: Dict[int, List[int]]) -> None:
         key_caches = [key_cache for key_cache, _ in self.gpu_cache]

@@ -71,6 +71,7 @@ class LLMEngine:
             
         self.seq_counter = Counter()
         self.submit_counter = Counter()
+        self.aux_submit_counter = Counter()
 
         # Create the parallel GPU workers.
         if self.parallel_config.worker_use_ray:
@@ -258,10 +259,10 @@ class LLMEngine:
         self.cache_config.num_gpu_blocks = num_main_gpu_blocks
         self.cache_config.num_cpu_blocks = num_cpu_blocks
 
-        self.cpu_cache_engine = CPUCacheEngine(self.cache_config, self.model_config, self.parallel_config)   
+ 
         # Initialize the cache.
         print ("init main cache engine")
-        self._run_main_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
+        self._run_main_worker("init_cache_engine", cache_config=self.cache_config)
         self._run_main_worker("warm_up_model")  
 
 
@@ -269,7 +270,7 @@ class LLMEngine:
         self.cache_config.num_cpu_blocks = num_cpu_blocks   
 
         print ("init aux cache engine")
-        self._run_aux_worker("init_cache_engine", cache_config=self.cache_config, cpu_cache_engine=self.cpu_cache_engine)
+        self._run_aux_worker("init_cache_engine", cache_config=self.cache_config)
         self._run_aux_worker("warm_up_model")
 
     @classmethod
@@ -368,7 +369,7 @@ class LLMEngine:
             seq.tokens = new_tokens
         else:
             seq.tokens.extend(new_tokens)
-        # print (new_tokens, prefix_offset, read_offset)
+        print (new_tokens, prefix_offset, read_offset)
         seq.prefix_offset = prefix_offset
         seq.read_offset = read_offset
         seq.output_text += new_output_text
@@ -399,7 +400,7 @@ class LLMEngine:
         scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
         for seq_group, outputs in zip(scheduled_seq_groups, output):
             self._process_sequence_group_outputs_multi(seq_group, outputs)
-
+        
         self.scheduler.free_finished_aux_seq_groups()
         self.scheduler.free_finished_main_seq_groups()
 
@@ -453,6 +454,7 @@ class LLMEngine:
         scheduler_outputs_main = callback_arg
         main_processoutput = self._process_model_outputs_multi(main_output, scheduler_outputs_main)
         self.output.extend(main_processoutput)
+        self.scheduler.set_finished_swap_out_seq_groups(scheduler_outputs_main.current_swap)
 
         for output in main_processoutput:
             if output.finished:
@@ -464,6 +466,10 @@ class LLMEngine:
         scheduler_outputs_aux = callback_arg
         aux_processoutput = self._process_model_outputs_multi(aux_output, scheduler_outputs_aux)    
         self.output.extend(aux_processoutput)
+
+        for output in aux_processoutput:
+            if output.finished:
+                print ("aux device: {}".format(output.outputs[0].text))
         
 
     def step(self) -> List[RequestOutput]:
@@ -489,7 +495,10 @@ class LLMEngine:
                     )
                 
             if (self.task_manager.get_aux_pending_len() < self.asy_submmitter.get_pending_length()):
+                submit_id = next(self.aux_submit_counter) 
                 seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
+                if (len(seq_group_metadata_list_aux) > 0):
+                    seq_group_metadata_list_aux[0].submit_id = submit_id
                 if scheduler_outputs_aux.is_empty():
                     # print ("sechduling aux empty")
                     self.output.extend(ignored_aux)

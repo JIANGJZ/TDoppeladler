@@ -8,7 +8,7 @@ import ray
 
 class AsySubmmitterConfig:
     def __init__(self):
-        self.pending_length = 4
+        self.pending_length = 1
         #vicuna pending_length=4, baichuang pending_length=4, aquiq pending_length=5
 
     def get_pending_length(self):
@@ -55,7 +55,7 @@ class RayTaskManager:
             for i, (task_id, callback, callback_arg) in enumerate(self.pending_tasks_main):
                 if task_id == ready_task_id:
                     result = ray.get(task_id)
-                    if callback and result:
+                    if callback:
                         callback(result, callback_arg)
                     self.pending_tasks_main.pop(i)
                     break
@@ -69,7 +69,7 @@ class RayTaskManager:
             for i, (task_id, callback, callback_arg) in enumerate(self.pending_tasks_aux):
                 if task_id == ready_task_id:
                     result = ray.get(task_id)
-                    if callback and result:
+                    if callback:
                         callback(result, callback_arg)
                     self.pending_tasks_aux.pop(i)
                     break
