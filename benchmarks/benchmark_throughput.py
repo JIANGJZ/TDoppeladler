@@ -118,6 +118,7 @@ if __name__ == "__main__":
     #用ray做request并行在experiment文件夹
     #用ray的时候profile出来的可用内存空间比不用ray大概少了10%，做对比实验需要把profile出来的可用的内存空间对齐
     #--swap-space 不能设置太大，超过可使用用内存的70%
+    parser.add_argument("--sorted_request", action="store_true", help="is sort request, store_false is true")
     parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
@@ -127,8 +128,9 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="/root/TDoppeladler/model/vicuna-7b")
     parser.add_argument("--tokenizer", type=str, default="/root/TDoppeladler/model/vicuna-7b")
     parser.add_argument("--load-format", type=str, default="auto")
-    parser.add_argument("--sorted_request", action="store_true", help="is sort request, store_false is true")
     parser.add_argument("--disable_log_stats", action="store_false", help="is disable stats, store_false is true")
+    parser.add_argument("--response_aware", action="store_true", help="is enable response_aware kv cache swap")
+    parser.add_argument("--async_submit", type=int, help="async submit queue, synchronous submission when queue length is 1 ")
                
     args = parser.parse_args()
     if args.tokenizer is None:
