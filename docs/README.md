@@ -1,19 +1,9 @@
-# vLLM documents
-
-## Build the docs
+# FuseSpill intall documents
 
 ```bash
 # Install dependencies.
-pip install -r requirements-docs.txt
+pip install -r requirements.txt
 
-# Build the docs.
-make clean
-make html
+# Install FuseSpill.
+pip install -e .
 ```
-
-## Open the docs with your browser
-
-```bash
-python -m http.server -d build/html/
-```
-Launch your browser and open localhost:8000.

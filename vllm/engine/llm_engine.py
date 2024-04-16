@@ -369,7 +369,7 @@ class LLMEngine:
             seq.tokens = new_tokens
         else:
             seq.tokens.extend(new_tokens)
-        print (new_tokens, prefix_offset, read_offset)
+        print (new_tokens, seq.tokens, prefix_offset, read_offset)
         seq.prefix_offset = prefix_offset
         seq.read_offset = read_offset
         seq.output_text += new_output_text
