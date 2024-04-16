@@ -8,11 +8,11 @@ We perform experiments on two multi-GPU platforms.
 One equipped with two Nvidia A10 GPUs, another equipped with one Nvidia GTX 4090 GPU, and one Nvidia GTX 3090 GPU. CPU of both platforms is Intel Xeon Platinum 8358P. The host memory capacity is 500GB. There is no nvlink between GPUs. CPUs and GPUs are connected via PCIe 4.0 with 16GB bandwidth.
 
 ### Software
--python v3.8
--pytorch v2.1.2
--CUDA 12.1
--Ray v2.5.1
--vLLM v0.2.7
+- python v3.8
+- pytorch v2.1.2
+- CUDA 12.1
+- Ray v2.5.1
+- vLLM v0.2.7
 
 ## FuseSpill install documents
 
