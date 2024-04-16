@@ -20,10 +20,6 @@ ROCM_SUPPORTED_ARCHS = {"gfx90a", "gfx908", "gfx906", "gfx1030", "gfx1100"}
 # SUPPORTED_ARCHS = NVIDIA_SUPPORTED_ARCHS.union(ROCM_SUPPORTED_ARCHS)
 
 
-def _is_hip() -> bool:
-    return torch.version.hip is not None
-
-
 def _is_cuda() -> bool:
     return torch.version.cuda is not None
 
@@ -32,13 +28,6 @@ def _is_cuda() -> bool:
 CXX_FLAGS = ["-g", "-O2", "-std=c++17"]
 # TODO(woosuk): Should we use -O3?
 NVCC_FLAGS = ["-O2", "-std=c++17"]
-
-if _is_hip():
-    if ROCM_HOME is None:
-        raise RuntimeError(
-            "Cannot find ROCM_HOME. ROCm must be available to build the package."
-        )
-    NVCC_FLAGS += ["-DUSE_ROCM"]
 
 if _is_cuda() and CUDA_HOME is None:
     raise RuntimeError(
@@ -64,27 +53,6 @@ def get_amdgpu_offload_arch():
 
     return None
 
-
-def get_hipcc_rocm_version():
-    # Run the hipcc --version command
-    result = subprocess.run(['hipcc', '--version'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            text=True)
-
-    # Check if the command was executed successfully
-    if result.returncode != 0:
-        print("Error running 'hipcc --version'")
-        return None
-
-    # Extract the version using a regular expression
-    match = re.search(r'HIP version: (\S+)', result.stdout)
-    if match:
-        # Return the version string
-        return match.group(1)
-    else:
-        print("Could not find HIP version in the output")
-        return None
 
 
 def get_nvcc_cuda_version(cuda_dir: str) -> Version:
@@ -203,12 +171,6 @@ if _is_cuda():
         num_threads = min(os.cpu_count(), nvcc_threads)
         NVCC_FLAGS += ["--threads", str(num_threads)]
 
-elif _is_hip():
-    amd_arch = get_amdgpu_offload_arch()
-    if amd_arch not in ROCM_SUPPORTED_ARCHS:
-        raise RuntimeError(
-            f"Only the following arch is supported: {ROCM_SUPPORTED_ARCHS}"
-            f"amdgpu_arch_found: {amd_arch}")
 
 ext_modules = []
 
@@ -243,10 +205,6 @@ def get_path(*filepath) -> str:
 
 
 def find_version(filepath: str) -> str:
-    """Extract version information from the given filepath.
-
-    Adapted from https://github.com/ray-project/ray/blob/0b190ee1160eeca9796bc091e07eaebf4c85b511/python/setup.py
-    """
     with open(filepath) as fp:
         version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                                   fp.read(), re.M)
@@ -258,17 +216,10 @@ def find_version(filepath: str) -> str:
 def get_vllm_version() -> str:
     version = find_version(get_path("vllm", "__init__.py"))
 
-    if _is_hip():
-        # Get the HIP version
-        hipcc_version = get_hipcc_rocm_version()
-        if hipcc_version != MAIN_CUDA_VERSION:
-            rocm_version_str = hipcc_version.replace(".", "")[:3]
-            version += f"+rocm{rocm_version_str}"
-    else:
-        cuda_version = str(nvcc_cuda_version)
-        if cuda_version != MAIN_CUDA_VERSION:
-            cuda_version_str = cuda_version.replace(".", "")[:3]
-            version += f"+cu{cuda_version_str}"
+    cuda_version = str(nvcc_cuda_version)
+    if cuda_version != MAIN_CUDA_VERSION:
+        cuda_version_str = cuda_version.replace(".", "")[:3]
+        version += f"+cu{cuda_version_str}"
 
     return version
 
@@ -284,12 +235,8 @@ def read_readme() -> str:
 
 def get_requirements() -> List[str]:
     """Get Python package dependencies from requirements.txt."""
-    if _is_hip():
-        with open(get_path("requirements-rocm.txt")) as f:
-            requirements = f.read().strip().split("\n")
-    else:
-        with open(get_path("requirements.txt")) as f:
-            requirements = f.read().strip().split("\n")
+    with open(get_path("requirements.txt")) as f:
+        requirements = f.read().strip().split("\n")
     return requirements
 
 
