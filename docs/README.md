@@ -1,4 +1,4 @@
-# FuseSpill intall documents
+# FuseSpill install documents
 
 ```bash
 # Install dependencies.
