@@ -369,7 +369,7 @@ class LLMEngine:
             seq.tokens = new_tokens
         else:
             seq.tokens.extend(new_tokens)
-        print (new_tokens, seq.tokens, prefix_offset, read_offset)
+        # print (new_tokens, prefix_offset, read_offset)
         seq.prefix_offset = prefix_offset
         seq.read_offset = read_offset
         seq.output_text += new_output_text
@@ -394,11 +394,12 @@ class LLMEngine:
         self._decode_sequence(parent_seq, seq_group.sampling_params)
         self._check_stop(parent_seq, seq_group.sampling_params)
         if parent_seq.is_finished():
+            print ("===================== seq_finished {}".format(parent_seq.seq_id))
             self.scheduler.free_seq(parent_seq)
 
     def _process_model_outputs_multi(self, output: SamplerOutput, scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
         scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
-        print ("process submit_id = {}".format(scheduler_outputs.submit_id))
+        # print ("process submit_id = {}".format(scheduler_outputs.submit_id))
         for seq_group, outputs in zip(scheduled_seq_groups, output):
             self._process_sequence_group_outputs_multi(seq_group, outputs)
         
@@ -457,9 +458,9 @@ class LLMEngine:
         self.output.extend(main_processoutput)
         self.scheduler.set_finished_swap_out_seq_groups(scheduler_outputs_main.current_swap)
 
-        for output in main_processoutput:
-            if output.finished:
-                print ("main device: {}".format(output.outputs[0].text))
+        # for output in main_processoutput:
+        #     if output.finished:
+        #         print ("main device: {}".format(output.outputs[0].text))
 
     def handle_aux_result(self, result, callback_arg):
         # print ("handling aux result")
@@ -468,9 +469,9 @@ class LLMEngine:
         aux_processoutput = self._process_model_outputs_multi(aux_output, scheduler_outputs_aux)    
         self.output.extend(aux_processoutput)
 
-        for output in aux_processoutput:
-            if output.finished:
-                print ("aux device: {}".format(output.outputs[0].text))
+        # for output in aux_processoutput:
+        #     if output.finished:
+        #         print ("aux device: {}".format(output.outputs[0].text))
         
 
     def step(self) -> List[RequestOutput]:

@@ -39,6 +39,10 @@ def sample_requests(dataset_path: str, num_requests: int, tokenizer: PreTrainedT
     filtered_dataset: List[Tuple[str, int, int]] = []
     for prompt, prompt_token_ids, output_len in tokenized_dataset:
         prompt_len = len(prompt_token_ids)
+        # if prompt_len < 4 or output_len < 50 or output_len > 60:
+        #     continue
+        # if prompt_len < 4 or output_len < 80:
+        #     continue
         if prompt_len < 4 or output_len < 4:
             continue
         if prompt_len > 1024 or prompt_len + output_len > 2048:
@@ -118,19 +122,19 @@ if __name__ == "__main__":
     #用ray做request并行在experiment文件夹
     #用ray的时候profile出来的可用内存空间比不用ray大概少了10%，做对比实验需要把profile出来的可用的内存空间对齐
     #--swap-space 不能设置太大，超过可使用用内存的70%
-    parser.add_argument("--sorted_request", action="store_true", help="is sort request, store_false is true")
     parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
-    parser.add_argument("--num-prompts", type=int, default=1, help="Number of prompts to process.")
+    parser.add_argument("--num-prompts", type=int, default=100, help="Number of prompts to process.")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.95, help='the fraction of GPU memory')
     parser.add_argument('--swap-space', type=int, default=32, help='CPU swap space size (GiB) per GPU')   
-    parser.add_argument("--model", type=str, default="/root/TDoppeladler/model/vicuna-7b")
-    parser.add_argument("--tokenizer", type=str, default="/root/TDoppeladler/model/vicuna-7b")
+    parser.add_argument("--model", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
+    parser.add_argument("--tokenizer", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
     parser.add_argument("--load-format", type=str, default="auto")
     parser.add_argument("--disable_log_stats", action="store_false", help="is disable stats, store_false is true")
     parser.add_argument("--response_aware", action="store_true", help="is enable response_aware kv cache swap")
     parser.add_argument("--async_submit", type=int, help="async submit queue, synchronous submission when queue length is 1 ")
+    parser.add_argument("--sorted_request", action="store_true", help="is sort request, store_false is true")
                
     args = parser.parse_args()
     if args.tokenizer is None:

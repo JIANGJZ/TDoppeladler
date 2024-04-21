@@ -77,8 +77,11 @@ class LlamaAttention(nn.Module):
         q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
         q, k = self.rotary_emb(positions, q, k)
         k_cache, v_cache = kv_cache
+        # print(f"before attention {q.max()} - {k.max()} - {v.max()}")
         attn_output = self.attn(q, k, v, k_cache, v_cache, input_metadata)
+        # print(f"after attention {attn_output.max()}")
         output, _ = self.o_proj(attn_output)
+        # print(f"after o_proj {output.max()}")
         return output
 
 
@@ -114,10 +117,14 @@ class LlamaDecoderLayer(nn.Module):
             hidden_states = self.input_layernorm(hidden_states)
         else:
             hidden_states, residual = self.input_layernorm(hidden_states, residual)
+        # print(f"after input_layernorm {hidden_states.max()} - {residual.max()}")
         hidden_states = self.self_attn(positions=positions, hidden_states=hidden_states, kv_cache=kv_cache, input_metadata=input_metadata,)
+        # print(f"after self_attn {hidden_states.max()} - {residual.max()}")
         # Fully Connected
         hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
+        # print(f"after post_attention_layernorm {hidden_states.max()} - {residual.max()}")
         hidden_states = self.mlp(hidden_states)
+        # print(f"after mlp {hidden_states.max()} - {residual.max()}")
         return hidden_states, residual
 
 
@@ -133,11 +140,15 @@ class LlamaModel(nn.Module):
 
     def forward(self, input_ids: torch.Tensor, positions: torch.Tensor, kv_caches: List[KVCache], input_metadata: InputMetadata,) -> torch.Tensor:
         hidden_states = self.embed_tokens(input_ids)
+        # print(f"Input IDs on GPU - {input_ids.max()}")
+        # print(f"hidden_states IDs on GPU- {hidden_states.max()}")
         residual = None
         for i in range(len(self.layers)):
             layer = self.layers[i]
-            hidden_states, residual = layer(positions, hidden_states, kv_caches[i], input_metadata, residual,)       
+            hidden_states, residual = layer(positions, hidden_states, kv_caches[i], input_metadata, residual,)
+        # print(f"after layer interation {hidden_states.max()} - {residual.max()}")
         hidden_states, _ = self.norm(hidden_states, residual)
+        # print(f"after norm {hidden_states.max()}")  
         return hidden_states
 
 

@@ -22,6 +22,7 @@ class RMSNorm(nn.Module):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
         self.variance_epsilon = eps
+        # self.variance_epsilon = 0
 
     def _forward(
         self,

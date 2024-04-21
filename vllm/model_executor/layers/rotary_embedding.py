@@ -312,8 +312,7 @@ class YaRNScalingRotaryEmbedding(RotaryEmbedding):
         inv_freq_mask = (1 - _yarn_linear_ramp_mask(
             low, high, self.rotary_dim // 2, dtype=torch.float,
             device="cuda")) * self.extrapolation_factor
-        inv_freq = inv_freq_interpolation * (
-            1 - inv_freq_mask) + inv_freq_extrapolation * inv_freq_mask
+        inv_freq = inv_freq_interpolation * (1 - inv_freq_mask) + inv_freq_extrapolation * inv_freq_mask
         return inv_freq
 
     def _compute_cos_sin_cache(self) -> torch.Tensor:

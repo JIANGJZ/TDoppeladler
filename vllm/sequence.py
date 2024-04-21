@@ -236,6 +236,7 @@ class SequenceGroup:
         self.arrival_time = arrival_time
         self.prompt_logprobs: Optional[PromptLogprobs] = None
         self.is_recompute = False
+        self.is_aux = False
 
     @property
     def prompt(self) -> str:

@@ -99,7 +99,7 @@ class MainWorker:
             self.model_runner.capture_model(self.gpu_cache)
         # Reset the seed to ensure that the random state is not affected by
         # the model initialization and profiling.
-        set_random_seed(self.model_config.seed)
+        # set_random_seed(self.model_config.seed)
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_out: Dict[int, int], blocks_to_copy: Dict[int, List[int]], ) -> SamplerOutput:
@@ -214,7 +214,7 @@ class AuxWorker:
             self.model_runner.capture_model(self.gpu_cache)
         # Reset the seed to ensure that the random state is not affected by
         # the model initialization and profiling.
-        set_random_seed(self.model_config.seed)
+        # set_random_seed(self.model_config.seed)
 
     @torch.inference_mode()
     def execute_model(self, seq_group_metadata_list: List[SequenceGroupMetadata], blocks_to_swap_in: Dict[int, int], blocks_to_copy=Dict[int, int],) -> SamplerOutput:

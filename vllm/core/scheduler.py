@@ -401,6 +401,8 @@ class MultiScheduler:
         self.running_aux: List[SequenceGroup] = []
         
         self.cost_model = CostModel()
+        self.finished_aux_seq = []
+        self.finished_main_seq = []
 
     def add_seq_group(self, seq_group: SequenceGroup) -> None:
         # Add sequence groups to the waiting queue.
@@ -435,7 +437,7 @@ class MultiScheduler:
         return self.waiting or self.running or self.swapped or self.running_aux or self.swapping
 
     def get_num_finished_seq_groups(self) -> int:
-        return (self.scheduler_config.num_prompts - self.get_num_unfinished_seq_groups())
+        return (len(self.finished_main_seq) + len(self.finished_aux_seq))
 
 
     def get_num_unfinished_seq_groups(self) -> int:
@@ -476,6 +478,14 @@ class MultiScheduler:
             num_curr_seqs += num_new_seqs
             self.running_aux.append(seq_group)
 
+        running_aux: List[SequenceGroup] = []
+        while self.running_aux:
+            seq_group = self.running_aux.pop(0)
+            self._append_aux_slot(seq_group, blocks_to_copy)
+            running_aux.append(seq_group)
+
+        self.running_aux = running_aux
+
         num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running_aux)
         scheduler_outputs = SchedulerOutputs(
             scheduled_seq_groups=self.running_aux,
@@ -502,9 +512,9 @@ class MultiScheduler:
         now = time.monotonic()
         finished_seqs = self.get_num_finished_seq_groups()
         unfinished_seqs = self.get_num_unfinished_seq_groups()
-        # print ("waiting = {}, running = {}, swapped = {}, running_aux = {}, swapping = {}".format(len(self.waiting), \
-        # len(self.running), len(self.swapped), len(self.running_aux), len(self.swapping)))
-        # print ("finished = {}, unfinished = {}".format(finished_seqs, unfinished_seqs))
+        print ("waiting = {}, running = {}, swapped = {}, running_aux = {}, swapping = {}, main_finished = {} aux_finished = {} ".format(len(self.waiting), \
+        len(self.running), len(self.swapped), len(self.running_aux), len(self.swapping), len(self.finished_main_seq), len(self.finished_aux_seq)))
+        print ("finished = {}, unfinished = {}".format(finished_seqs, unfinished_seqs))
 
         # Join waiting sequences if possible.
         if not (self.swapped and self.swapping):
@@ -614,19 +624,19 @@ class MultiScheduler:
                     current_swap.append(seq_group)
                     break
             else:
-                self._preempt(seq_group, blocks_to_swap_out)
-                current_swap.append(seq_group)
+                # self._preempt(seq_group, blocks_to_swap_out)
+                # current_swap.append(seq_group)
 
                 # self._append_main_slot(seq_group, blocks_to_copy)
                 # running.append(seq_group)
 
-                # aux_queue_length = self.cost_model.get_auxilary_queue_length()
-                # if (len(self.running) > aux_queue_length*len(self.running_aux)):
-                #     self._preempt(seq_group, blocks_to_swap_out)
-                #     current_swap.append(seq_group)
-                # else:
-                #     self._append_main_slot(seq_group, blocks_to_copy)
-                #     running.append(seq_group)
+                aux_queue_length = self.cost_model.get_auxilary_queue_length()
+                if aux_queue_length*(len(self.running) > len(self.running_aux)):
+                    self._preempt(seq_group, blocks_to_swap_out)
+                    current_swap.append(seq_group)
+                else:
+                    self._append_main_slot(seq_group, blocks_to_copy)
+                    running.append(seq_group)
         self.running = running
 
         num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running)
@@ -697,9 +707,13 @@ class MultiScheduler:
         self.block_manager.free(seq)
 
     def free_finished_main_seq_groups(self) -> None:
+        finished = [int(seq_group.request_id) for seq_group in self.running if seq_group.is_finished()]
+        self.finished_main_seq.extend(finished)
         self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
 
     def free_finished_aux_seq_groups(self) -> None:
+        finished = [int(seq_group.request_id) for seq_group in self.running_aux if seq_group.is_finished()]
+        self.finished_aux_seq.extend(finished)
         self.running_aux = [seq_group for seq_group in self.running_aux if not seq_group.is_finished()]
 
     def set_finished_swap_out_seq_groups(self, current_swap: List[SequenceGroup]) -> None:

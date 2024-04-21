@@ -29,6 +29,8 @@ class Sampler(nn.Module):
     def forward(self, embedding: torch.Tensor, hidden_states: torch.Tensor, sampling_metadata: SamplingMetadata, embedding_bias: Optional[torch.Tensor] = None, ) -> SamplerOutput:
         # Get the hidden states that we use for sampling.
         hidden_states = _prune_hidden_states(hidden_states, sampling_metadata)
+        # print ("mean of _prune hidden_states {}".format(hidden_states.mean()))
+        # print ("embedding {}".format(embedding.mean()))
 
         # Get the logits for the next tokens.
         logits = _get_logits(hidden_states, embedding, embedding_bias, self.vocab_size)
@@ -58,10 +60,11 @@ class Sampler(nn.Module):
         # Compute the log probabilities.
         # Use log_softmax to ensure numerical stability.
         logprobs = torch.log_softmax(logits, dim=-1, dtype=torch.float)
+        # print ("prompt_logprobs {}, logprobs {}".format(probs.mean(), logprobs.mean()))
         # Sample the next tokens.
         sample_results = _sample(probs, logprobs, sampling_metadata)
         # Get the logprobs query results.
-        prompt_logprobs, sample_logprobs = _get_logprobs(logprobs, sampling_metadata, sample_results)    
+        prompt_logprobs, sample_logprobs = _get_logprobs(logprobs, sampling_metadata, sample_results)   
         return _build_sampler_output(sample_results, sampling_metadata, prompt_logprobs, sample_logprobs)
                                      
 
@@ -215,6 +218,7 @@ def _random_sample(
 ) -> List[Tuple[List[int], List[int]]]:
     # Find the maximum best_of value of the prompt phase requests.
     random_samples = random_samples.cpu()
+    # print ("random_samples mean = {}".format(random_samples.float().mean()))
     sample_idx = 0
     results = []
     for seq_group, is_prompt in zip(selected_seq_groups, is_prompts):
@@ -227,7 +231,8 @@ def _random_sample(
         else:
             # Generation phase.
             parent_ids = list(range(num_parent_seqs))
-            next_token_ids = random_samples[sample_idx:sample_idx + num_parent_seqs, 0].tolist()                        
+            next_token_ids = random_samples[sample_idx:sample_idx + num_parent_seqs, 0].tolist()     
+            # print ("next tokens id = {}".format(next_token_ids))                   
         results.append((next_token_ids, parent_ids))
         sample_idx += num_parent_seqs
     return results
@@ -275,6 +280,9 @@ def _beam_search_sample(
 # probs will be modified in place, but this is fine, as we pass
 # in a copy already.
 def _multinomial(probs: torch.Tensor, num_samples: int,):
+    # print ("probs in _multinomial {}  num_samples {}".format(probs.mean(), num_samples))
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     if num_samples > 1:
         # This is equivalent to torch.repeat_interleaved (which also
         # forces a GPU<->CPU sync).
@@ -284,7 +292,12 @@ def _multinomial(probs: torch.Tensor, num_samples: int,):
         probs = probs[:, None, :].expand(probs.shape[0], num_samples, probs.shape[1]).contiguous().view(-1, probs.shape[1])
                       
     q = torch.empty_like(probs).exponential_(1)
-    return probs.div_(q).argmax(dim=1).view(-1, num_samples)
+    # print ("q in _multinomial {}".format(q.mean()))
+    # current_seed = torch.initial_seed()
+    # print("Current random seed:", current_seed)
+
+    # print ("_multinomial in {}".format(test.div_(q).argmax(dim=1).view(-1, num_samples).float().mean()))
+    return probs.argmax(dim=1).view(-1, num_samples)
 
 
 def _sample(probs: torch.Tensor, logprobs: torch.Tensor, sampling_metadata: SamplingMetadata, ) -> List[Tuple[List[int], List[int]]]:
@@ -324,12 +337,11 @@ def _sample(probs: torch.Tensor, logprobs: torch.Tensor, sampling_metadata: Samp
             raise ValueError(f"Unsupported sampling type: {sampling_type}")
 
     # GPU<->CPU sync happens in the loop below.
-
     for sampling_type in SamplingType:
         if sampling_type not in sample_metadata:
             continue
-        seq_group_ids, seq_groups, is_prompts, sample_indices = sample_metadata[
-            sampling_type]
+        seq_group_ids, seq_groups, is_prompts, sample_indices = sample_metadata[sampling_type]
+        # print ("seq group ids {}  is_prompts {}  sample_indices {}, sampling_type {}".format(seq_group_ids, is_prompts, sample_indices, sampling_type))    
         if sampling_type == SamplingType.GREEDY:
             sample_results = _greedy_sample(seq_groups, greedy_samples)
         elif sampling_type == SamplingType.RANDOM:
@@ -395,6 +407,7 @@ def _get_logprobs(
     for i, (seq_group, sample_result) in enumerate(zip(sampling_metadata.seq_groups, sample_results)):
         seq_ids, sampling_params = seq_group
         next_token_ids, parent_ids = sample_result
+        # print ("next tokens id {}, parent ids {}".format(next_token_ids, parent_ids))
 
         # Prompt logprobs
         if (i < sampling_metadata.num_prompts and sampling_params.prompt_logprobs is not None):

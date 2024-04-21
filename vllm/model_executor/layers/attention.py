@@ -145,6 +145,7 @@ class PagedAttention(nn.Module):
             output = out.view_as(query)
         else:
             # Decoding run.
+            # print(f"before _paged_attention {query.max()} - {key_cache.max()} - {value_cache.max()}- {input_metadata.attn_bias} - {self.num_kv_heads} - {self.scale}")
             if key_cache is not None and value_cache is not None:
                 output = _paged_attention(
                     query,
@@ -159,6 +160,8 @@ class PagedAttention(nn.Module):
                 # This happens during the initial memory profiling run for
                 # CUDA graphs.
                 output = torch.zeros_like(query)
+
+            # print(f"after _paged_attention {output.max()}")
 
         # Reshape the output tensor.
         return output.view(batch_size, seq_len, hidden_size)
@@ -219,6 +222,12 @@ def _paged_attention(
     # TODO(woosuk): Tune this heuristic.
     # For context len > 8192, use V2 kernel to avoid shared memory shortage.
     use_v1 = input_metadata.max_context_len <= 8192 and (max_num_partitions == 1 or num_seqs * num_heads > 512)
+    # if alibi_slopes:
+    #     print(f"alibi_slopes {alibi_slopes.max()}")
+
+    # non_zero_tensor = input_metadata.block_tables[0][input_metadata.block_tables[0] != 0]
+    # print(f"use_v1 {use_v1}  block_tables {non_zero_tensor} \
+    # context_lens {input_metadata.context_lens.float().mean()}  max_context_len {input_metadata.max_context_len}")
     if use_v1:
         # Run PagedAttention V1.
         ops.paged_attention_v1(

@@ -9,6 +9,7 @@ from vllm.model_executor import get_model, get_model_cpu, InputMetadata, Samplin
 from vllm.sampling_params import SamplingParams, SamplingType
 from vllm.sequence import SamplerOutput, SequenceData, SequenceGroupMetadata
 from vllm.utils import in_wsl
+import traceback  
 
 logger = init_logger(__name__)
 
@@ -132,7 +133,7 @@ class ModelRunner:
             for seq_id in seq_ids:
                 seq_data = seq_group_metadata.seq_data[seq_id]
                 generation_token = seq_data.get_last_token_id()
-                print ("seqdata: {} generation token: {}".format(seq_data, generation_token))
+                # print ("seqdata: {} generation token: {}".format(seq_data, generation_token))
                 input_tokens.append([generation_token])
 
                 seq_len = seq_data.get_len()
@@ -254,7 +255,7 @@ class ModelRunner:
         # NOTE: We assume that all sequences in the group are all prompts or
         # all decodes.
         is_prompt = seq_group_metadata_list[0].is_prompt
-        print ("current seqdata {} current logprob {}".format(self.current_seqdata.keys(), self.current_logprob.keys()))
+        # print ("current seqdata {} current logprob {}".format(self.current_seqdata.keys(), self.current_logprob.keys()))
         if self.current_submitid == -1:
             self.current_submitid = seq_group_metadata_list[0].submit_id
             if is_prompt:
@@ -266,16 +267,18 @@ class ModelRunner:
                 for sequence in seq_group_metadata_list:
                     if (len(sequence.seq_data) > 0):
                         if sequence.request_id not in self.current_seqdata:
-                            print ("sequence.request_id not in current seqdata")
+                            # print ("current seqdata {} current logprob {}".format(self.current_seqdata.keys(), self.current_logprob.keys()))
+                            # traceback.print_stack()
+                            # print ("sequence.request_id not in current seqdata")
                             key = next(iter(sequence.seq_data.keys()))
-                            self.current_seqdata[sequence.request_id] = []
-                            print ("swap set output token {}".format(sequence.seq_data[key].output_token_ids))
-                            self.current_logprob[sequence.request_id] = 0
-                            print ("swap set current_logprob {}".format(sequence.seq_data[key].cumulative_logprob))
+                            self.current_seqdata[sequence.request_id] = sequence.seq_data[key].output_token_ids
+                            # print ("swap set output token {}".format(sequence.seq_data[key].output_token_ids))
+                            self.current_logprob[sequence.request_id] = sequence.seq_data[key].cumulative_logprob
+                            # print ("swap set current_logprob {}".format(sequence.seq_data[key].cumulative_logprob))
                         else:
-                            print ("sequence.request_id in current seqdata")
-                            print ("current output token {}".format(self.current_seqdata[sequence.request_id]))
-                            print ("current output logprob {}".format(self.current_logprob[sequence.request_id]))
+                            # print ("sequence.request_id in current seqdata")
+                            # print ("current output token {}".format(self.current_seqdata[sequence.request_id]))
+                            # print ("current output logprob {}".format(self.current_logprob[sequence.request_id]))
                             key = next(iter(sequence.seq_data.keys()))
                             sequence.seq_data[key].output_token_ids = self.current_seqdata[sequence.request_id]
                             sequence.seq_data[key].cumulative_logprob = self.current_logprob[sequence.request_id]
@@ -297,30 +300,34 @@ class ModelRunner:
             model_executable = self.graph_runners[graph_batch_size]
         else:
             model_executable = self.model
+        # print ("mean of kcache {}  vcache {}".format(kv_caches[0][0].mean(), kv_caches[0][1].mean()))
         hidden_states = model_executable(input_ids=input_tokens, positions=input_positions, kv_caches=kv_caches, input_metadata=input_metadata,)
+        # print ("mean of hidden_states {}".format(hidden_states.max()))
         sampling_metadata = self._prepare_sample(seq_group_metadata_list, input_metadata.prompt_lens)
         # Sample the next token.
+        # print ("sampling_metadata {}".format(sampling_metadata))
         output = self.model.sample(hidden_states=hidden_states, sampling_metadata=sampling_metadata,)
 
-        if is_aux:
-            key = next(iter(seq_group_metadata_list[0].seq_data.keys()))
-            print ("aux submit_id={}, end sampling".format(seq_group_metadata_list[0].submit_id))
-            print ("aux end:{}".format(seq_group_metadata_list[0].seq_data[key]))
-        else:
-            key = next(iter(seq_group_metadata_list[0].seq_data.keys()))
-            print ("main submit_id={}, end sampling".format(seq_group_metadata_list[0].submit_id))
-            print ("main end:{}".format(seq_group_metadata_list[0].seq_data[key]))
+        # if is_aux:
+        #     key = next(iter(seq_group_metadata_list[0].seq_data.keys()))
+        #     print ("aux submit_id={}, end sampling".format(seq_group_metadata_list[0].submit_id))
+        #     print ("aux end:{}".format(seq_group_metadata_list[0].seq_data[key]))
+        # else:
+        #     key = next(iter(seq_group_metadata_list[0].seq_data.keys()))
+        #     print ("main submit_id={}, end sampling".format(seq_group_metadata_list[0].submit_id))
+        #     print ("main end:{}".format(seq_group_metadata_list[0].seq_data[key]))
         
 
         for sequence, result in zip(seq_group_metadata_list, output):
-            if (len(sequence.seq_data) > 0):
+            if (len(sequence.seq_data) > 0 and sequence.request_id in self.current_seqdata):
                 token_id = result.samples[0].output_token
                 self.current_seqdata[sequence.request_id].append(token_id)
                 self.current_logprob[sequence.request_id] += result.samples[0].logprobs[token_id]
-                if (len(self.current_seqdata[sequence.request_id]) >= sequence.sampling_params.max_tokens):
-                    print ("del current seqdata len={}".format(len(self.current_seqdata[sequence.request_id])))
-                    del self.current_seqdata[sequence.request_id]
-                    del self.current_logprob[sequence.request_id]
+            # print ("token_id {} iterations logprobs {}".format(token_id, result.samples[0].logprobs[token_id]))
+            if ((sequence.request_id in self.current_seqdata) and len(self.current_seqdata[sequence.request_id]) >= sequence.sampling_params.max_tokens):
+                # print ("del current seqdata len={}".format(len(self.current_seqdata[sequence.request_id])))
+                del self.current_seqdata[sequence.request_id]
+                del self.current_logprob[sequence.request_id]
         self.current_submitid = -1
         return output
 
