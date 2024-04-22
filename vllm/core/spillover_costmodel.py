@@ -1,7 +1,7 @@
 class CostModel:
     def __init__(self):
         self.spillover_portion = 0.2
-        self.offload_portion = 0.4  #A10 vicuna 0.45  3090 0.4
+        self.offload_portion = 0.3  #A10 vicuna 0.45  3090 0.4
         self.auxilary_portion = self.spillover_portion + self.offload_portion
         self.primary_portion = 1 - self.auxilary_portion
 

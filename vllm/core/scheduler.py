@@ -526,12 +526,14 @@ class MultiScheduler:
         now = time.monotonic()
         finished_seqs = self.get_num_finished_seq_groups()
         unfinished_seqs = self.get_num_unfinished_seq_groups()
-        print ("waiting = {}, running = {}, swapped = {}, running_aux = {}, swapping = {}, main_finished = {} aux_finished = {} ".format(len(self.waiting), \
-        len(self.running), len(self.swapped), len(self.running_aux), len(self.swapping), len(self.finished_main_seq), len(self.finished_aux_seq)))
+        block_lengths_list = [len(lst) for lst in self.block_manager.block_tables.values()]
+        aux_block_list = [len(lst) for lst in self.block_manager.aux_block_tables.values()]
+        print ("waiting = {}, running = {}, swapped = {}, running_aux = {}, swapping = {}, main_finished = {} aux_finished = {} main_occupy_block= {}  aux_occupy_block= {}".format(len(self.waiting), \
+        len(self.running), len(self.swapped), len(self.running_aux), len(self.swapping), len(self.finished_main_seq), len(self.finished_aux_seq), sum(block_lengths_list), sum(aux_block_list)))
         print ("finished = {}, unfinished = {}".format(finished_seqs, unfinished_seqs))
 
         # Join waiting sequences if possible.
-        if not (self.swapped and self.swapping):
+        if (len(self.swapped) + len(self.swapping)) < 7:
             ignored_seq_groups: List[SequenceGroup] = []
             scheduled: List[SequenceGroup] = []
             # The total number of sequences on the fly, including the

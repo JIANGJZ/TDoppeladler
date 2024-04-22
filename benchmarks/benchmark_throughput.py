@@ -45,7 +45,7 @@ def sample_requests(dataset_path: str, num_requests: int, tokenizer: PreTrainedT
         #     continue
         if prompt_len < 4 or output_len < 4:
             continue
-        if prompt_len > 1024 or prompt_len + output_len > 2048:
+        if prompt_len > 1024 or prompt_len + output_len > 1512:
             continue
         filtered_dataset.append((prompt, prompt_len, output_len))
 
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument("--multi-worker", action="store_false", help="is use multiworker, store_false is true")
     parser.add_argument("--worker-use-ray", action="store_true", help="is use ray, store_true is False")
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
-    parser.add_argument("--num-prompts", type=int, default=200, help="Number of prompts to process.")
+    parser.add_argument("--num-prompts", type=int, default=1000, help="Number of prompts to process.")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.95, help='the fraction of GPU memory')
     parser.add_argument('--swap-space', type=int, default=32, help='CPU swap space size (GiB) per GPU')   
     parser.add_argument("--model", type=str, default="/home/users/jiangjz/llm/TDoppeladler/model/vicuna-7b")
