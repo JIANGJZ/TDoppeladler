@@ -165,6 +165,13 @@ class MultiBlockSpaceManager:
             self.main_gpu_allocator.free(last_block)
             return last_block.block_number, new_block.block_number
 
+    def can_append_aux_slot(self, seq_group: SequenceGroup) -> bool:
+        # Simple heuristic: If there is at least one free block
+        # for each sequence, we can append.
+        num_free_gpu_blocks = self.aux_gpu_allocator.get_num_free_blocks()
+        num_seqs = seq_group.num_seqs(status=SequenceStatus.RUNNING)
+        return num_seqs <= num_free_gpu_blocks
+
     def append_aux_slot(self, seq: Sequence) -> Optional[Tuple[int, int]]:
         """Allocate a physical slot for a new token."""
         logical_blocks = seq.logical_token_blocks
@@ -205,7 +212,7 @@ class MultiBlockSpaceManager:
 
     def can_get_new(self):
         num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
-        return num_free_blocks > self.watermark_blocks * 2
+        return num_free_blocks > self.watermark_blocks
 
     def get_aux_memory_usage(self):
         num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
@@ -218,7 +225,7 @@ class MultiBlockSpaceManager:
         num_swapped_seqs = seq_group.num_seqs(status=SequenceStatus.SWAPPED)
         num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
         num_required_blocks = len(blocks) + num_swapped_seqs
-        return num_free_blocks - num_required_blocks >= self.watermark_blocks * 15
+        return num_free_blocks - num_required_blocks >= self.watermark_blocks * 6
 
     def swap_in(self, seq_group: SequenceGroup) -> Dict[int, int]:
         # CPU block -> GPU block.

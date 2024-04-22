@@ -495,8 +495,16 @@ class MultiScheduler:
         with lock_aux:
             while self.running_aux:
                 seq_group = self.running_aux.pop(0)
-                self._append_aux_slot(seq_group, blocks_to_copy)
-                running_aux.append(seq_group)
+                while not self.block_manager.can_append_aux_slot(seq_group):
+                    if self.running_aux:
+                        victim_seq_group = self.running_aux.pop(-1)
+                        self._aux_preempt_by_recompute(victim_seq_group)
+                    else:
+                        self._aux_preempt_by_recompute(seq_group)
+                        break
+                else:
+                    self._append_aux_slot(seq_group, blocks_to_copy)
+                    running_aux.append(seq_group)
 
             self.running_aux = running_aux
 
@@ -809,5 +817,13 @@ class MultiScheduler:
         blocks_to_swap_out.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
             seq.status = SequenceStatus.SWAPPING    
+
+
+    def _aux_preempt_by_recompute(self, seq_group: SequenceGroup) -> None:
+        seqs = seq_group.get_seqs(status=SequenceStatus.RUNNING)
+        for seq in seqs:
+            seq.status = SequenceStatus.WAITING
+            self.block_manager.free(seq)
+        self.waiting.insert(0, seq_group)
 
 

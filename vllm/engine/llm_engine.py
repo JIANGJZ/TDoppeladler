@@ -394,7 +394,7 @@ class LLMEngine:
         self._decode_sequence(parent_seq, seq_group.sampling_params)
         self._check_stop(parent_seq, seq_group.sampling_params)
         if parent_seq.is_finished():
-            print ("===================== seq_finished {}".format(parent_seq.seq_id))
+            # print ("===================== seq_finished {}".format(parent_seq.seq_id))
             self.scheduler.free_seq(parent_seq)
 
     def _process_model_outputs_multi(self, output: SamplerOutput, scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
