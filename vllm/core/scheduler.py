@@ -403,7 +403,7 @@ class MultiScheduler:
         self.swapped: List[SequenceGroup] = []
         self.running_aux: List[SequenceGroup] = []
         
-        self.cost_model = CostModel()
+        self.cost_model = CostModel(self.block_manager)
         self.finished_aux_seq = []
         self.finished_main_seq = []
 
@@ -533,7 +533,7 @@ class MultiScheduler:
         print ("finished = {}, unfinished = {}".format(finished_seqs, unfinished_seqs))
 
         # Join waiting sequences if possible.
-        if (len(self.swapped) + len(self.swapping)) < 7:
+        if self.block_manager.can_get_new():
             ignored_seq_groups: List[SequenceGroup] = []
             scheduled: List[SequenceGroup] = []
             # The total number of sequences on the fly, including the
@@ -654,12 +654,14 @@ class MultiScheduler:
 
                     # self._append_main_slot(seq_group, blocks_to_copy)
                     # running.append(seq_group)
-
-                    queue_length_ratio = self.cost_model.get_auxilary_queue_length()
+                    send_number = self.cost_model.offload_seq_num
+                    queue_length_ratio = self.cost_model.get_auxilary_queue_ratio()
                     current_aux_length = len(self.running_aux)+len(self.swapped)+len(self.swapping)+len(current_swap)
                     if (len(self.running) > queue_length_ratio * current_aux_length):
-                        self._preempt(seq_group, blocks_to_swap_out)
-                        current_swap.append(seq_group)
+                        while(send_number > 0):
+                            self._preempt(seq_group, blocks_to_swap_out)
+                            current_swap.append(seq_group)
+                            send_number = send_number - 1
                     else:
                         self._append_main_slot(seq_group, blocks_to_copy)
                         running.append(seq_group)

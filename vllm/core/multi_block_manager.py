@@ -203,13 +203,22 @@ class MultiBlockSpaceManager:
         for block in src_block_table:
             block.ref_count += 1
 
+    def can_get_new(self):
+        num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
+        return num_free_blocks > self.watermark_blocks * 2
+
+    def get_aux_memory_usage(self):
+        num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
+        occupy_blocks = self.aux_gpu_allocator.num_blocks - num_free_blocks
+        return float(occupy_blocks)/(self.aux_gpu_allocator.num_blocks)
+
 
     def can_swap_in(self, seq_group: SequenceGroup) -> bool:
         blocks = self._get_physical_blocks(seq_group)
         num_swapped_seqs = seq_group.num_seqs(status=SequenceStatus.SWAPPED)
         num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
         num_required_blocks = len(blocks) + num_swapped_seqs
-        return num_free_blocks - num_required_blocks >= self.watermark_blocks * 3
+        return num_free_blocks - num_required_blocks >= self.watermark_blocks * 15
 
     def swap_in(self, seq_group: SequenceGroup) -> Dict[int, int]:
         # CPU block -> GPU block.
