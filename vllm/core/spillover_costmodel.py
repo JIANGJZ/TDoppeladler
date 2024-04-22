@@ -1,7 +1,7 @@
 class CostModel:
     def __init__(self):
         self.spillover_portion = 0.2
-        self.offload_portion = 0.38  #A10 vicuna 0.45  3090 0.4
+        self.offload_portion = 0.4  #A10 vicuna 0.45  3090 0.4
         self.auxilary_portion = self.spillover_portion + self.offload_portion
         self.primary_portion = 1 - self.auxilary_portion
 
@@ -17,5 +17,5 @@ class CostModel:
 
 
     def get_auxilary_queue_length(self):
-        return (self.offload_portion/self.primary_portion)
+        return (self.auxilary_portion/self.primary_portion)
         #vincuna=1.2, baichuang=1.5, aquiq=1.5

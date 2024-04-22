@@ -87,6 +87,7 @@ class MultiBlockSpaceManager:
         self.block_tables: Dict[int, BlockTable] = {}
 
         self.aux_block_tables: Dict[int, BlockTable] = {}
+        self.aux_free_seq = []
 
     def can_allocate(self, seq_group: SequenceGroup) -> AllocStatus:
         # FIXME(woosuk): Here we assume that all sequences in the group share
@@ -295,6 +296,7 @@ class MultiBlockSpaceManager:
                 block_table = self.aux_block_tables[seq.seq_id]
                 self._free_block_table(block_table)
                 del self.aux_block_tables[seq.seq_id]
+                self.aux_free_seq.append(seq.seq_id)
         else:
             block_table = self.block_tables[seq.seq_id]
             self._free_block_table(block_table)

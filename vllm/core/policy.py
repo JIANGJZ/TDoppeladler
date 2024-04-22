@@ -20,7 +20,7 @@ class FCFS(Policy):
 class Prediction(Policy):
     def get_priority(self, seq_group: SequenceGroup)-> float:
         all_seqs = seq_group.get_seqs()
-        return (seq_group.sampling_params.max_tokens - all_seqs[0].get_output_len())
+        return (seq_group.sampling_params.max_tokens - all_seqs[0].get_output_len()) / float(all_seqs[0].get_output_len()+all_seqs[0].get_prompt_len())
 
 
 class PolicyFactory:

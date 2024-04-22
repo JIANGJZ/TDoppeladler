@@ -11,6 +11,9 @@ from vllm.core.policy import PolicyFactory
 from vllm.core.spillover_costmodel import CostModel
 from vllm.logger import init_logger
 from vllm.sequence import (Sequence, SequenceData, SequenceGroup, SequenceGroupMetadata, SequenceStatus)
+import threading
+lock_aux = threading.Lock()
+lock_main = threading.Lock()
 
 logger = init_logger(__name__)
 
@@ -478,13 +481,24 @@ class MultiScheduler:
             num_curr_seqs += num_new_seqs
             self.running_aux.append(seq_group)
 
-        running_aux: List[SequenceGroup] = []
-        while self.running_aux:
-            seq_group = self.running_aux.pop(0)
-            self._append_aux_slot(seq_group, blocks_to_copy)
-            running_aux.append(seq_group)
+        # submit_seq_ids = [seq_group.request_id for seq_group in self.running_aux]
+        # should_end_length = [seq_group.sampling_params.max_tokens for seq_group in self.running_aux] 
+        # current_length = [(seq_group.get_seqs())[0].get_output_len() for seq_group in self.running_aux]  
+        # swap_seq_ids = [seq_group.request_id for seq_group in self.swapped]
+        # swapping_seq_ids =  [seq_group.request_id for seq_group in self.swapping]
+        # lengths_list = [len(lst) for lst in self.block_manager.aux_block_tables.values()]
+        # print("main_finished {} aux_finish_seq {} swap_seq {} swapping {} free_seq{} submit seq id {} aux_table {} should_end_length {} \
+        # current_length {} block_lengths_list{} sum {}".format(self.finished_main_seq, self.finished_aux_seq, swap_seq_ids, swapping_seq_ids, 
+        # self.block_manager.aux_free_seq, submit_seq_ids, self.block_manager.aux_block_tables.keys(), should_end_length, current_length, lengths_list, sum(lengths_list)))
 
-        self.running_aux = running_aux
+        running_aux: List[SequenceGroup] = []
+        with lock_aux:
+            while self.running_aux:
+                seq_group = self.running_aux.pop(0)
+                self._append_aux_slot(seq_group, blocks_to_copy)
+                running_aux.append(seq_group)
+
+            self.running_aux = running_aux
 
         num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running_aux)
         scheduler_outputs = SchedulerOutputs(
@@ -603,41 +617,51 @@ class MultiScheduler:
         # Reserve new token slots for the running sequence groups.
         running: List[SequenceGroup] = []
         current_swap: List[SequenceGroup] = []
-        while self.running:
-            seq_group = self.running.pop(0)
-            if not self.block_manager.check_in_main(seq_group):
-                continue
-            while not self.block_manager.can_append_main_slot(seq_group):
-                if self.running:
-                    # Preempt the lowest-priority sequence groups.
-                    victim_seq_group = self.running.pop(-1)
-                    self._preempt(victim_seq_group, blocks_to_swap_out)
-                    current_swap.append(victim_seq_group)
-                    if (len(self.running) > 0):
+
+        # submit_seq_ids = [seq_group.request_id for seq_group in self.running]
+        # lengths_list = [len(lst) for lst in self.block_manager.block_tables.values()]
+        # swap_seq_ids = [seq_group.request_id for seq_group in self.swapped]
+        # swapping_seq_ids =  [seq_group.request_id for seq_group in self.swapping]
+        # print("main_finished {} swap_seq {} swapping {} submit seq id {} main_table {} lengths_list{} \
+        # sum {}".format(self.finished_main_seq,  swap_seq_ids, swapping_seq_ids, \
+        # submit_seq_ids, self.block_manager.block_tables.keys(), lengths_list, sum(lengths_list)))
+        with lock_main:
+            while self.running:
+                seq_group = self.running.pop(0)
+                if not self.block_manager.check_in_main(seq_group):
+                    continue
+                while not self.block_manager.can_append_main_slot(seq_group):
+                    if self.running:
+                        # Preempt the lowest-priority sequence groups.
                         victim_seq_group = self.running.pop(-1)
                         self._preempt(victim_seq_group, blocks_to_swap_out)
                         current_swap.append(victim_seq_group)
+                        if (len(self.running) > 0):
+                            victim_seq_group = self.running.pop(-1)
+                            self._preempt(victim_seq_group, blocks_to_swap_out)
+                            current_swap.append(victim_seq_group)
+                    else:
+                        # No other sequence groups can be preempted.
+                        # Preempt the current sequence group.
+                        self._preempt(seq_group, blocks_to_swap_out)
+                        current_swap.append(seq_group)
+                        break
                 else:
-                    # No other sequence groups can be preempted.
-                    # Preempt the current sequence group.
-                    self._preempt(seq_group, blocks_to_swap_out)
-                    current_swap.append(seq_group)
-                    break
-            else:
-                # self._preempt(seq_group, blocks_to_swap_out)
-                # current_swap.append(seq_group)
+                    # self._preempt(seq_group, blocks_to_swap_out)
+                    # current_swap.append(seq_group)
 
-                # self._append_main_slot(seq_group, blocks_to_copy)
-                # running.append(seq_group)
+                    # self._append_main_slot(seq_group, blocks_to_copy)
+                    # running.append(seq_group)
 
-                aux_queue_length = self.cost_model.get_auxilary_queue_length()
-                if aux_queue_length*(len(self.running) > len(self.running_aux)):
-                    self._preempt(seq_group, blocks_to_swap_out)
-                    current_swap.append(seq_group)
-                else:
-                    self._append_main_slot(seq_group, blocks_to_copy)
-                    running.append(seq_group)
-        self.running = running
+                    queue_length_ratio = self.cost_model.get_auxilary_queue_length()
+                    current_aux_length = len(self.running_aux)+len(self.swapped)+len(self.swapping)+len(current_swap)
+                    if (len(self.running) > queue_length_ratio * current_aux_length):
+                        self._preempt(seq_group, blocks_to_swap_out)
+                        current_swap.append(seq_group)
+                    else:
+                        self._append_main_slot(seq_group, blocks_to_copy)
+                        running.append(seq_group)
+            self.running = running
 
         num_batched_tokens = sum(seq_group.num_seqs(status=SequenceStatus.RUNNING) for seq_group in self.running)
         scheduler_outputs = SchedulerOutputs(
@@ -707,14 +731,16 @@ class MultiScheduler:
         self.block_manager.free(seq)
 
     def free_finished_main_seq_groups(self) -> None:
-        finished = [int(seq_group.request_id) for seq_group in self.running if seq_group.is_finished()]
-        self.finished_main_seq.extend(finished)
-        self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
+        with lock_main:
+            finished = [int(seq_group.request_id) for seq_group in self.running if seq_group.is_finished()]
+            self.finished_main_seq.extend(finished)
+            self.running = [seq_group for seq_group in self.running if not seq_group.is_finished()]
 
     def free_finished_aux_seq_groups(self) -> None:
-        finished = [int(seq_group.request_id) for seq_group in self.running_aux if seq_group.is_finished()]
-        self.finished_aux_seq.extend(finished)
-        self.running_aux = [seq_group for seq_group in self.running_aux if not seq_group.is_finished()]
+        with lock_aux:
+            finished = [int(seq_group.request_id) for seq_group in self.running_aux if seq_group.is_finished()]
+            self.finished_aux_seq.extend(finished)
+            self.running_aux = [seq_group for seq_group in self.running_aux if not seq_group.is_finished()]
 
     def set_finished_swap_out_seq_groups(self, current_swap: List[SequenceGroup]) -> None:
         print(f"swap_sequence len {len(self.swapping)}")
@@ -779,3 +805,5 @@ class MultiScheduler:
         blocks_to_swap_out.update(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
             seq.status = SequenceStatus.SWAPPING    
+
+
