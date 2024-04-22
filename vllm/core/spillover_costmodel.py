@@ -13,7 +13,7 @@ class CostModel:
         self.compute_flops = 0
 
         self.block_manager = block_manager
-        self.offload_seq_num = 2
+        self.offload_seq_per_time = 2
 
 
     def compute_offload_portion(self):

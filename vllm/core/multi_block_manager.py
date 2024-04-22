@@ -212,7 +212,7 @@ class MultiBlockSpaceManager:
 
     def can_get_new(self):
         num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()
-        return num_free_blocks > self.watermark_blocks
+        return num_free_blocks > 0
 
     def get_aux_memory_usage(self):
         num_free_blocks = self.aux_gpu_allocator.get_num_free_blocks()

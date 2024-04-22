@@ -8,11 +8,15 @@ import ray
 
 class AsySubmmitterConfig:
     def __init__(self):
-        self.pending_length = 5
+        self.main_pending_length = 6
+        self.aux_pending_length = 6
         #A10 vicuna pending_length=4, baichuang pending_length=4, aquiq pending_length=5
 
-    def get_pending_length(self):
-        return self.pending_length
+    def get_main_pending_length(self):
+        return self.main_pending_length
+
+    def get_aux_pending_length(self):
+        return self.aux_pending_length
 
 class RayTaskManager:
     def __init__(self):

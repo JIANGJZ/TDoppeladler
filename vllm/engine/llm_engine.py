@@ -478,7 +478,7 @@ class LLMEngine:
         # Execute the model.
         if self.parallel_config.multi_worker:
                 # print ("main list len = {}".format(len(seq_group_metadata_list_main)))
-            if (self.task_manager.get_main_pending_len() < self.asy_submmitter.get_pending_length()):
+            if (self.task_manager.get_main_pending_len() < self.asy_submmitter.get_main_pending_length()):
                 submit_id = next(self.submit_counter) 
                 seq_group_metadata_list_main, scheduler_outputs_main, ignored_main = self._schedule_main()
                 if (len(seq_group_metadata_list_main) > 0):
@@ -497,7 +497,7 @@ class LLMEngine:
                         blocks_to_copy=scheduler_outputs_main.blocks_to_copy,
                     )
                 
-            if (self.task_manager.get_aux_pending_len() < self.asy_submmitter.get_pending_length()):
+            if (self.task_manager.get_aux_pending_len() < self.asy_submmitter.get_aux_pending_length()):
                 submit_id = next(self.aux_submit_counter) 
                 seq_group_metadata_list_aux, scheduler_outputs_aux, ignored_aux = self._schedule_aux()
                 if (len(seq_group_metadata_list_aux) > 0):

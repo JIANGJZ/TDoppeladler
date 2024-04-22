@@ -662,7 +662,7 @@ class MultiScheduler:
 
                     # self._append_main_slot(seq_group, blocks_to_copy)
                     # running.append(seq_group)
-                    send_number = self.cost_model.offload_seq_num
+                    send_number = self.cost_model.offload_seq_per_time
                     queue_length_ratio = self.cost_model.get_auxilary_queue_ratio()
                     current_aux_length = len(self.running_aux)+len(self.swapped)+len(self.swapping)+len(current_swap)
                     if (len(self.running) > queue_length_ratio * current_aux_length):

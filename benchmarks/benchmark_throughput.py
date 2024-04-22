@@ -118,7 +118,8 @@ if __name__ == "__main__":
     parser.add_argument("--enforce-eager", action="store_true", help="enforce eager execution")
 
     #如果要用sepration去处理则把multi-worker 的action="store_false"， worker-use-ray为true
-    #把worker-use-ray设置为store_false， 然后multi-worker设置为store true， tensor-parallel-size可测试单卡用ray的性能
+    #把worker-use-ray设置为store_false， 然后multi-worker设置为store true，可测试单卡
+    #tensor-parallel-size可测试单卡用ray的性能
     #用ray做request并行在experiment文件夹
     #用ray的时候profile出来的可用内存空间比不用ray大概少了10%，做对比实验需要把profile出来的可用的内存空间对齐
     #--swap-space 不能设置太大，超过可使用用内存的70%
