@@ -24,8 +24,22 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+or use with docker
+```bash
+# Build with docker
+cp Dockerfile ..
+cd ..
+docker build -t test .
+
+# Run the docker
+docker run --gpus all -it --rm --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 -v /home/models:/models/ test
+```
+
 ## Usage
 To execution command of the demo is to run the benchmark.sh script in the project directory.
+
+The default dataset can be find at:
+https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/blob/main/ShareGPT_V3_unfiltered_cleaned_split.json
 
 The hyper-parameters of FuseSpill can be set in benchmarks/benchmark_throughput.py:
 ```bash

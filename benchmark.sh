@@ -6,7 +6,7 @@ main () {
 
   positional_args=()
 
-  path_prefix="/home/users/jiangjz/llm/TDoppeladler"
+  path_prefix="/workspace/fuse"
 
   dataset_path=$path_prefix"/dataset/ShareGPT_V3_unfiltered_cleaned_split.json"
   dataset_path_modified=0
