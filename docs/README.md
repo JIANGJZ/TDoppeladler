@@ -1,5 +1,5 @@
 # FuseSpill
-This is the computational artifact of paper `Characterizing and Optimizing KV Cache Spilloveron Memory-Constrained GPU for LLM Inference`.
+This is the computational artifact of paper `FuseSpill: Efficient KV Cache Spillover Management on Memory-Constrained GPU for LLM Inference`.
 FuseSpill an runtime system developped based on vllm for large model inference that showcases efficient KV Cache spillover handling. By leveraging auxiliary devices for managing the decoding phase of spillover sequences, FuseSpill incorporates adaptive offloading, asynchronous submission, and length perception techniques to enhance device utilization and boost the throughput of LLM inference.
 
 ## Environment
